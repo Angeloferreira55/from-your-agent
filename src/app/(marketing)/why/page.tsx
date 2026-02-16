@@ -27,28 +27,34 @@ export default function WhyPage() {
         <div className="mx-auto max-w-6xl px-6">
           <div className="grid gap-10 md:grid-cols-3">
             <div>
-              <h3 className="font-serif text-xl font-bold text-[#1a1a2e] mb-4">
+              <h3 className="font-serif text-xl font-bold text-[#1a1a2e] mb-3">
                 Building Trust to Build Your Referrals
               </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                In a high-dollar, complicated transaction like buying or selling a home, consumers won&apos;t make the decision to trust an agent by looking at their face on a bus bench. They want a referral from someone they trust! That&apos;s why 54% of home buyers last year either already knew their agent or found them from a referral. A relationship marketing program will ensure your referral network knows, likes and trusts you enough to refer their friends and family.
-              </p>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#E8733A]" />Consumers trust referrals — not bus bench ads</li>
+                <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#E8733A]" />54% of buyers already knew their agent or got a referral</li>
+                <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#E8733A]" />Relationship marketing builds know, like &amp; trust</li>
+              </ul>
             </div>
             <div>
-              <h3 className="font-serif text-xl font-bold text-[#1a1a2e] mb-4">
+              <h3 className="font-serif text-xl font-bold text-[#1a1a2e] mb-3">
                 You Are Losing 80% of Your Customers
               </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                According to the National Association of REALTORS, over 80% of home buyers and sellers say they would use their real estate agent again or refer them to friends. But only 20% of them actually do! Why? The number one reason consumers say they don&apos;t go back to their real estate agent for future transactions or refer their friends is that the agent DIDN&apos;T KEEP IN TOUCH! Maintain high quality contact with your clients and friends - it&apos;s critical to your success.
-              </p>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#E8733A]" />80% say they&apos;d use their agent again — only 20% do</li>
+                <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#E8733A]" />#1 reason: the agent didn&apos;t keep in touch</li>
+                <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#E8733A]" />Consistent contact is critical to your success</li>
+              </ul>
             </div>
             <div>
-              <h3 className="font-serif text-xl font-bold text-[#1a1a2e] mb-4">
-                Staying Top of Mind is the Key to Referrals
+              <h3 className="font-serif text-xl font-bold text-[#1a1a2e] mb-3">
+                Staying Top of Mind is the Key
               </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                If you don&apos;t keep in constant contact and reward your customers and sphere for their relationship with you, it becomes easier and easier to lose their business and referrals to someone else. Top referral generators know you need to touch your sphere at least 2-3 times per month. When someone in your sphere hears the words &quot;real estate&quot; they need to immediately think of, and recommend, YOU!
-              </p>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#E8733A]" />Touch your sphere 2–3 times per month</li>
+                <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#E8733A]" />Without contact, you lose business to someone else</li>
+                <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#E8733A]" />When they hear &quot;real estate&quot; they should think of YOU</li>
+              </ul>
             </div>
           </div>
         </div>
