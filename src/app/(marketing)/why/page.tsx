@@ -53,19 +53,11 @@ export default function WhyPage() {
           </div>
 
           <div className="flex-1 max-w-lg">
-            <div className="relative overflow-hidden rounded-lg shadow-xl">
-              <img
-                src="/custom-closet-add.png"
-                alt="Direct Mail Postcard Mockup"
-                className="w-full"
-              />
-              {/* Cover the original name with a generic one */}
-              <div className="absolute bottom-0 left-0 right-0 h-[10%] bg-[#1a1a2e] flex items-center justify-center px-4">
-                <p className="text-[8px] sm:text-xs md:text-sm font-bold text-white tracking-wide text-center">
-                  FREE Consultation and $250 off your closet — AS A GIFT FROM YOUR AGENT
-                </p>
-              </div>
-            </div>
+            <img
+              src="/custom-closet-add.png"
+              alt="Direct Mail Postcard Mockup"
+              className="w-full rounded-lg shadow-xl"
+            />
           </div>
         </div>
       </section>
