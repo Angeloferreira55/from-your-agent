@@ -104,48 +104,59 @@ export default function UpcomingPostcardPage() {
 
                   </div>
 
-                  {/* Right half — Mailing area */}
-                  <div className="flex w-1/2 flex-col p-3 md:p-4">
-                    {/* KW Logo + Stamp */}
-                    <div className="flex items-start justify-between mb-3">
-                      <img
-                        src="/kw-logo.png"
-                        alt="Keller Williams Realty"
-                        className="h-6 md:h-10 w-auto object-contain"
-                      />
-                      <div className="h-6 w-8 md:h-8 md:w-10 rounded border-2 border-dashed border-gray-300 flex items-center justify-center">
-                        <p className="text-[5px] md:text-[6px] text-gray-400 text-center leading-tight">POSTAGE</p>
+                  {/* Right half — Brokerage branding (Scavoy style) */}
+                  <div
+                    className="relative flex w-1/2 flex-col p-3 md:p-4 overflow-hidden"
+                    style={{ backgroundColor: '#B40101' }}
+                  >
+                    {/* Background image + overlay */}
+                    <img
+                      src="/brokerages/kw-bg.jpg"
+                      alt=""
+                      className="absolute inset-0 h-full w-full object-cover opacity-40"
+                    />
+                    <div className="absolute inset-0" style={{ backgroundColor: 'rgba(100, 0, 0, 0.55)' }} />
+
+                    {/* Content on top of background */}
+                    <div className="relative z-10 flex flex-col h-full">
+                      {/* Brokerage logo */}
+                      <div className="flex items-center gap-1.5 mb-auto">
+                        <img
+                          src="/brokerages/kw-logo-white.png"
+                          alt="Keller Williams Realty"
+                          className="h-6 md:h-10 w-auto object-contain"
+                        />
+                      </div>
+
+                      {/* Slogan */}
+                      <div className="my-auto text-center">
+                        <p className="text-[10px] md:text-[15px] font-serif italic text-white leading-snug">
+                          Not Just Agents.
+                        </p>
+                        <p className="text-[10px] md:text-[15px] font-serif italic text-white leading-snug">
+                          Advisors.
+                        </p>
+                      </div>
+
+                      {/* Social icons + website */}
+                      <div className="mt-auto">
+                        <div className="flex items-center gap-1 md:gap-1.5 mb-1">
+                          {['f', 'in', 'ig', 'yt'].map((icon) => (
+                            <div
+                              key={icon}
+                              className="h-3 w-3 md:h-4 md:w-4 rounded-sm bg-white/20 flex items-center justify-center"
+                            >
+                              <span className="text-[4px] md:text-[6px] font-bold text-white">{icon}</span>
+                            </div>
+                          ))}
+                          <p className="text-[5px] md:text-[7px] text-white/90 ml-auto font-medium">www.kw.com</p>
+                        </div>
+                        {/* Disclaimer */}
+                        <p className="text-[3px] md:text-[4.5px] text-white/60 leading-tight">
+                          For questions about this postcard or offer please call (505) 555-0147 &bull; www.FromYourAgent.com &bull; Each office is independently owned and operated. If your home is currently on the market, please don&apos;t consider this a solicitation.
+                        </p>
                       </div>
                     </div>
-
-                    {/* Accent bar */}
-                    <div className="h-0.5 w-8 md:w-10 rounded-full mb-3 bg-[#B40101]" />
-
-                    {/* Recipient */}
-                    <div className="mt-auto">
-                      <p className="text-[8px] md:text-[10px] font-semibold text-gray-900">John &amp; Sarah Johnson</p>
-                      <p className="text-[7px] md:text-[9px] text-gray-600">123 Main Street</p>
-                      <p className="text-[7px] md:text-[9px] text-gray-600">Albuquerque, NM 87110</p>
-                    </div>
-
-                    {/* Barcode placeholder */}
-                    <div className="mt-3 flex gap-px">
-                      {Array.from({ length: 30 }).map((_, i) => (
-                        <div
-                          key={i}
-                          className="bg-gray-800"
-                          style={{
-                            width: 1.5,
-                            height: i % 3 === 0 ? 12 : 8,
-                          }}
-                        />
-                      ))}
-                    </div>
-
-                    {/* Fine print */}
-                    <p className="text-[3.5px] md:text-[5px] text-gray-400 mt-1.5 leading-tight">
-                      For questions or concerns about this postcard or offer please call (505) 555-0147 &bull; www.FromYourAgent.com &bull; If your home is currently on the market, please don&apos;t consider this a solicitation.
-                    </p>
                   </div>
                 </div>
               </div>
