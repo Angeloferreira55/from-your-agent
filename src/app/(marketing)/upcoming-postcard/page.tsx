@@ -66,8 +66,8 @@ export default function UpcomingPostcardPage() {
                 <div className="flex h-full">
                   {/* Left half — Agent branding */}
                   <div className="flex w-1/2 flex-col border-r p-3 md:p-4">
-                    {/* Photo + Agent Info */}
-                    <div className="flex items-start gap-2 mb-1">
+                    {/* Photo + KW Logo */}
+                    <div className="flex items-start gap-1.5 mb-1.5">
                       <div className="h-14 w-14 md:h-20 md:w-20 shrink-0 rounded-lg border-2 border-[#B40101] overflow-hidden flex items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300">
                         <img
                           src="/sample-agent-woman.jpg"
@@ -75,27 +75,25 @@ export default function UpcomingPostcardPage() {
                           className="h-full w-full object-cover"
                         />
                       </div>
-                      <div className="min-w-0 flex flex-col justify-center">
-                        <p className="text-[9px] md:text-[11px] font-bold text-gray-900 leading-tight">Liz Garcia</p>
-                        <p className="text-[6px] md:text-[8px] italic text-[#B40101] mt-0.5">Your Trusted Real Estate Expert</p>
-                        <p className="text-[5px] md:text-[6.5px] text-gray-500 whitespace-nowrap mt-0.5">
-                          (505) 555-0147 | liz.garcia@kw.com
-                        </p>
-                        <p className="text-[5px] md:text-[8px] text-gray-400">NM Lic #67890</p>
+                      <div className="min-w-0 flex flex-col justify-start">
+                        <img
+                          src="/kw-logo.png"
+                          alt="Keller Williams Realty"
+                          className="h-8 md:h-12 w-auto object-contain object-left"
+                        />
+                        <p className="text-[5px] md:text-[7px] text-gray-400 leading-none mt-0.5">(505) 292-8900</p>
+                        <p className="text-[5px] md:text-[7px] text-gray-400 leading-none mt-px">6703 Academy NE, Albuquerque, NM 87109</p>
                       </div>
                     </div>
 
-                    {/* KW Logo + brokerage info — left aligned */}
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <img
-                        src="/kw-logo.png"
-                        alt="Keller Williams Realty"
-                        className="h-6 md:h-9 w-auto object-contain"
-                      />
-                      <div>
-                        <p className="text-[5px] md:text-[7px] text-gray-400 leading-none">(505) 292-8900</p>
-                        <p className="text-[5px] md:text-[7px] text-gray-400 leading-none mt-px">6703 Academy NE, Albuquerque, NM 87109</p>
-                      </div>
+                    {/* Agent name + contact details */}
+                    <div className="mb-1">
+                      <p className="text-[9px] md:text-[11px] font-bold text-gray-900 leading-tight">Liz Garcia</p>
+                      <p className="text-[6px] md:text-[8px] italic text-[#B40101] mt-0.5">Your Trusted Real Estate Expert</p>
+                      <p className="text-[5px] md:text-[6.5px] text-gray-500 whitespace-nowrap mt-0.5">
+                        (505) 555-0147 | liz.garcia@kw.com
+                      </p>
+                      <p className="text-[5px] md:text-[8px] text-gray-400">NM Lic #67890</p>
                     </div>
 
                     {/* Featured Deal — Custom Closet Guys */}
