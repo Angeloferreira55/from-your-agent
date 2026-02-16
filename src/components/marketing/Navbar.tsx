@@ -79,7 +79,7 @@ export function Navbar() {
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5">
-          <img src="/logo-transparent.png" alt="From Your Agent" className="h-24 w-auto" />
+          <img src="/logo-transparent.png" alt="From Your Agent" className="h-36 w-auto" />
           <span className="text-lg font-bold text-[#1B3A5C] hidden sm:inline">From Your Agent</span>
         </Link>
 
