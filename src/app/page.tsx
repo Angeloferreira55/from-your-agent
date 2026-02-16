@@ -95,6 +95,13 @@ export default function HomePage() {
               Reward your customers and friends with
               outstanding free offers &amp; discounts as a gift from their agent.
             </p>
+            <div className="mt-8">
+              <img
+                src="/fya-banner.png"
+                alt="From Your Agent"
+                className="mx-auto max-w-4xl w-full rounded-lg shadow-lg"
+              />
+            </div>
             <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
               <Link href="/signup">
                 <Button
