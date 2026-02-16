@@ -122,6 +122,13 @@ export function Navbar() {
               </NavigationMenuContent>
             </NavigationMenuItem>
 
+            {/* Pricing */}
+            <NavigationMenuItem>
+              <Link href="/pricing" className="text-sm font-medium px-4 py-2 hover:text-[#E8733A] transition-colors">
+                Pricing
+              </Link>
+            </NavigationMenuItem>
+
             {/* Learn More Dropdown */}
             <NavigationMenuItem>
               <NavigationMenuTrigger className="text-sm font-medium">
@@ -149,13 +156,6 @@ export function Navbar() {
                   ))}
                 </ul>
               </NavigationMenuContent>
-            </NavigationMenuItem>
-
-            {/* Pricing */}
-            <NavigationMenuItem>
-              <Link href="/pricing" className="text-sm font-medium px-4 py-2 hover:text-[#E8733A] transition-colors">
-                Pricing
-              </Link>
             </NavigationMenuItem>
           </NavigationMenuList>
         </NavigationMenu>
