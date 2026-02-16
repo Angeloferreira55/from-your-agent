@@ -120,7 +120,7 @@ export default function FaqPage() {
   return (
     <div>
       {/* Hero */}
-      <section className="bg-[#FDF2F4] py-20">
+      <section className="bg-[#FFF5EE] py-20">
         <div className="mx-auto max-w-3xl px-6 text-center">
           <h1 className="font-serif text-4xl font-bold tracking-tight text-[#1a1a2e] md:text-5xl">
             Frequently Asked Questions
@@ -155,14 +155,14 @@ export default function FaqPage() {
       </section>
 
       {/* CTA */}
-      <section className="border-t bg-[#FDF2F4] py-16">
+      <section className="border-t bg-[#FFF5EE] py-16">
         <div className="mx-auto max-w-3xl px-6 text-center">
           <h2 className="font-serif text-3xl font-bold text-[#1a1a2e]">Still have questions?</h2>
           <p className="mt-3 text-lg text-muted-foreground">
             Email us at support@fromyouragent.com or sign up and try it out yourself.
           </p>
           <Link href="/signup">
-            <Button size="lg" className="mt-6 bg-[#C02646] hover:bg-[#A01E38] text-white text-lg px-8">
+            <Button size="lg" className="mt-6 bg-[#E8733A] hover:bg-[#CF6430] text-white text-lg px-8">
               Get Started Free
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>

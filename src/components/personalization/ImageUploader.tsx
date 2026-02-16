@@ -88,7 +88,7 @@ export function ImageUploader({
         className={cn(
           "relative flex items-center justify-center border-2 border-dashed transition-colors cursor-pointer overflow-hidden",
           shape === "circle" ? "h-28 w-28 rounded-full" : "h-28 rounded-lg",
-          dragOver ? "border-[#C02646] bg-[#FDF2F4]" : "border-muted-foreground/25 hover:border-[#C02646]/50",
+          dragOver ? "border-[#E8733A] bg-[#FFF5EE]" : "border-muted-foreground/25 hover:border-[#E8733A]/50",
           uploading && "pointer-events-none opacity-60"
         )}
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
@@ -113,7 +113,7 @@ export function ImageUploader({
         ) : (
           <div className="text-center p-2">
             {uploading ? (
-              <Loader2 className="mx-auto h-6 w-6 text-[#C02646] animate-spin" />
+              <Loader2 className="mx-auto h-6 w-6 text-[#E8733A] animate-spin" />
             ) : (
               <>
                 <Upload className="mx-auto h-6 w-6 text-muted-foreground" />

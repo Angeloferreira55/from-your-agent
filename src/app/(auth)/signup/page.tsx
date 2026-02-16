@@ -61,11 +61,11 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#FDF2F4] to-white px-4 py-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#FFF5EE] to-white px-4 py-8">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#FDF2F4]">
-            <User className="h-6 w-6 text-[#C02646]" />
+          <div className="mx-auto mb-4">
+            <img src="/logo.png" alt="From Your Agent" className="h-14 w-auto mx-auto" />
           </div>
           <CardTitle className="text-2xl font-bold">Create your account</CardTitle>
           <CardDescription>
@@ -147,7 +147,7 @@ export default function SignupPage() {
           <CardFooter className="flex flex-col gap-4">
             <Button
               type="submit"
-              className="w-full bg-[#C02646] hover:bg-[#A01E38]"
+              className="w-full bg-[#E8733A] hover:bg-[#CF6430]"
               disabled={loading}
             >
               {loading ? (
@@ -157,7 +157,7 @@ export default function SignupPage() {
             </Button>
             <p className="text-sm text-muted-foreground text-center">
               Already have an account?{" "}
-              <Link href="/login" className="text-[#C02646] hover:underline font-medium">
+              <Link href="/login" className="text-[#E8733A] hover:underline font-medium">
                 Sign in
               </Link>
             </p>

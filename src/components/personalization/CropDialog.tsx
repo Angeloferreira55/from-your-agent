@@ -149,7 +149,7 @@ export function CropDialog({
             step={0.05}
             value={zoom}
             onChange={(e) => setZoom(Number(e.target.value))}
-            className="w-full accent-[#C02646]"
+            className="w-full accent-[#E8733A]"
           />
         </div>
 
@@ -158,7 +158,7 @@ export function CropDialog({
             Cancel
           </Button>
           <Button
-            className="bg-[#C02646] hover:bg-[#A01E38]"
+            className="bg-[#E8733A] hover:bg-[#CF6430]"
             onClick={handleCrop}
             disabled={processing}
           >

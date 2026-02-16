@@ -8,7 +8,7 @@ import {
   Upload,
   Gift,
   Palette,
-  PartyPopper,
+  BrainCircuit,
   MapPin,
   Shield,
   Send,
@@ -30,7 +30,7 @@ const samplePostcards = [
   {
     month: "February",
     theme: "Valentine's Treats",
-    color: "#C02646",
+    color: "#E8733A",
     emoji: "🧁",
     deal: "$15 OFF",
     bg: "from-pink-50 via-rose-50 to-red-50",
@@ -88,8 +88,8 @@ export default function HomePage() {
           <div className="mx-auto max-w-3xl text-center">
             <h1 className="font-serif text-4xl font-bold tracking-tight text-[#1a1a2e] md:text-6xl md:leading-[1.15]">
               Helping Real Estate Agents Build{" "}
-              <span className="text-[#C02646]">Repeat</span> &{" "}
-              <span className="text-[#C02646]">Referral</span> Business.
+              <span className="text-[#E8733A]">Repeat</span> &{" "}
+              <span className="text-[#E8733A]">Referral</span> Business.
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground md:text-xl">
               Reward your customers and friends with
@@ -99,7 +99,7 @@ export default function HomePage() {
               <Link href="/signup">
                 <Button
                   size="lg"
-                  className="bg-[#C02646] hover:bg-[#A01E38] text-white text-lg px-8"
+                  className="bg-[#E8733A] hover:bg-[#CF6430] text-white text-lg px-8"
                 >
                   Subscribe Today
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -162,7 +162,7 @@ export default function HomePage() {
                   "Add your headshot, logo, brand color, and a personal message. Every postcard is uniquely yours.",
               },
               {
-                icon: PartyPopper,
+                icon: BrainCircuit,
                 step: "4",
                 title: "Results",
                 description:
@@ -172,9 +172,9 @@ export default function HomePage() {
               <Card key={item.step} className="bg-white text-center shadow-sm">
                 <CardContent className="pt-8 pb-6">
                   <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50">
-                    <item.icon className="h-7 w-7 text-[#007AFF]" />
+                    <item.icon className="h-7 w-7 text-[#1B3A5C]" />
                   </div>
-                  <div className="mt-3 inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#C02646] text-xs font-bold text-white">
+                  <div className="mt-3 inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#E8733A] text-xs font-bold text-white">
                     {item.step}
                   </div>
                   <h3 className="mt-3 text-lg font-semibold">{item.title}</h3>
@@ -188,7 +188,7 @@ export default function HomePage() {
 
           <div className="mt-10 text-center">
             <Link href="/how-it-works">
-              <Button variant="link" className="text-[#C02646]">
+              <Button variant="link" className="text-[#E8733A]">
                 Learn more about how it works{" "}
                 <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
@@ -238,7 +238,7 @@ export default function HomePage() {
               ].map((item) => (
                 <div key={item.title} className="flex items-start gap-4">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50">
-                    <item.icon className="h-5 w-5 text-[#007AFF]" />
+                    <item.icon className="h-5 w-5 text-[#1B3A5C]" />
                   </div>
                   <div>
                     <h3 className="font-semibold">{item.title}</h3>
@@ -334,7 +334,7 @@ export default function HomePage() {
             ].map((badge) => (
               <span
                 key={badge}
-                className="rounded-full border border-[#C02646]/20 bg-[#FDF2F4] px-5 py-2 text-sm font-medium text-[#C02646]"
+                className="rounded-full border border-[#E8733A]/20 bg-[#FFF5EE] px-5 py-2 text-sm font-medium text-[#E8733A]"
               >
                 {badge}
               </span>
@@ -412,13 +412,13 @@ export default function HomePage() {
                 key={tier.name}
                 className={
                   tier.popular
-                    ? "border-2 border-[#C02646] shadow-lg"
+                    ? "border-2 border-[#E8733A] shadow-lg"
                     : ""
                 }
               >
                 <CardContent className="pt-6 text-center">
                   {tier.popular && (
-                    <span className="mb-3 inline-block rounded-full bg-[#FDF2F4] px-3 py-1 text-xs font-semibold text-[#C02646]">
+                    <span className="mb-3 inline-block rounded-full bg-[#FFF5EE] px-3 py-1 text-xs font-semibold text-[#E8733A]">
                       Most Popular
                     </span>
                   )}
@@ -450,7 +450,7 @@ export default function HomePage() {
                     <Button
                       className={
                         tier.popular
-                          ? "w-full bg-[#C02646] hover:bg-[#A01E38] text-white"
+                          ? "w-full bg-[#E8733A] hover:bg-[#CF6430] text-white"
                           : "w-full"
                       }
                       variant={tier.popular ? "default" : "outline"}
@@ -465,7 +465,7 @@ export default function HomePage() {
 
           <div className="mt-8 text-center">
             <Link href="/pricing">
-              <Button variant="link" className="text-[#C02646]">
+              <Button variant="link" className="text-[#E8733A]">
                 See full pricing details{" "}
                 <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
@@ -475,7 +475,7 @@ export default function HomePage() {
       </section>
 
       {/* ═══════════════ FINAL CTA ═══════════════ */}
-      <section className="border-t bg-[#FDF2F4] py-20">
+      <section className="border-t bg-[#FFF5EE] py-20">
         <div className="mx-auto max-w-3xl px-6 text-center">
           <h2 className="font-serif text-3xl font-bold tracking-tight text-[#1a1a2e] md:text-4xl">
             Ready to grow your referral business?
@@ -487,7 +487,7 @@ export default function HomePage() {
           <Link href="/signup">
             <Button
               size="lg"
-              className="mt-8 bg-[#C02646] hover:bg-[#A01E38] text-white text-lg px-8"
+              className="mt-8 bg-[#E8733A] hover:bg-[#CF6430] text-white text-lg px-8"
             >
               Get Started Free
               <ArrowRight className="ml-2 h-5 w-5" />

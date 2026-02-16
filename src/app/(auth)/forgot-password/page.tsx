@@ -36,7 +36,7 @@ export default function ForgotPasswordPage() {
 
   if (sent) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#FDF2F4] to-white px-4">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#FFF5EE] to-white px-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
@@ -61,7 +61,7 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#FDF2F4] to-white px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#FFF5EE] to-white px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">Reset your password</CardTitle>
@@ -90,7 +90,7 @@ export default function ForgotPasswordPage() {
           <CardFooter className="flex flex-col gap-4">
             <Button
               type="submit"
-              className="w-full bg-[#C02646] hover:bg-[#A01E38]"
+              className="w-full bg-[#E8733A] hover:bg-[#CF6430]"
               disabled={loading}
             >
               {loading ? (

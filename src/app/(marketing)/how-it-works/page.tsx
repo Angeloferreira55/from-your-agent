@@ -7,6 +7,7 @@ import {
   Send,
   MapPin,
   Mail,
+  BrainCircuit,
   CreditCard,
   ArrowRight,
   CheckCircle2,
@@ -71,7 +72,7 @@ const steps = [
     ],
   },
   {
-    icon: Mail,
+    icon: BrainCircuit,
     number: "05",
     title: "Stay Top of Mind",
     description:
@@ -102,7 +103,7 @@ export default function HowItWorksPage() {
   return (
     <div>
       {/* Hero */}
-      <section className="bg-[#FDF2F4] py-20">
+      <section className="bg-[#FFF5EE] py-20">
         <div className="mx-auto max-w-3xl px-6 text-center">
           <h1 className="font-serif text-4xl font-bold tracking-tight text-[#1a1a2e] md:text-5xl">
             How It Works
@@ -127,7 +128,7 @@ export default function HowItWorksPage() {
               >
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-3">
-                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#C02646] text-sm font-bold text-white">
+                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#E8733A] text-sm font-bold text-white">
                       {step.number}
                     </span>
                     <h2 className="font-serif text-2xl font-bold text-[#1a1a2e]">{step.title}</h2>
@@ -145,7 +146,7 @@ export default function HowItWorksPage() {
                 <Card className="w-full md:w-64 shrink-0">
                   <CardContent className="flex flex-col items-center justify-center py-10">
                     <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50">
-                      <step.icon className="h-8 w-8 text-[#007AFF]" />
+                      <step.icon className="h-8 w-8 text-[#1B3A5C]" />
                     </div>
                   </CardContent>
                 </Card>
@@ -156,14 +157,14 @@ export default function HowItWorksPage() {
       </section>
 
       {/* CTA */}
-      <section className="border-t bg-[#FDF2F4] py-16">
+      <section className="border-t bg-[#FFF5EE] py-16">
         <div className="mx-auto max-w-3xl px-6 text-center">
           <h2 className="font-serif text-3xl font-bold text-[#1a1a2e]">Ready to get started?</h2>
           <p className="mt-3 text-lg text-muted-foreground">
             Sign up in minutes. Upload your contacts. We handle the rest.
           </p>
           <Link href="/signup">
-            <Button size="lg" className="mt-6 bg-[#C02646] hover:bg-[#A01E38] text-white text-lg px-8">
+            <Button size="lg" className="mt-6 bg-[#E8733A] hover:bg-[#CF6430] text-white text-lg px-8">
               Start Sending Postcards
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>

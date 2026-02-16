@@ -69,7 +69,7 @@ export default function PricingPage() {
   return (
     <div>
       {/* Hero */}
-      <section className="bg-[#FDF2F4] py-20">
+      <section className="bg-[#FFF5EE] py-20">
         <div className="mx-auto max-w-3xl px-6 text-center">
           <h1 className="font-serif text-4xl font-bold tracking-tight text-[#1a1a2e] md:text-5xl">
             Simple, Transparent Pricing
@@ -87,11 +87,11 @@ export default function PricingPage() {
             {tiers.map((tier) => (
               <Card
                 key={tier.name}
-                className={tier.popular ? "border-2 border-[#C02646] shadow-xl relative" : ""}
+                className={tier.popular ? "border-2 border-[#E8733A] shadow-xl relative" : ""}
               >
                 {tier.popular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span className="rounded-full bg-[#C02646] px-4 py-1 text-xs font-semibold text-white">
+                    <span className="rounded-full bg-[#E8733A] px-4 py-1 text-xs font-semibold text-white">
                       Most Popular
                     </span>
                   </div>
@@ -113,7 +113,7 @@ export default function PricingPage() {
                     <Button
                       className={
                         tier.popular
-                          ? "w-full bg-[#C02646] hover:bg-[#A01E38] text-white"
+                          ? "w-full bg-[#E8733A] hover:bg-[#CF6430] text-white"
                           : "w-full"
                       }
                       variant={tier.popular ? "default" : "outline"}
@@ -152,7 +152,7 @@ export default function PricingPage() {
       <section className="border-t py-20">
         <div className="mx-auto max-w-3xl px-6">
           <h2 className="font-serif text-center text-3xl font-bold text-[#1a1a2e] flex items-center justify-center gap-2">
-            <HelpCircle className="h-7 w-7 text-[#C02646]" />
+            <HelpCircle className="h-7 w-7 text-[#E8733A]" />
             Pricing FAQ
           </h2>
           <div className="mt-10 space-y-6">
@@ -167,14 +167,14 @@ export default function PricingPage() {
       </section>
 
       {/* CTA */}
-      <section className="border-t bg-[#FDF2F4] py-16">
+      <section className="border-t bg-[#FFF5EE] py-16">
         <div className="mx-auto max-w-3xl px-6 text-center">
           <h2 className="font-serif text-3xl font-bold text-[#1a1a2e]">One referral pays for an entire year</h2>
           <p className="mt-3 text-lg text-muted-foreground">
             The average commission on a single referral easily covers the cost of mailing postcards to your entire sphere for 12 months.
           </p>
           <Link href="/signup">
-            <Button size="lg" className="mt-6 bg-[#C02646] hover:bg-[#A01E38] text-white text-lg px-8">
+            <Button size="lg" className="mt-6 bg-[#E8733A] hover:bg-[#CF6430] text-white text-lg px-8">
               Start Your First Campaign
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>

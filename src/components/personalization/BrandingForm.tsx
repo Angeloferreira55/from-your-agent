@@ -27,7 +27,7 @@ export function BrandingForm() {
 
   const [tagline, setTagline] = useState("");
   const [customMessage, setCustomMessage] = useState("");
-  const [brandColor, setBrandColor] = useState("#C02646");
+  const [brandColor, setBrandColor] = useState("#E8733A");
   const [companyName, setCompanyName] = useState("");
   const [licenseNumber, setLicenseNumber] = useState("");
   const [phone, setPhone] = useState("");
@@ -44,7 +44,7 @@ export function BrandingForm() {
     if (profile) {
       setTagline(profile.tagline || "");
       setCustomMessage(profile.custom_message || "");
-      setBrandColor(profile.brand_color || "#C02646");
+      setBrandColor(profile.brand_color || "#E8733A");
       setCompanyName(profile.company_name || "");
       setLicenseNumber(profile.license_number || "");
       setPhone(profile.phone || "");
@@ -169,7 +169,7 @@ export function BrandingForm() {
             <Input
               value={brandColor}
               onChange={(e) => setBrandColor(e.target.value)}
-              placeholder="#C02646"
+              placeholder="#E8733A"
               className="w-28 font-mono text-sm"
             />
             <div
@@ -294,7 +294,7 @@ export function BrandingForm() {
                   type="checkbox"
                   checked={visibleFields[key]}
                   onChange={() => toggleVisible(key)}
-                  className="h-4 w-4 rounded border-gray-300 accent-[#C02646]"
+                  className="h-4 w-4 rounded border-gray-300 accent-[#E8733A]"
                 />
                 <span className={visibleFields[key] ? "text-foreground" : "text-muted-foreground"}>
                   {label}
@@ -332,7 +332,7 @@ export function BrandingForm() {
         </div>
 
         <Button
-          className="w-full bg-[#C02646] hover:bg-[#A01E38]"
+          className="w-full bg-[#E8733A] hover:bg-[#CF6430]"
           onClick={handleSave}
           disabled={updateProfile.isPending}
         >
