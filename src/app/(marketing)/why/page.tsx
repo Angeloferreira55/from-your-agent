@@ -55,7 +55,7 @@ export default function WhyPage() {
           <div className="flex-1 max-w-lg">
             <div className="relative overflow-hidden rounded-lg shadow-xl">
               <img
-                src="/sample-deal-closet.png"
+                src="/custom-closet-add.png"
                 alt="Direct Mail Postcard Mockup"
                 className="w-full"
               />
