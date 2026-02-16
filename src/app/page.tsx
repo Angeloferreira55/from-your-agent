@@ -152,7 +152,7 @@ export default function HomePage() {
                 step: "2",
                 title: "Monthly Offers",
                 description:
-                  "Each month we curate exclusive local merchant deals — restaurants, spas, gyms & more — for your contacts.",
+                  "Each month we curate an exclusive local merchant deal — restaurants, cafes, spas, gyms, bakeries, vetted professionals & more.",
               },
               {
                 icon: Palette,
@@ -222,8 +222,8 @@ export default function HomePage() {
                 },
                 {
                   icon: MapPin,
-                  title: "Geo-Targeted Local Deals",
-                  desc: "Every contact receives offers from merchants closest to them. Real value they'll actually use.",
+                  title: "Curated Local Deals",
+                  desc: "Every month features a great local merchant deal your contacts will actually use. Real value in their mailbox.",
                 },
                 {
                   icon: Shield,

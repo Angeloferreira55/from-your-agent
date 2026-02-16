@@ -14,7 +14,7 @@ const faqCategories = [
     questions: [
       {
         q: "What is From Your Agent?",
-        a: "From Your Agent is a relationship marketing platform for real estate agents. We send monthly physical postcards featuring local merchant deals to your sphere of influence — personalized with your branding. It's the easiest way to stay top of mind and drive referrals.",
+        a: "From Your Agent is a relationship marketing platform for real estate agents. We send monthly physical postcards featuring local merchant deals to your clients and friends — personalized with your branding. It's the easiest way to stay top of mind and drive referrals.",
       },
       {
         q: "How do I sign up?",
@@ -60,7 +60,7 @@ const faqCategories = [
       },
       {
         q: "What's on the front of the postcard?",
-        a: "The front features curated local merchant deals — discounts at restaurants, spas, fitness studios, and other local businesses. These are the same for all agents in a given month and market.",
+        a: "The front features curated local merchant deals — discounts at restaurants, cafes, spas, gyms, bakeries, vetted professionals and more. These are the same for all agents in a given month.",
       },
       {
         q: "What's on the back?",
@@ -68,7 +68,7 @@ const faqCategories = [
       },
       {
         q: "How long does delivery take?",
-        a: "Postcards are sent via USPS First-Class Mail and typically arrive within 3-5 business days of the mail date. You can track delivery status in your dashboard.",
+        a: "Postcards are sent via USPS First-Class Mail and typically arrive the first week of each month. You can track delivery status in your dashboard.",
       },
       {
         q: "Can I preview my postcard before it's mailed?",
@@ -84,8 +84,8 @@ const faqCategories = [
         a: "Our team curates exclusive deals from popular local merchants in your market. We focus on businesses your contacts will love — restaurants, cafes, spas, gyms, bakeries, and more.",
       },
       {
-        q: "How are offers matched to my contacts?",
-        a: "We use geo-targeting to match each contact with the nearest merchant offers based on their address. Your contact in the north side of town might get different offers than your contact in the south — each gets the most relevant local deals.",
+        q: "Are the offers the same for everyone?",
+        a: "Yes! Every month, all agents send the same curated postcard featuring a great local merchant deal. This keeps things simple and ensures every contact receives a high-quality, professionally designed offer.",
       },
       {
         q: "Do I need to find merchants myself?",

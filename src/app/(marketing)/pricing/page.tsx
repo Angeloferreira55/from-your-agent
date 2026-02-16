@@ -42,7 +42,6 @@ const included = [
   "Real-time delivery tracking",
   "Custom branding (headshot, logo, message)",
   "Curated local merchant offers",
-  "Geo-targeted offer matching",
   "CSV import & database management",
   "Postcard preview before mailing",
   "No setup fees",

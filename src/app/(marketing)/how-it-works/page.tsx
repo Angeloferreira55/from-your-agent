@@ -50,10 +50,10 @@ const steps = [
     number: "03",
     title: "We Match Local Offers",
     description:
-      "Each month, our team curates exclusive deals from popular local merchants — restaurants, spas, fitness studios, and more. We geo-match each contact to the nearest offers.",
+      "Each month, our team curates an exclusive deal from a popular local merchant — restaurants, cafes, spas, gyms, bakeries, vetted professionals and more. Everyone receives the same great offer.",
     details: [
       "Curated local merchant deals",
-      "Geo-targeted by proximity",
+      "Same great offer for all your contacts",
       "New offers every month",
       "Exclusive discounts your contacts will love",
     ],

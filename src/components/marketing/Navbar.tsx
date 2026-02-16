@@ -45,7 +45,7 @@ const howItWorksItems = [
   {
     icon: MapPin,
     title: "We Match Local Offers",
-    description: "Geo-targeted merchant deals curated for your contacts.",
+    description: "Curated local merchant deals featured on every postcard.",
     href: "/how-it-works",
   },
   {
