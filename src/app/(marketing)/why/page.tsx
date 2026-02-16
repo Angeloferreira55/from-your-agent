@@ -54,54 +54,46 @@ export default function WhyPage() {
         </div>
       </section>
 
-      {/* Hero */}
+      {/* Flyer + CTA */}
       <section className="bg-white py-20 md:py-28">
-        <div className="mx-auto max-w-6xl px-6 flex flex-col md:flex-row items-center gap-12 md:gap-16">
-          <div className="flex-1">
-            <h1 className="font-serif text-4xl md:text-5xl font-bold text-[#0B1F3B] leading-tight">
-              We Make Direct Mail Marketing for Your{" "}
-              <span className="text-[#E8733A]">Clients &amp; Friends</span> Easy.
-            </h1>
-            <p className="mt-6 text-lg text-gray-600 max-w-xl">
-              Because referrals are the name of the game, we make direct mail
-              marketing for your clients and friends simple, seamless, and
-              effective.
-            </p>
+        <div className="mx-auto max-w-4xl px-6 flex flex-col items-center">
+          <img
+            src="/custom-closet-add.png"
+            alt="Direct Mail Postcard Mockup"
+            className="w-full max-w-2xl rounded-lg shadow-xl"
+          />
 
-            <div className="mt-8 flex flex-wrap gap-4">
-              <Link href="/signup">
-                <Button size="lg" className="bg-[#E8733A] hover:bg-[#CF6430] text-white text-lg px-8">
-                  Get Started
-                </Button>
-              </Link>
-              <Link href="/how-it-works">
-                <Button size="lg" variant="outline" className="text-[#0B1F3B] text-lg px-8">
-                  See Sample Postcards
-                </Button>
-              </Link>
-            </div>
+          <p className="mt-10 text-lg text-gray-600 text-center max-w-2xl">
+            Because referrals are the name of the game, we make direct mail
+            marketing for your clients and friends simple, seamless, and
+            effective.
+          </p>
 
-            <ul className="mt-8 space-y-2">
-              {[
-                "Personalized with your brand & message",
-                "Professional design & printing",
-                "We handle postage & delivery",
-              ].map((feature) => (
-                <li key={feature} className="flex items-center gap-2 text-gray-700">
-                  <CheckCircle2 className="h-5 w-5 text-[#059669] shrink-0" />
-                  {feature}
-                </li>
-              ))}
-            </ul>
+          <div className="mt-8 flex flex-wrap justify-center gap-4">
+            <Link href="/signup">
+              <Button size="lg" className="bg-[#E8733A] hover:bg-[#CF6430] text-white text-lg px-8">
+                Get Started
+              </Button>
+            </Link>
+            <Link href="/how-it-works">
+              <Button size="lg" variant="outline" className="text-[#0B1F3B] text-lg px-8">
+                See Sample Postcards
+              </Button>
+            </Link>
           </div>
 
-          <div className="flex-1 max-w-lg">
-            <img
-              src="/custom-closet-add.png"
-              alt="Direct Mail Postcard Mockup"
-              className="w-full rounded-lg shadow-xl"
-            />
-          </div>
+          <ul className="mt-8 flex flex-wrap justify-center gap-x-8 gap-y-2">
+            {[
+              "Personalized with your brand & message",
+              "Professional design & printing",
+              "We handle postage & delivery",
+            ].map((feature) => (
+              <li key={feature} className="flex items-center gap-2 text-gray-700">
+                <CheckCircle2 className="h-5 w-5 text-[#059669] shrink-0" />
+                {feature}
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
 
