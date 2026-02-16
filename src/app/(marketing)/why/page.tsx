@@ -20,9 +20,9 @@ export default function WhyPage() {
               <span className="text-[#E8733A]">Clients &amp; Friends</span> Easy.
             </h1>
             <p className="mt-6 text-lg text-gray-600 max-w-xl">
-              From Your Agent helps you stay in consistent contact with your
-              clients, friends, and database through completely done-for-you
-              postcard mailing services.
+              Because referrals are the name of the game, we make direct mail
+              marketing for your clients and friends simple, seamless, and
+              effective.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-4">
