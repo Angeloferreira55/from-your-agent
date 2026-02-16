@@ -53,11 +53,19 @@ export default function WhyPage() {
           </div>
 
           <div className="flex-1 max-w-lg">
-            <img
-              src="/sample-deal-closet.png"
-              alt="Direct Mail Postcard Mockup"
-              className="w-full rounded-lg shadow-xl"
-            />
+            <div className="relative overflow-hidden rounded-lg shadow-xl">
+              <img
+                src="/sample-deal-closet.png"
+                alt="Direct Mail Postcard Mockup"
+                className="w-full"
+              />
+              {/* Cover the original name with a generic one */}
+              <div className="absolute bottom-0 left-0 right-0 h-[10%] bg-[#1a1a2e] flex items-center justify-center px-4">
+                <p className="text-[8px] sm:text-xs md:text-sm font-bold text-white tracking-wide text-center">
+                  FREE Consultation and $250 off your closet — AS A GIFT FROM YOUR AGENT
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -80,6 +88,37 @@ export default function WhyPage() {
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </Link>
+        </div>
+      </section>
+      {/* Why Relationship Marketing */}
+      <section className="bg-[#F7F8FA] py-20 md:py-28">
+        <div className="mx-auto max-w-6xl px-6">
+          <div className="grid gap-10 md:grid-cols-3">
+            <div>
+              <h3 className="font-serif text-xl font-bold text-[#1a1a2e] mb-4">
+                Building Trust to Build Your Referrals
+              </h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                In a high-dollar, complicated transaction like buying or selling a home, consumers won&apos;t make the decision to trust an agent by looking at their face on a bus bench. They want a referral from someone they trust! That&apos;s why 54% of home buyers last year either already knew their agent or found them from a referral. A relationship marketing program will ensure your referral network knows, likes and trusts you enough to refer their friends and family.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-serif text-xl font-bold text-[#1a1a2e] mb-4">
+                You Are Losing 80% of Your Customers
+              </h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                According to the National Association of REALTORS, over 80% of home buyers and sellers say they would use their real estate agent again or refer them to friends. But only 20% of them actually do! Why? The number one reason consumers say they don&apos;t go back to their real estate agent for future transactions or refer their friends is that the agent DIDN&apos;T KEEP IN TOUCH! Maintain high quality contact with your clients and friends - it&apos;s critical to your success.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-serif text-xl font-bold text-[#1a1a2e] mb-4">
+                Staying Top of Mind is the Key to Referrals
+              </h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                If you don&apos;t keep in constant contact and reward your customers and sphere for their relationship with you, it becomes easier and easier to lose their business and referrals to someone else. Top referral generators know you need to touch your sphere at least 2-3 times per month. When someone in your sphere hears the words &quot;real estate&quot; they need to immediately think of, and recommend, YOU!
+              </p>
+            </div>
+          </div>
         </div>
       </section>
     </div>
