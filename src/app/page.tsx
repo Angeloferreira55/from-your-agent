@@ -17,42 +17,6 @@ import {
   Star,
 } from "lucide-react";
 
-/* ── Sample postcard data for the Past Promotions gallery ── */
-const samplePostcards = [
-  {
-    month: "January",
-    theme: "New Year Savings",
-    color: "#2563EB",
-    emoji: "🍔",
-    deal: "$20 OFF",
-    bg: "from-amber-50 via-orange-50 to-red-50",
-  },
-  {
-    month: "February",
-    theme: "Valentine's Treats",
-    color: "#E8733A",
-    emoji: "🧁",
-    deal: "$15 OFF",
-    bg: "from-pink-50 via-rose-50 to-red-50",
-  },
-  {
-    month: "March",
-    theme: "Spring Into Savings",
-    color: "#059669",
-    emoji: "🥗",
-    deal: "$10 OFF",
-    bg: "from-green-50 via-emerald-50 to-teal-50",
-  },
-  {
-    month: "April",
-    theme: "Local Favorites",
-    color: "#7C3AED",
-    emoji: "🍕",
-    deal: "BOGO",
-    bg: "from-violet-50 via-purple-50 to-fuchsia-50",
-  },
-];
-
 const testimonials = [
   {
     quote:
@@ -271,53 +235,12 @@ export default function HomePage() {
             promotions.
           </p>
 
-          <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {samplePostcards.map((card) => (
-              <div
-                key={card.month}
-                className="flex flex-col overflow-hidden rounded-xl border bg-white shadow-sm transition-transform hover:-translate-y-1 hover:shadow-md"
-                style={{ aspectRatio: "9/6.5" }}
-              >
-                {/* Header */}
-                <div
-                  className="px-4 py-3 text-white"
-                  style={{ backgroundColor: card.color }}
-                >
-                  <p className="text-[10px] font-medium uppercase tracking-wider opacity-80">
-                    {card.month} 2026 — Exclusive Local Deals
-                  </p>
-                  <p className="text-sm font-bold leading-tight">
-                    {card.theme}
-                  </p>
-                </div>
-
-                {/* Image area with deal badge */}
-                <div className={`relative flex-1 bg-gradient-to-br ${card.bg}`}>
-                  <div className="flex h-full items-center justify-center">
-                    <span className="text-6xl">{card.emoji}</span>
-                  </div>
-                  {/* Deal badge */}
-                  <div
-                    className="absolute right-3 top-3 rounded-lg px-3 py-1.5 text-white shadow-lg"
-                    style={{ backgroundColor: card.color }}
-                  >
-                    <p className="text-xs font-extrabold leading-tight">{card.deal}</p>
-                  </div>
-                  {/* Gift from overlay */}
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent px-4 pb-3 pt-8">
-                    <p className="text-[10px] text-white/80">Enjoy this as a gift from</p>
-                    <p className="text-sm font-bold text-white">Your Name Here</p>
-                  </div>
-                </div>
-
-                {/* Footer */}
-                <div className="border-t bg-gray-50 px-4 py-2">
-                  <p className="text-[8px] text-gray-400 text-center">
-                    From Your Agent — Exclusive neighborhood deals
-                  </p>
-                </div>
-              </div>
-            ))}
+          <div className="mt-14">
+            <img
+              src="/add-a-heading.png"
+              alt="See what your contacts receive"
+              className="mx-auto w-full max-w-5xl rounded-lg shadow-lg"
+            />
           </div>
         </div>
       </section>
