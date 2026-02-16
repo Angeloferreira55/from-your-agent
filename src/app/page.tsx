@@ -92,9 +92,8 @@ export default function HomePage() {
               <span className="text-[#C02646]">Referral</span> Business.
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground md:text-xl">
-              Reward your past customers &amp; sphere of influence (SOI) with
-              outstanding free offers &amp; discounts as a gift from their
-              friend in the real estate business.
+              Reward your customers and friends with
+              outstanding free offers &amp; discounts as a gift from their agent.
             </p>
             <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
               <Link href="/signup">
