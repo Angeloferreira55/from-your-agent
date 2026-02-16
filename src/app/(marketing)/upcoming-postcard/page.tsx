@@ -49,11 +49,64 @@ export default function UpcomingPostcardPage() {
                 Front of Postcard
               </p>
               <div className="overflow-hidden rounded-xl border shadow-lg bg-white" style={{ aspectRatio: "9/6" }}>
-                <img
-                  src="/custom-closet-add.png"
-                  alt="Postcard Front — Custom Closet Guys"
-                  className="h-full w-full object-cover"
-                />
+                <div className="flex h-full">
+                  {/* Left — Deal image */}
+                  <div className="w-[58%] h-full">
+                    <img
+                      src="/custom-closet-add.png"
+                      alt="Postcard Front — Custom Closet Guys"
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                  {/* Right — Brokerage branding */}
+                  <div
+                    className="relative flex w-[42%] flex-col p-2.5 md:p-3.5 overflow-hidden"
+                    style={{ backgroundColor: '#B40101' }}
+                  >
+                    <img
+                      src="/brokerages/kw-bg.jpg"
+                      alt=""
+                      className="absolute inset-0 h-full w-full object-cover opacity-40"
+                    />
+                    <div className="absolute inset-0" style={{ backgroundColor: 'rgba(100, 0, 0, 0.55)' }} />
+                    <div className="relative z-10 flex flex-col h-full">
+                      {/* KW Logo */}
+                      <div className="flex items-center gap-1 mb-auto">
+                        <img
+                          src="/brokerages/kw-logo-white.png"
+                          alt="Keller Williams Realty"
+                          className="h-5 md:h-9 w-auto object-contain"
+                        />
+                      </div>
+                      {/* Slogan */}
+                      <div className="my-auto text-center">
+                        <p className="text-[9px] md:text-[14px] font-serif italic text-white leading-snug">
+                          Not Just Agents.
+                        </p>
+                        <p className="text-[9px] md:text-[14px] font-serif italic text-white leading-snug">
+                          Advisors.
+                        </p>
+                      </div>
+                      {/* Social + website */}
+                      <div className="mt-auto">
+                        <div className="flex items-center gap-1 md:gap-1.5 mb-1">
+                          {['f', 'in', 'ig', 'yt'].map((icon) => (
+                            <div
+                              key={icon}
+                              className="h-2.5 w-2.5 md:h-3.5 md:w-3.5 rounded-sm bg-white/20 flex items-center justify-center"
+                            >
+                              <span className="text-[3.5px] md:text-[5.5px] font-bold text-white">{icon}</span>
+                            </div>
+                          ))}
+                          <p className="text-[4.5px] md:text-[6.5px] text-white/90 ml-auto font-medium">www.kw.com</p>
+                        </div>
+                        <p className="text-[2.5px] md:text-[4px] text-white/60 leading-tight">
+                          For questions about this postcard or offer please call (505) 555-0147 &bull; www.FromYourAgent.com &bull; Each office is independently owned and operated. If your home is currently on the market, please don&apos;t consider this a solicitation.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
