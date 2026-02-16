@@ -78,8 +78,9 @@ export function Navbar() {
     <header className="sticky top-0 z-50 border-b bg-white/80 backdrop-blur-sm">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
-          <img src="/logo.png" alt="From Your Agent" className="h-10 w-auto" />
+        <Link href="/" className="flex items-center gap-2.5">
+          <img src="/logo.png" alt="From Your Agent" className="h-14 w-auto" />
+          <span className="text-lg font-bold text-[#1B3A5C] hidden sm:inline">From Your Agent</span>
         </Link>
 
         {/* Desktop Nav */}
@@ -141,6 +142,13 @@ export function Navbar() {
                   ))}
                 </ul>
               </NavigationMenuContent>
+            </NavigationMenuItem>
+
+            {/* Why From Your Agent */}
+            <NavigationMenuItem>
+              <Link href="/why" className="text-sm font-medium px-4 py-2 hover:text-[#E8733A] transition-colors">
+                Why From Your Agent
+              </Link>
             </NavigationMenuItem>
 
             {/* Pricing */}
@@ -213,6 +221,24 @@ export function Navbar() {
                   ))}
                 </div>
               </div>
+
+              <Link
+                href="/why"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-3 rounded-md p-2.5 hover:bg-[#FFF5EE] transition-colors"
+              >
+                <span className="text-sm font-medium">Why From Your Agent</span>
+                <ChevronRight className="ml-auto h-3.5 w-3.5 text-muted-foreground" />
+              </Link>
+
+              <Link
+                href="/pricing"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-3 rounded-md p-2.5 hover:bg-[#FFF5EE] transition-colors"
+              >
+                <span className="text-sm font-medium">Pricing</span>
+                <ChevronRight className="ml-auto h-3.5 w-3.5 text-muted-foreground" />
+              </Link>
 
               <div className="border-t pt-4 space-y-3">
                 <Link href="/login" onClick={() => setMobileOpen(false)}>
