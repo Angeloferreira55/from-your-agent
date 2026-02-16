@@ -14,32 +14,7 @@ import {
   Send,
   ArrowRight,
   CheckCircle2,
-  Star,
 } from "lucide-react";
-
-const testimonials = [
-  {
-    quote:
-      "I got 1 referral in my first 3 months. My sphere loves getting the postcards — they actually thank me for the local deals.",
-    name: "Sarah M.",
-    title: "Real Estate Agent",
-    company: "Keller Williams — Phoenix, AZ",
-  },
-  {
-    quote:
-      "This is the easiest marketing I've ever done. Upload my contacts, and the postcards go out every month. I wish I'd started years ago.",
-    name: "James R.",
-    title: "Broker Associate",
-    company: "RE/MAX — Denver, CO",
-  },
-  {
-    quote:
-      "My clients love the local deals, and I love that my face shows up in their mailbox every month. It's the best $1 per contact I spend.",
-    name: "Monica L.",
-    title: "Realtor",
-    company: "Coldwell Banker — Austin, TX",
-  },
-];
 
 export default function HomePage() {
   return (
@@ -273,36 +248,34 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ═══════════════ TESTIMONIALS ═══════════════ */}
+      {/* ═══════════════ WHY RELATIONSHIP MARKETING ═══════════════ */}
       <section className="border-t bg-[#F7F8FA] py-24">
         <div className="mx-auto max-w-6xl px-6">
-          <h2 className="font-serif text-center text-3xl font-bold tracking-tight text-[#1a1a2e] md:text-4xl">
-            What Agents Are Saying
-          </h2>
-          <div className="mt-14 grid gap-8 md:grid-cols-3">
-            {testimonials.map((t) => (
-              <Card key={t.name} className="bg-white shadow-sm">
-                <CardContent className="pt-6">
-                  <div className="flex gap-0.5 mb-4">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <Star
-                        key={i}
-                        className="h-4 w-4 fill-amber-400 text-amber-400"
-                      />
-                    ))}
-                  </div>
-                  <blockquote className="text-sm text-gray-700 italic leading-relaxed">
-                    &ldquo;{t.quote}&rdquo;
-                  </blockquote>
-                  <div className="mt-4 border-t pt-4">
-                    <p className="text-sm font-semibold">{t.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {t.title}, {t.company}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+          <div className="grid gap-10 md:grid-cols-3">
+            <div>
+              <h3 className="font-serif text-xl font-bold text-[#1a1a2e] mb-4">
+                Building Trust to Build Your Referrals
+              </h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                In a high-dollar, complicated transaction like buying or selling a home, consumers won&apos;t make the decision to trust an agent by looking at their face on a bus bench. They want a referral from someone they trust! That&apos;s why 54% of home buyers last year either already knew their agent or found them from a referral. A relationship marketing program will ensure your referral network knows, likes and trusts you enough to refer their friends and family.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-serif text-xl font-bold text-[#1a1a2e] mb-4">
+                You Are Losing 80% of Your Customers
+              </h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                According to the National Association of REALTORS, over 80% of home buyers and sellers say they would use their real estate agent again or refer them to friends. But only 20% of them actually do! Why? The number one reason consumers say they don&apos;t go back to their real estate agent for future transactions or refer their friends is that the agent DIDN&apos;T KEEP IN TOUCH! Maintain high quality contact with your clients and friends - it&apos;s critical to your success.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-serif text-xl font-bold text-[#1a1a2e] mb-4">
+                Staying Top of Mind is the Key to Referrals
+              </h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                If you don&apos;t keep in constant contact and reward your customers and sphere for their relationship with you, it becomes easier and easier to lose their business and referrals to someone else. Top referral generators know you need to touch your sphere at least 2-3 times per month. When someone in your sphere hears the words &quot;real estate&quot; they need to immediately think of, and recommend, YOU!
+              </p>
+            </div>
           </div>
         </div>
       </section>
