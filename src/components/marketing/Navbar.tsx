@@ -67,7 +67,7 @@ const learnMoreItems = [
     icon: Newspaper,
     title: "Upcoming Postcard",
     description: "See this month's curated local merchant deals.",
-    href: "/how-it-works",
+    href: "/upcoming-postcard",
   },
 ];
 
