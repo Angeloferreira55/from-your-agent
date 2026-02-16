@@ -23,7 +23,6 @@ import {
   Palette,
   MapPin,
   Send,
-  DollarSign,
   HelpCircle,
   Newspaper,
   Menu,
@@ -58,12 +57,6 @@ const howItWorksItems = [
 ];
 
 const learnMoreItems = [
-  {
-    icon: DollarSign,
-    title: "Pricing",
-    description: "Starting at $1.00/card. No fees, no contracts.",
-    href: "/pricing",
-  },
   {
     icon: HelpCircle,
     title: "FAQ",

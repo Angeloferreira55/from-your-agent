@@ -59,7 +59,7 @@ const steps = [
     ],
   },
   {
-    icon: Send,
+    icon: Mail,
     number: "04",
     title: "Postcards Are Mailed",
     description:
@@ -67,7 +67,7 @@ const steps = [
     details: [
       "Professional 6x9 full-color printing",
       "USPS First-Class Mail delivery",
-      "Typically arrives in 3-5 business days",
+      "Typically arrives first week of each month",
       "Real-time delivery tracking",
     ],
   },
