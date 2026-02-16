@@ -42,17 +42,17 @@ export default function UpcomingPostcardPage() {
       {/* Postcard Preview */}
       <section className="py-20">
         <div className="mx-auto max-w-5xl px-6">
-          <div className="grid gap-10 md:grid-cols-2">
+          <div className="grid gap-10 md:grid-cols-2 items-start">
             {/* Front */}
             <div>
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
                 Front of Postcard
               </p>
-              <div className="overflow-hidden rounded-xl border shadow-lg">
+              <div className="overflow-hidden rounded-xl border shadow-lg bg-white" style={{ aspectRatio: "9/6" }}>
                 <img
                   src="/custom-closet-add.png"
                   alt="Postcard Front — Custom Closet Guys"
-                  className="w-full"
+                  className="h-full w-full object-cover"
                 />
               </div>
             </div>
@@ -66,8 +66,8 @@ export default function UpcomingPostcardPage() {
                 <div className="flex h-full">
                   {/* Left half — Agent branding */}
                   <div className="flex w-1/2 flex-col border-r p-3 md:p-4">
-                    {/* Photo + KW Logo */}
-                    <div className="flex items-start gap-2 mb-1.5">
+                    {/* Photo + Agent Info */}
+                    <div className="flex items-start gap-2 mb-1">
                       <div className="h-14 w-14 md:h-20 md:w-20 shrink-0 rounded-lg border-2 border-[#B40101] overflow-hidden flex items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300">
                         <img
                           src="/sample-agent-woman.jpg"
@@ -75,25 +75,27 @@ export default function UpcomingPostcardPage() {
                           className="h-full w-full object-cover"
                         />
                       </div>
-                      <div className="min-w-0 flex flex-col justify-start">
-                        <img
-                          src="/kw-logo.png"
-                          alt="Keller Williams Realty"
-                          className="h-8 md:h-12 w-auto object-contain"
-                        />
-                        <p className="text-[5px] md:text-[7px] text-gray-400 leading-none mt-0.5">(505) 292-8900</p>
-                        <p className="text-[5px] md:text-[7px] text-gray-400 leading-none mt-px">6703 Academy NE, Albuquerque</p>
+                      <div className="min-w-0 flex flex-col justify-center">
+                        <p className="text-[9px] md:text-[11px] font-bold text-gray-900 leading-tight">Liz Garcia</p>
+                        <p className="text-[6px] md:text-[8px] italic text-[#B40101] mt-0.5">Your Trusted Real Estate Expert</p>
+                        <p className="text-[5px] md:text-[6.5px] text-gray-500 whitespace-nowrap mt-0.5">
+                          (505) 555-0147 | liz.garcia@kw.com
+                        </p>
+                        <p className="text-[5px] md:text-[8px] text-gray-400">NM Lic #67890</p>
                       </div>
                     </div>
 
-                    {/* Agent name + contact details */}
-                    <div className="mb-1">
-                      <p className="text-[9px] md:text-[11px] font-bold text-gray-900 leading-tight">Liz Garcia</p>
-                      <p className="text-[6px] md:text-[8px] italic text-[#B40101] mt-0.5">Your Trusted Real Estate Expert</p>
-                      <p className="text-[5px] md:text-[6.5px] text-gray-500 whitespace-nowrap mt-0.5">
-                        (505) 555-0147 | liz.garcia@kw.com
-                      </p>
-                      <p className="text-[5px] md:text-[8px] text-gray-400">NM Lic #67890</p>
+                    {/* KW Logo + brokerage info — left aligned */}
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <img
+                        src="/kw-logo.png"
+                        alt="Keller Williams Realty"
+                        className="h-6 md:h-9 w-auto object-contain"
+                      />
+                      <div>
+                        <p className="text-[5px] md:text-[7px] text-gray-400 leading-none">(505) 292-8900</p>
+                        <p className="text-[5px] md:text-[7px] text-gray-400 leading-none mt-px">6703 Academy NE, Albuquerque, NM 87109</p>
+                      </div>
                     </div>
 
                     {/* Featured Deal — Custom Closet Guys */}
