@@ -20,7 +20,7 @@ import {
 const testimonials = [
   {
     quote:
-      "I got 3 referrals in my first two months. My sphere loves getting the postcards — they actually thank me for the local deals.",
+      "I got 1 referral in my first 3 months. My sphere loves getting the postcards — they actually thank me for the local deals.",
     name: "Sarah M.",
     title: "Real Estate Agent",
     company: "Keller Williams — Phoenix, AZ",
