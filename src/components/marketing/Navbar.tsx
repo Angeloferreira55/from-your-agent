@@ -86,6 +86,13 @@ export function Navbar() {
         {/* Desktop Nav */}
         <NavigationMenu className="hidden md:flex">
           <NavigationMenuList>
+            {/* Why From Your Agent */}
+            <NavigationMenuItem>
+              <Link href="/why" className="text-sm font-medium px-4 py-2 hover:text-[#E8733A] transition-colors">
+                Why From Your Agent
+              </Link>
+            </NavigationMenuItem>
+
             {/* How It Works Dropdown */}
             <NavigationMenuItem>
               <NavigationMenuTrigger className="text-sm font-medium">
@@ -142,13 +149,6 @@ export function Navbar() {
                   ))}
                 </ul>
               </NavigationMenuContent>
-            </NavigationMenuItem>
-
-            {/* Why From Your Agent */}
-            <NavigationMenuItem>
-              <Link href="/why" className="text-sm font-medium px-4 py-2 hover:text-[#E8733A] transition-colors">
-                Why From Your Agent
-              </Link>
             </NavigationMenuItem>
 
             {/* Pricing */}
