@@ -40,7 +40,11 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/dashboard");
+    // Check if this email should be auto-promoted to admin
+    const adminCheck = await fetch("/api/auth/check-admin", { method: "POST" });
+    const { role } = await adminCheck.json();
+
+    router.push(role === "admin" ? "/admin" : "/dashboard");
     router.refresh();
   }
 
