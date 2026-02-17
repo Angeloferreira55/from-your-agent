@@ -1,16 +1,33 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ImageUploader } from "./ImageUploader";
 import { useAgentProfile, useUpdateProfile, useUploadImage } from "@/hooks/use-agent-profile";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Lock, Building2 } from "lucide-react";
 import type { PostcardVisibleFields } from "@/types/database";
+
+interface BrokerageOption {
+  id: string;
+  name: string;
+  slogan: string;
+  website: string;
+  logo_url: string;
+  second_logo_url: string | null;
+  background_url: string;
+  brand_color: string;
+  overlay_color: string;
+  text_color: string;
+  social_links: Record<string, string>;
+  disclaimer: string;
+}
 
 const DEFAULT_VISIBLE: PostcardVisibleFields = {
   phone: true,
@@ -25,6 +42,18 @@ export function BrandingForm() {
   const updateProfile = useUpdateProfile();
   const uploadImage = useUploadImage();
 
+  const { data: brokeragesData } = useQuery({
+    queryKey: ["brokerages"],
+    queryFn: async () => {
+      const res = await fetch("/api/brokerages");
+      if (!res.ok) throw new Error("Failed to fetch brokerages");
+      return res.json();
+    },
+  });
+
+  const brokerages: BrokerageOption[] = brokeragesData?.brokerages || [];
+
+  const [brokerageId, setBrokerageId] = useState("");
   const [tagline, setTagline] = useState("");
   const [customMessage, setCustomMessage] = useState("");
   const [brandColor, setBrandColor] = useState("#E8733A");
@@ -42,6 +71,7 @@ export function BrandingForm() {
 
   useEffect(() => {
     if (profile) {
+      setBrokerageId(profile.brokerage_id || "");
       setTagline(profile.tagline || "");
       setCustomMessage(profile.custom_message || "");
       setBrandColor(profile.brand_color || "#E8733A");
@@ -58,6 +88,28 @@ export function BrandingForm() {
       setVisibleFields(profile.postcard_visible_fields || DEFAULT_VISIBLE);
     }
   }, [profile]);
+
+  const selectedBrokerage = brokerages.find((b) => b.id === brokerageId) || null;
+
+  const handleBrokerageChange = async (value: string) => {
+    setBrokerageId(value);
+    const brokerage = brokerages.find((b) => b.id === value);
+    if (brokerage) {
+      setCompanyName(brokerage.name);
+      setBrandColor(brokerage.brand_color);
+      // Save brokerage_id + auto-filled fields immediately
+      try {
+        await updateProfile.mutateAsync({
+          brokerage_id: value,
+          company_name: brokerage.name,
+          brand_color: brokerage.brand_color,
+        } as Record<string, unknown>);
+        toast.success(`Switched to ${brokerage.name}`);
+      } catch {
+        toast.error("Failed to update brokerage");
+      }
+    }
+  };
 
   const toggleVisible = (key: keyof PostcardVisibleFields) => {
     setVisibleFields((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -80,18 +132,17 @@ export function BrandingForm() {
         brokerage_state: brokerageState || null,
         brokerage_zip: brokerageZip || null,
         postcard_visible_fields: visibleFields,
-      } as Record<string, unknown> & Partial<typeof profile>);
+        brokerage_id: brokerageId || null,
+      } as Record<string, unknown>);
       toast.success("Branding saved successfully");
     } catch {
       toast.error("Failed to save changes");
     }
   };
 
-  const handleUpload = async (file: File, type: "logo" | "photo" | "brokerage_logo" | "team_logo") => {
+  const handleUpload = async (file: File, type: "photo" | "team_logo") => {
     const labels: Record<string, string> = {
-      logo: "Logo",
       photo: "Photo",
-      brokerage_logo: "Brokerage logo",
       team_logo: "Team logo",
     };
     try {
@@ -122,6 +173,71 @@ export function BrandingForm() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Brokerage Selector */}
+        <div className="space-y-2">
+          <Label>Your Brokerage</Label>
+          <Select value={brokerageId} onValueChange={handleBrokerageChange}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select your brokerage..." />
+            </SelectTrigger>
+            <SelectContent>
+              {brokerages.map((b) => (
+                <SelectItem key={b.id} value={b.id}>
+                  <div className="flex items-center gap-2">
+                    {b.logo_url ? (
+                      <img src={b.logo_url} alt="" className="h-4 w-auto object-contain" />
+                    ) : (
+                      <Building2 className="h-4 w-4 text-muted-foreground" />
+                    )}
+                    {b.name}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {selectedBrokerage && (
+            <div className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              <Lock className="h-3 w-3 shrink-0" />
+              Brokerage branding (logo, colors, slogan) is managed by your admin
+            </div>
+          )}
+        </div>
+
+        {/* Brokerage preview when selected */}
+        {selectedBrokerage && (
+          <div
+            className="relative overflow-hidden rounded-lg p-3"
+            style={{ backgroundColor: selectedBrokerage.brand_color }}
+          >
+            <div
+              className="absolute inset-0"
+              style={{ backgroundColor: selectedBrokerage.overlay_color }}
+            />
+            {selectedBrokerage.background_url && (
+              <img
+                src={selectedBrokerage.background_url}
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover opacity-30"
+              />
+            )}
+            <div className="relative z-10 flex items-center gap-3">
+              {selectedBrokerage.logo_url && (
+                <img
+                  src={selectedBrokerage.logo_url}
+                  alt={selectedBrokerage.name}
+                  className="h-8 w-auto object-contain"
+                />
+              )}
+              <div>
+                <p className="text-sm font-semibold text-white">{selectedBrokerage.name}</p>
+                {selectedBrokerage.slogan && (
+                  <p className="text-xs italic text-white/80">{selectedBrokerage.slogan}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Headshot */}
         <ImageUploader
           label="Your Headshot"
@@ -132,54 +248,46 @@ export function BrandingForm() {
           shape="circle"
         />
 
-        {/* Logos */}
+        {/* Team Logo only (brokerage logo is admin-managed) */}
         <div>
-          <p className="text-sm font-medium mb-3">Logos</p>
-          <div className="grid grid-cols-2 gap-4">
-            <ImageUploader
-              label="Brokerage Logo"
-              currentUrl={profile?.brokerage_logo_url ?? null}
-              onUpload={(file) => handleUpload(file, "brokerage_logo")}
-              accept="image/png,image/jpeg,image/webp,image/svg+xml"
-              maxSizeMb={10}
-              shape="square"
-            />
-            <ImageUploader
-              label="Team Logo"
-              currentUrl={profile?.team_logo_url ?? null}
-              onUpload={(file) => handleUpload(file, "team_logo")}
-              accept="image/png,image/jpeg,image/webp,image/svg+xml"
-              maxSizeMb={10}
-              shape="square"
-            />
-          </div>
+          <p className="text-sm font-medium mb-3">Team Logo</p>
+          <ImageUploader
+            label="Team Logo (optional)"
+            currentUrl={profile?.team_logo_url ?? null}
+            onUpload={(file) => handleUpload(file, "team_logo")}
+            accept="image/png,image/jpeg,image/webp,image/svg+xml"
+            maxSizeMb={10}
+            shape="square"
+          />
         </div>
 
-        {/* Brand Color */}
-        <div className="space-y-2">
-          <Label htmlFor="brandColor">Brand Color</Label>
-          <div className="flex items-center gap-3">
-            <input
-              type="color"
-              id="brandColor"
-              value={brandColor}
-              onChange={(e) => setBrandColor(e.target.value)}
-              className="h-10 w-14 cursor-pointer rounded border p-1"
-            />
-            <Input
-              value={brandColor}
-              onChange={(e) => setBrandColor(e.target.value)}
-              placeholder="#E8733A"
-              className="w-28 font-mono text-sm"
-            />
-            <div
-              className="h-10 flex-1 rounded-md border"
-              style={{ backgroundColor: brandColor }}
-            />
+        {/* Brand Color — locked if brokerage selected */}
+        {!selectedBrokerage && (
+          <div className="space-y-2">
+            <Label htmlFor="brandColor">Brand Color</Label>
+            <div className="flex items-center gap-3">
+              <input
+                type="color"
+                id="brandColor"
+                value={brandColor}
+                onChange={(e) => setBrandColor(e.target.value)}
+                className="h-10 w-14 cursor-pointer rounded border p-1"
+              />
+              <Input
+                value={brandColor}
+                onChange={(e) => setBrandColor(e.target.value)}
+                placeholder="#E8733A"
+                className="w-28 font-mono text-sm"
+              />
+              <div
+                className="h-10 flex-1 rounded-md border"
+                style={{ backgroundColor: brandColor }}
+              />
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Company Info */}
+        {/* Company Info — company name locked if brokerage selected */}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="companyName">Company / Brokerage</Label>
@@ -188,6 +296,7 @@ export function BrandingForm() {
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
               placeholder="Keller Williams Realty"
+              disabled={!!selectedBrokerage}
             />
           </div>
           <div className="space-y-2">

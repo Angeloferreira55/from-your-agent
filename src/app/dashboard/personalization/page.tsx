@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BrandingForm } from "@/components/personalization/BrandingForm";
@@ -8,9 +9,38 @@ import { PostcardFront } from "@/components/postcard/PostcardFront";
 import { PostcardBack } from "@/components/postcard/PostcardBack";
 import { useAgentProfile } from "@/hooks/use-agent-profile";
 
+interface BrokerageConfig {
+  id: string;
+  name: string;
+  slogan: string;
+  website: string;
+  logo_url: string;
+  second_logo_url: string | null;
+  background_url: string;
+  brand_color: string;
+  overlay_color: string;
+  text_color: string;
+  social_links: Record<string, string>;
+  disclaimer: string;
+}
+
 export default function PersonalizationPage() {
   const { data: profile } = useAgentProfile();
   const [previewSide, setPreviewSide] = useState<"front" | "back">("back");
+
+  const { data: brokeragesData } = useQuery({
+    queryKey: ["brokerages"],
+    queryFn: async () => {
+      const res = await fetch("/api/brokerages");
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
+  });
+
+  const brokerages: BrokerageConfig[] = brokeragesData?.brokerages || [];
+  const selectedBrokerage = profile?.brokerage_id
+    ? brokerages.find((b) => b.id === profile.brokerage_id) || null
+    : null;
 
   return (
     <div className="space-y-6">
@@ -44,7 +74,7 @@ export default function PersonalizationPage() {
                 <TabsContent value="back">
                   <PostcardBack
                     agentName={profile ? `${profile.first_name} ${profile.last_name}` : undefined}
-                    companyName={profile?.company_name}
+                    companyName={selectedBrokerage?.name || profile?.company_name}
                     tagline={profile?.tagline}
                     customMessage={profile?.custom_message}
                     phone={profile?.phone}
@@ -52,9 +82,9 @@ export default function PersonalizationPage() {
                     website={profile?.website}
                     licenseNumber={profile?.license_number}
                     teamLogoUrl={profile?.team_logo_url}
-                    brokerageLogoUrl={profile?.brokerage_logo_url}
+                    brokerageLogoUrl={selectedBrokerage?.logo_url || profile?.brokerage_logo_url}
                     photoUrl={profile?.photo_url}
-                    brandColor={profile?.brand_color}
+                    brandColor={selectedBrokerage?.brand_color || profile?.brand_color}
                     brokeragePhone={profile?.brokerage_phone}
                     brokerageAddress={
                       profile?.brokerage_address_line1
@@ -66,14 +96,21 @@ export default function PersonalizationPage() {
                         : null
                     }
                     visibleFields={profile?.postcard_visible_fields}
+                    // Brokerage-specific props from admin config
+                    brokerageSlogan={selectedBrokerage?.slogan}
+                    brokerageBackgroundUrl={selectedBrokerage?.background_url}
+                    brokerageOverlayColor={selectedBrokerage?.overlay_color}
+                    brokerageTextColor={selectedBrokerage?.text_color}
+                    brokerageSocialLinks={selectedBrokerage?.social_links}
+                    brokerageDisclaimer={selectedBrokerage?.disclaimer}
                   />
                 </TabsContent>
 
                 <TabsContent value="front">
                   <PostcardFront
                     agentName={profile ? `${profile.first_name} ${profile.last_name}` : undefined}
-                    brokerageLogoUrl={profile?.brokerage_logo_url}
-                    brandColor={profile?.brand_color}
+                    brokerageLogoUrl={selectedBrokerage?.logo_url || profile?.brokerage_logo_url}
+                    brandColor={selectedBrokerage?.brand_color || profile?.brand_color}
                   />
                 </TabsContent>
               </Tabs>
@@ -93,7 +130,7 @@ export default function PersonalizationPage() {
                 </li>
                 <li className="flex gap-2">
                   <span className="shrink-0 text-orange-500">•</span>
-                  Upload a high-resolution logo (PNG with transparent background works best)
+                  Upload a high-resolution team logo if you have one (PNG with transparent background works best)
                 </li>
                 <li className="flex gap-2">
                   <span className="shrink-0 text-orange-500">•</span>
@@ -101,7 +138,7 @@ export default function PersonalizationPage() {
                 </li>
                 <li className="flex gap-2">
                   <span className="shrink-0 text-orange-500">•</span>
-                  Choose a brand color that matches your company branding
+                  Select your brokerage to auto-fill branding (logo, colors, slogan)
                 </li>
               </ul>
             </CardContent>

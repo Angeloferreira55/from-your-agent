@@ -30,6 +30,13 @@ interface PostcardBackProps {
   visibleFields?: PostcardVisibleFields;
   recipientName?: string;
   recipientAddress?: string;
+  // Brokerage-specific props (from admin config)
+  brokerageSlogan?: string | null;
+  brokerageBackgroundUrl?: string | null;
+  brokerageOverlayColor?: string | null;
+  brokerageTextColor?: string | null;
+  brokerageSocialLinks?: Record<string, string> | null;
+  brokerageDisclaimer?: string | null;
   className?: string;
 }
 
@@ -51,9 +58,31 @@ export function PostcardBack({
   visibleFields = DEFAULT_VISIBLE,
   recipientName = "John & Sarah Johnson",
   recipientAddress = "123 Main Street\nAnytown, CA 90210",
+  brokerageSlogan = null,
+  brokerageBackgroundUrl = null,
+  brokerageOverlayColor = null,
+  brokerageTextColor = null,
+  brokerageSocialLinks = null,
+  brokerageDisclaimer = null,
   className,
 }: PostcardBackProps) {
   const v = { ...DEFAULT_VISIBLE, ...visibleFields };
+  const overlayColor = brokerageOverlayColor || "rgba(0, 0, 0, 0.35)";
+  const textColor = brokerageTextColor || "#FFFFFF";
+
+  // Build social icons from brokerage config
+  const socialIcons: { key: string; label: string }[] = [];
+  if (brokerageSocialLinks) {
+    if (brokerageSocialLinks.facebook) socialIcons.push({ key: "facebook", label: "f" });
+    if (brokerageSocialLinks.linkedin) socialIcons.push({ key: "linkedin", label: "in" });
+    if (brokerageSocialLinks.instagram) socialIcons.push({ key: "instagram", label: "ig" });
+    if (brokerageSocialLinks.youtube) socialIcons.push({ key: "youtube", label: "yt" });
+    if (brokerageSocialLinks.twitter) socialIcons.push({ key: "twitter", label: "X" });
+  }
+  // Fallback to generic icons if no social links configured
+  const displayIcons = socialIcons.length > 0
+    ? socialIcons
+    : [{ key: "f", label: "f" }, { key: "in", label: "in" }, { key: "ig", label: "ig" }, { key: "yt", label: "yt" }];
 
   return (
     <div
@@ -90,10 +119,18 @@ export function PostcardBack({
             className="relative flex w-1/2 flex-col p-2 md:p-3 overflow-hidden"
             style={{ backgroundColor: brandColor }}
           >
+            {/* Background image */}
+            {brokerageBackgroundUrl && (
+              <img
+                src={brokerageBackgroundUrl}
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover opacity-30"
+              />
+            )}
             {/* Overlay for readability */}
             <div
               className="absolute inset-0"
-              style={{ backgroundColor: "rgba(0, 0, 0, 0.35)" }}
+              style={{ backgroundColor: overlayColor }}
             />
             <div className="relative z-10 flex flex-col h-full">
               {/* Brokerage + Team Logos */}
@@ -105,7 +142,7 @@ export function PostcardBack({
                     className="h-5 md:h-8 w-auto object-contain"
                   />
                 ) : (
-                  <p className="text-[7px] md:text-[9px] font-bold text-white">
+                  <p className="text-[7px] md:text-[9px] font-bold" style={{ color: textColor }}>
                     {companyName || "Your Brokerage"}
                   </p>
                 )}
@@ -118,28 +155,33 @@ export function PostcardBack({
                 )}
               </div>
 
-              {/* Slogan / tagline area */}
+              {/* Slogan area */}
               <div className="my-auto text-center">
-                <p className="text-[8px] md:text-[12px] font-serif italic text-white leading-snug">
-                  {companyName || "Your Brokerage"}
+                <p
+                  className="text-[8px] md:text-[12px] font-serif italic leading-snug"
+                  style={{ color: textColor }}
+                >
+                  {brokerageSlogan
+                    ? brokerageSlogan.replace(/\n/g, " ")
+                    : companyName || "Your Brokerage"}
                 </p>
               </div>
 
-              {/* Social icons + website */}
+              {/* Social icons + brokerage phone */}
               <div className="mt-auto">
                 <div className="flex items-center gap-0.5 md:gap-1">
-                  {["f", "in", "ig", "yt"].map((icon) => (
+                  {displayIcons.map((icon) => (
                     <div
-                      key={icon}
+                      key={icon.key}
                       className="h-2 w-2 md:h-3 md:w-3 rounded-sm bg-white/20 flex items-center justify-center"
                     >
-                      <span className="text-[3px] md:text-[5px] font-bold text-white">
-                        {icon}
+                      <span className="text-[3px] md:text-[5px] font-bold" style={{ color: textColor }}>
+                        {icon.label}
                       </span>
                     </div>
                   ))}
                   {v.brokerage_info && brokeragePhone && (
-                    <p className="text-[4px] md:text-[6px] text-white/90 ml-auto font-medium">
+                    <p className="text-[4px] md:text-[6px] ml-auto font-medium" style={{ color: `${textColor}E6` }}>
                       {brokeragePhone}
                     </p>
                   )}
@@ -247,9 +289,9 @@ export function PostcardBack({
 
             {/* Footer disclaimer */}
             <p className="text-[3px] md:text-[4.5px] text-gray-400 leading-tight mt-1">
-              For questions about this postcard or offer please call{" "}
-              {phone || "(555) 123-4567"} &bull; www.FromYourAgent.com &bull;
-              Each office is independently owned and operated.
+              {brokerageDisclaimer
+                ? brokerageDisclaimer
+                : `For questions about this postcard or offer please call ${phone || "(555) 123-4567"} \u2022 www.FromYourAgent.com \u2022 Each office is independently owned and operated.`}
             </p>
           </div>
         </div>

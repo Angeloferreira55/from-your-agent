@@ -43,6 +43,7 @@ export interface AgentProfile {
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
   subscription_status: SubscriptionStatus;
+  brokerage_id: string | null;
   role: AgentRole;
   onboarding_completed: boolean;
   created_at: string;

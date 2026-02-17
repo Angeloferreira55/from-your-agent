@@ -8,11 +8,25 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { BrokerageForm } from "@/components/admin/BrokerageForm";
 import { Plus, Building2, MoreHorizontal, Pencil, Trash2, Globe, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
-import type { BrokerageConfig } from "@/data/brokerages";
+
+interface BrokerageRecord {
+  id: string;
+  name: string;
+  slogan: string;
+  website: string;
+  logo_url: string;
+  second_logo_url: string | null;
+  background_url: string;
+  brand_color: string;
+  overlay_color: string;
+  text_color: string;
+  social_links: Record<string, string>;
+  disclaimer: string;
+}
 
 export default function AdminBrokeragesPage() {
   const [formOpen, setFormOpen] = useState(false);
-  const [editingBrokerage, setEditingBrokerage] = useState<BrokerageConfig | null>(null);
+  const [editingBrokerage, setEditingBrokerage] = useState<BrokerageRecord | null>(null);
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
@@ -74,9 +88,9 @@ export default function AdminBrokeragesPage() {
     onError: (err) => toast.error(err.message),
   });
 
-  const brokerages: BrokerageConfig[] = data?.brokerages || [];
+  const brokerages: BrokerageRecord[] = data?.brokerages || [];
 
-  function handleEdit(brokerage: BrokerageConfig) {
+  function handleEdit(brokerage: BrokerageRecord) {
     setEditingBrokerage(brokerage);
     setFormOpen(true);
   }
@@ -126,32 +140,18 @@ export default function AdminBrokeragesPage() {
               {/* Color banner with logo */}
               <div
                 className="relative h-24 flex items-center justify-center overflow-hidden"
-                style={{ backgroundColor: brokerage.brandColor }}
+                style={{ backgroundColor: brokerage.brand_color }}
               >
-                {brokerage.backgroundUrl && (
-                  <img
-                    src={brokerage.backgroundUrl}
-                    alt=""
-                    className="absolute inset-0 h-full w-full object-cover opacity-30"
-                  />
+                {brokerage.background_url && (
+                  <img src={brokerage.background_url} alt="" className="absolute inset-0 h-full w-full object-cover opacity-30" />
                 )}
-                <div
-                  className="absolute inset-0"
-                  style={{ backgroundColor: brokerage.overlayColor }}
-                />
+                <div className="absolute inset-0" style={{ backgroundColor: brokerage.overlay_color }} />
                 <div className="relative z-10 flex flex-col items-center gap-1">
-                  {brokerage.logoUrl && (
-                    <img
-                      src={brokerage.logoUrl}
-                      alt={brokerage.name}
-                      className="h-10 w-auto object-contain"
-                    />
+                  {brokerage.logo_url && (
+                    <img src={brokerage.logo_url} alt={brokerage.name} className="h-10 w-auto object-contain" />
                   )}
                   {brokerage.slogan && (
-                    <p
-                      className="text-[10px] font-serif italic text-center leading-tight max-w-[160px]"
-                      style={{ color: brokerage.textColor }}
-                    >
+                    <p className="text-[10px] font-serif italic text-center leading-tight max-w-[160px]" style={{ color: brokerage.text_color }}>
                       {brokerage.slogan.replace(/\n/g, " ")}
                     </p>
                   )}
@@ -173,45 +173,27 @@ export default function AdminBrokeragesPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => handleEdit(brokerage)}>
-                        <Pencil className="mr-2 h-4 w-4" />
-                        Edit
+                        <Pencil className="mr-2 h-4 w-4" /> Edit
                       </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="text-destructive"
-                        onClick={() => {
-                          if (confirm(`Delete ${brokerage.name}?`)) {
-                            deleteMutation.mutate(brokerage.id);
-                          }
-                        }}
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete
+                      <DropdownMenuItem className="text-destructive" onClick={() => { if (confirm(`Delete ${brokerage.name}?`)) deleteMutation.mutate(brokerage.id); }}>
+                        <Trash2 className="mr-2 h-4 w-4" /> Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
-
-                {/* Details */}
                 <div className="mt-3 flex items-center gap-3">
-                  <div
-                    className="h-6 w-6 rounded-full border"
-                    style={{ backgroundColor: brokerage.brandColor }}
-                    title={brokerage.brandColor}
-                  />
+                  <div className="h-6 w-6 rounded-full border" style={{ backgroundColor: brokerage.brand_color }} title={brokerage.brand_color} />
                   {brokerage.website && (
                     <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Globe className="h-3 w-3" />
-                      {brokerage.website}
+                      <Globe className="h-3 w-3" /> {brokerage.website}
                     </span>
                   )}
                 </div>
-
-                {/* Social links count */}
-                {brokerage.socialLinks && Object.keys(brokerage.socialLinks).length > 0 && (
+                {brokerage.social_links && Object.keys(brokerage.social_links).length > 0 && (
                   <div className="mt-2 flex items-center gap-1">
                     <ExternalLink className="h-3 w-3 text-muted-foreground" />
                     <span className="text-xs text-muted-foreground">
-                      {Object.keys(brokerage.socialLinks).length} social link{Object.keys(brokerage.socialLinks).length !== 1 ? "s" : ""}
+                      {Object.keys(brokerage.social_links).length} social link{Object.keys(brokerage.social_links).length !== 1 ? "s" : ""}
                     </span>
                   </div>
                 )}
