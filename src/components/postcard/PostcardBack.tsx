@@ -96,13 +96,13 @@ export function PostcardBack({
               style={{ backgroundColor: "rgba(0, 0, 0, 0.35)" }}
             />
             <div className="relative z-10 flex flex-col h-full">
-              {/* Logo */}
-              <div className="flex items-center gap-1.5">
+              {/* Brokerage + Team Logos */}
+              <div className="flex items-center gap-2">
                 {brokerageLogoUrl ? (
                   <img
                     src={brokerageLogoUrl}
                     alt={companyName || "Brokerage"}
-                    className="h-4 md:h-7 w-auto object-contain"
+                    className="h-5 md:h-8 w-auto object-contain"
                   />
                 ) : (
                   <p className="text-[7px] md:text-[9px] font-bold text-white">
@@ -113,7 +113,7 @@ export function PostcardBack({
                   <img
                     src={teamLogoUrl}
                     alt="Team Logo"
-                    className="h-4 md:h-6 w-auto object-contain"
+                    className="h-5 md:h-8 w-auto object-contain"
                   />
                 )}
               </div>
