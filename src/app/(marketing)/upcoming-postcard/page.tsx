@@ -49,64 +49,11 @@ export default function UpcomingPostcardPage() {
                 Front of Postcard
               </p>
               <div className="overflow-hidden rounded-xl border shadow-lg bg-white" style={{ aspectRatio: "9/6" }}>
-                <div className="flex h-full">
-                  {/* Left — Deal image */}
-                  <div className="w-[58%] h-full">
-                    <img
-                      src="/custom-closet-add.png"
-                      alt="Postcard Front — Custom Closet Guys"
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                  {/* Right — Brokerage branding */}
-                  <div
-                    className="relative flex w-[42%] flex-col p-2.5 md:p-3.5 overflow-hidden"
-                    style={{ backgroundColor: '#B40101' }}
-                  >
-                    <img
-                      src="/brokerages/kw-bg.jpg"
-                      alt=""
-                      className="absolute inset-0 h-full w-full object-cover opacity-40"
-                    />
-                    <div className="absolute inset-0" style={{ backgroundColor: 'rgba(100, 0, 0, 0.55)' }} />
-                    <div className="relative z-10 flex flex-col h-full">
-                      {/* KW Logo */}
-                      <div className="flex items-center gap-1 mb-auto">
-                        <img
-                          src="/brokerages/kw-logo-white.png"
-                          alt="Keller Williams Realty"
-                          className="h-5 md:h-9 w-auto object-contain"
-                        />
-                      </div>
-                      {/* Slogan */}
-                      <div className="my-auto text-center">
-                        <p className="text-[9px] md:text-[14px] font-serif italic text-white leading-snug">
-                          Not Just Agents.
-                        </p>
-                        <p className="text-[9px] md:text-[14px] font-serif italic text-white leading-snug">
-                          Advisors.
-                        </p>
-                      </div>
-                      {/* Social + website */}
-                      <div className="mt-auto">
-                        <div className="flex items-center gap-1 md:gap-1.5 mb-1">
-                          {['f', 'in', 'ig', 'yt'].map((icon) => (
-                            <div
-                              key={icon}
-                              className="h-2.5 w-2.5 md:h-3.5 md:w-3.5 rounded-sm bg-white/20 flex items-center justify-center"
-                            >
-                              <span className="text-[3.5px] md:text-[5.5px] font-bold text-white">{icon}</span>
-                            </div>
-                          ))}
-                          <p className="text-[4.5px] md:text-[6.5px] text-white/90 ml-auto font-medium">www.kw.com</p>
-                        </div>
-                        <p className="text-[2.5px] md:text-[4px] text-white/60 leading-tight">
-                          For questions about this postcard or offer please call (505) 555-0147 &bull; www.FromYourAgent.com &bull; Each office is independently owned and operated. If your home is currently on the market, please don&apos;t consider this a solicitation.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <img
+                  src="/custom-closet-add.png"
+                  alt="Postcard Front — Custom Closet Guys"
+                  className="h-full w-full object-cover"
+                />
               </div>
             </div>
 
@@ -116,99 +63,105 @@ export default function UpcomingPostcardPage() {
                 Back of Postcard
               </p>
               <div className="overflow-hidden rounded-xl border shadow-lg bg-white" style={{ aspectRatio: "9/6" }}>
-                <div className="flex h-full">
-                  {/* Left half — Agent branding (Scavoy style) */}
-                  <div className="flex w-1/2 flex-col border-r p-3 md:p-4">
-                    {/* Agent photo + name centered */}
-                    <div className="flex items-start gap-2 mb-1">
-                      <div className="h-16 w-14 md:h-24 md:w-20 shrink-0 rounded-md border-2 border-[#B40101] overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300">
+                <div className="flex flex-col h-full">
+                  {/* Top half */}
+                  <div className="flex h-1/2">
+                    {/* Agent branding */}
+                    <div className="flex w-1/2 items-start gap-2 p-3 md:p-4">
+                      <div className="h-14 w-12 md:h-20 md:w-16 shrink-0 rounded-md border-2 border-[#B40101] overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300">
                         <img
                           src="/sample-agent-woman.jpg"
                           alt="Liz Garcia"
                           className="h-full w-full object-cover"
                         />
                       </div>
-                      <div className="min-w-0 flex flex-col justify-center mt-1 md:mt-2">
-                        <p className="text-[10px] md:text-[13px] font-bold text-gray-900 leading-tight">Liz Garcia Realtor&reg;</p>
-                        <p className="text-[6px] md:text-[8px] italic text-[#B40101] mt-0.5">Client Focused, Results Driven</p>
-                        <p className="text-[7px] md:text-[9px] font-semibold text-gray-700 mt-0.5">Keller Williams Realty</p>
-                        <p className="text-[6px] md:text-[8px] text-gray-500 mt-0.5">(505) 555-0147</p>
-                        <p className="text-[5px] md:text-[7px] text-gray-500">liz.garcia@kw.com</p>
-                        <p className="text-[5px] md:text-[7px] text-gray-500">www.lizgarcia.kwrealty.com</p>
+                      <div className="min-w-0 flex flex-col justify-center mt-0.5 md:mt-1">
+                        <p className="text-[9px] md:text-[12px] font-bold text-gray-900 leading-tight">Liz Garcia Realtor&reg;</p>
+                        <p className="text-[5px] md:text-[7px] italic text-[#B40101] mt-0.5">Client Focused, Results Driven</p>
+                        <p className="text-[6px] md:text-[8px] font-semibold text-gray-700 mt-0.5">Keller Williams Realty</p>
+                        <p className="text-[5px] md:text-[7px] text-gray-500 mt-0.5">(505) 555-0147</p>
+                        <p className="text-[4px] md:text-[6px] text-gray-500">liz.garcia@kw.com</p>
+                        <p className="text-[4px] md:text-[6px] text-gray-500">www.lizgarcia.kwrealty.com</p>
                       </div>
                     </div>
-
-                    {/* Featured Deal section (like the CMA offer area) */}
-                    <div className="mt-auto border-t border-gray-200 pt-1.5">
-                      <div className="flex items-start gap-1.5">
-                        <img
-                          src="/sample-deal-closet-back.png"
-                          alt="Custom Closet Guys"
-                          className="h-10 md:h-16 w-auto object-contain rounded mix-blend-multiply shrink-0"
-                        />
-                        <div className="min-w-0">
-                          <p className="text-[5px] md:text-[7px] text-gray-500 leading-tight">
-                            Present this postcard and enjoy a FREE Consultation + $250 off your custom closet, as a gift from your friends at Keller Williams Realty!
+                    {/* Brokerage branding */}
+                    <div
+                      className="relative flex w-1/2 flex-col p-2 md:p-3 overflow-hidden"
+                      style={{ backgroundColor: '#B40101' }}
+                    >
+                      <img
+                        src="/brokerages/kw-bg.jpg"
+                        alt=""
+                        className="absolute inset-0 h-full w-full object-cover opacity-40"
+                      />
+                      <div className="absolute inset-0" style={{ backgroundColor: 'rgba(100, 0, 0, 0.55)' }} />
+                      <div className="relative z-10 flex flex-col h-full">
+                        <div className="flex items-center gap-1.5">
+                          <img
+                            src="/brokerages/kw-logo-white.png"
+                            alt="Keller Williams Realty"
+                            className="h-4 md:h-7 w-auto object-contain"
+                          />
+                        </div>
+                        <div className="my-auto text-center">
+                          <p className="text-[8px] md:text-[12px] font-serif italic text-white leading-snug">
+                            Not Just Agents.
                           </p>
-                          <p className="text-[5px] md:text-[6.5px] font-semibold text-gray-600 mt-0.5">(505) 546-1788 &bull; customclosetguys.com</p>
+                          <p className="text-[8px] md:text-[12px] font-serif italic text-white leading-snug">
+                            Advisors.
+                          </p>
+                        </div>
+                        <div className="mt-auto">
+                          <div className="flex items-center gap-0.5 md:gap-1">
+                            {['f', 'in', 'ig', 'yt'].map((icon) => (
+                              <div
+                                key={icon}
+                                className="h-2 w-2 md:h-3 md:w-3 rounded-sm bg-white/20 flex items-center justify-center"
+                              >
+                                <span className="text-[3px] md:text-[5px] font-bold text-white">{icon}</span>
+                              </div>
+                            ))}
+                            <p className="text-[4px] md:text-[6px] text-white/90 ml-auto font-medium">www.kw.com</p>
+                          </div>
                         </div>
                       </div>
                     </div>
-
                   </div>
 
-                  {/* Right half — Brokerage branding (Scavoy style) */}
-                  <div
-                    className="relative flex w-1/2 flex-col p-3 md:p-4 overflow-hidden"
-                    style={{ backgroundColor: '#B40101' }}
-                  >
-                    {/* Background image + overlay */}
-                    <img
-                      src="/brokerages/kw-bg.jpg"
-                      alt=""
-                      className="absolute inset-0 h-full w-full object-cover opacity-40"
-                    />
-                    <div className="absolute inset-0" style={{ backgroundColor: 'rgba(100, 0, 0, 0.55)' }} />
+                  {/* Fine horizontal line */}
+                  <div className="h-[0.5px] bg-gray-300 w-full" />
 
-                    {/* Content on top of background */}
-                    <div className="relative z-10 flex flex-col h-full">
-                      {/* Brokerage logo */}
-                      <div className="flex items-center gap-1.5 mb-auto">
-                        <img
-                          src="/brokerages/kw-logo-white.png"
-                          alt="Keller Williams Realty"
-                          className="h-6 md:h-10 w-auto object-contain"
-                        />
-                      </div>
-
-                      {/* Slogan */}
-                      <div className="my-auto text-center">
-                        <p className="text-[10px] md:text-[15px] font-serif italic text-white leading-snug">
-                          Not Just Agents.
+                  {/* Bottom half */}
+                  <div className="flex h-1/2">
+                    {/* Featured Deal */}
+                    <div className="flex w-1/2 items-start gap-1.5 p-3 md:p-4 border-r border-gray-200">
+                      <img
+                        src="/sample-deal-closet-back.png"
+                        alt="Custom Closet Guys"
+                        className="h-10 md:h-14 w-auto object-contain rounded mix-blend-multiply shrink-0"
+                      />
+                      <div className="min-w-0">
+                        <p className="text-[5px] md:text-[7px] text-gray-500 leading-tight">
+                          Present this postcard and enjoy a FREE Consultation + $250 off your custom closet, as a gift from your friends at Keller Williams Realty!
                         </p>
-                        <p className="text-[10px] md:text-[15px] font-serif italic text-white leading-snug">
-                          Advisors.
-                        </p>
+                        <p className="text-[5px] md:text-[6.5px] font-semibold text-gray-600 mt-0.5">(505) 546-1788 &bull; customclosetguys.com</p>
                       </div>
-
-                      {/* Social icons + website */}
-                      <div className="mt-auto">
-                        <div className="flex items-center gap-1 md:gap-1.5 mb-1">
-                          {['f', 'in', 'ig', 'yt'].map((icon) => (
-                            <div
-                              key={icon}
-                              className="h-3 w-3 md:h-4 md:w-4 rounded-sm bg-white/20 flex items-center justify-center"
-                            >
-                              <span className="text-[4px] md:text-[6px] font-bold text-white">{icon}</span>
-                            </div>
-                          ))}
-                          <p className="text-[5px] md:text-[7px] text-white/90 ml-auto font-medium">www.kw.com</p>
+                    </div>
+                    {/* Mailing area */}
+                    <div className="flex w-1/2 flex-col justify-between p-2 md:p-3 bg-white">
+                      <div className="flex justify-end">
+                        <div className="h-5 w-7 md:h-7 md:w-9 border border-dashed border-gray-300 rounded-sm flex items-center justify-center">
+                          <p className="text-[4px] md:text-[6px] text-gray-400 text-center leading-tight">POSTAGE</p>
                         </div>
-                        {/* Disclaimer */}
-                        <p className="text-[3px] md:text-[4.5px] text-white/60 leading-tight">
-                          For questions about this postcard or offer please call (505) 555-0147 &bull; www.FromYourAgent.com &bull; Each office is independently owned and operated. If your home is currently on the market, please don&apos;t consider this a solicitation.
-                        </p>
                       </div>
+                      <div className="mt-auto space-y-0.5">
+                        <div className="h-[0.5px] bg-gray-300 w-3/4 ml-auto" />
+                        <div className="h-[0.5px] bg-gray-300 w-3/4 ml-auto" />
+                        <div className="h-[0.5px] bg-gray-300 w-3/4 ml-auto" />
+                      </div>
+                      <p className="text-[3px] md:text-[4.5px] text-gray-400 leading-tight mt-1">
+                        For questions about this postcard or offer please call (505) 555-0147 &bull; www.FromYourAgent.com &bull; Each office is independently owned and operated.
+                      </p>
                     </div>
                   </div>
                 </div>
