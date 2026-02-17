@@ -66,22 +66,18 @@ export default function UpcomingPostcardPage() {
                 <div className="flex flex-col h-full">
                   {/* Top half */}
                   <div className="flex h-1/2">
-                    {/* Agent branding */}
-                    <div className="flex w-1/2 items-start gap-2 p-3 md:p-4">
-                      <div className="h-14 w-12 md:h-20 md:w-16 shrink-0 rounded-md border-2 border-[#B40101] overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300">
-                        <img
-                          src="/sample-agent-woman.jpg"
-                          alt="Liz Garcia"
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                      <div className="min-w-0 flex flex-col justify-center mt-0.5 md:mt-1">
-                        <p className="text-[9px] md:text-[12px] font-bold text-gray-900 leading-tight">Liz Garcia Realtor&reg;</p>
-                        <p className="text-[5px] md:text-[7px] italic text-[#B40101] mt-0.5">Client Focused, Results Driven</p>
-                        <p className="text-[6px] md:text-[8px] font-semibold text-gray-700 mt-0.5">Keller Williams Realty</p>
-                        <p className="text-[5px] md:text-[7px] text-gray-500 mt-0.5">(505) 555-0147</p>
-                        <p className="text-[4px] md:text-[6px] text-gray-500">liz.garcia@kw.com</p>
-                        <p className="text-[4px] md:text-[6px] text-gray-500">www.lizgarcia.kwrealty.com</p>
+                    {/* Featured Deal */}
+                    <div className="flex w-1/2 items-start gap-1.5 p-3 md:p-4">
+                      <img
+                        src="/sample-deal-closet-back.png"
+                        alt="Custom Closet Guys"
+                        className="h-10 md:h-14 w-auto object-contain rounded mix-blend-multiply shrink-0"
+                      />
+                      <div className="min-w-0">
+                        <p className="text-[5px] md:text-[7px] text-gray-500 leading-tight">
+                          Present this postcard and enjoy a FREE Consultation + $250 off your custom closet, as a gift from your friends at Keller Williams Realty!
+                        </p>
+                        <p className="text-[5px] md:text-[6.5px] font-semibold text-gray-600 mt-0.5">(505) 546-1788 &bull; customclosetguys.com</p>
                       </div>
                     </div>
                     {/* Brokerage branding */}
@@ -133,18 +129,22 @@ export default function UpcomingPostcardPage() {
 
                   {/* Bottom half */}
                   <div className="flex h-1/2">
-                    {/* Featured Deal */}
-                    <div className="flex w-1/2 items-start gap-1.5 p-3 md:p-4 border-r border-gray-200">
-                      <img
-                        src="/sample-deal-closet-back.png"
-                        alt="Custom Closet Guys"
-                        className="h-10 md:h-14 w-auto object-contain rounded mix-blend-multiply shrink-0"
-                      />
-                      <div className="min-w-0">
-                        <p className="text-[5px] md:text-[7px] text-gray-500 leading-tight">
-                          Present this postcard and enjoy a FREE Consultation + $250 off your custom closet, as a gift from your friends at Keller Williams Realty!
-                        </p>
-                        <p className="text-[5px] md:text-[6.5px] font-semibold text-gray-600 mt-0.5">(505) 546-1788 &bull; customclosetguys.com</p>
+                    {/* Agent branding */}
+                    <div className="flex w-1/2 items-start gap-2 p-3 md:p-4 border-r border-gray-200">
+                      <div className="h-14 w-12 md:h-20 md:w-16 shrink-0 rounded-md border-2 border-[#B40101] overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300">
+                        <img
+                          src="/sample-agent-woman.jpg"
+                          alt="Liz Garcia"
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                      <div className="min-w-0 flex flex-col justify-center mt-0.5 md:mt-1">
+                        <p className="text-[9px] md:text-[12px] font-bold text-gray-900 leading-tight">Liz Garcia Realtor&reg;</p>
+                        <p className="text-[5px] md:text-[7px] italic text-[#B40101] mt-0.5">Client Focused, Results Driven</p>
+                        <p className="text-[6px] md:text-[8px] font-semibold text-gray-700 mt-0.5">Keller Williams Realty</p>
+                        <p className="text-[5px] md:text-[7px] text-gray-500 mt-0.5">(505) 555-0147</p>
+                        <p className="text-[4px] md:text-[6px] text-gray-500">liz.garcia@kw.com</p>
+                        <p className="text-[4px] md:text-[6px] text-gray-500">www.lizgarcia.kwrealty.com</p>
                       </div>
                     </div>
                     {/* Mailing area */}
