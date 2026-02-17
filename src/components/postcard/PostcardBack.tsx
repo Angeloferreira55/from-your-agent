@@ -54,8 +54,6 @@ export function PostcardBack({
   className,
 }: PostcardBackProps) {
   const v = { ...DEFAULT_VISIBLE, ...visibleFields };
-  const hasLogos = teamLogoUrl || brokerageLogoUrl;
-  const hasBrokerageInfo = v.brokerage_info && (brokeragePhone || brokerageAddress);
 
   return (
     <div
@@ -65,137 +63,194 @@ export function PostcardBack({
       )}
       style={{ aspectRatio: "9/6" }}
     >
-      <div className="flex h-full">
-        {/* Left half — Agent branding */}
-        <div className="flex w-1/2 flex-col border-r p-4">
-          {/* Photo + Logos side by side */}
-          <div className="flex items-start gap-2 mb-1.5">
+      <div className="flex flex-col h-full">
+        {/* ── Top half ── */}
+        <div className="flex h-1/2">
+          {/* Top-left: Featured Deal */}
+          <div className="flex w-1/2 items-start gap-1.5 p-3 md:p-4">
+            <img
+              src="/sample-deal-closet-back.png"
+              alt="Custom Closet Guys"
+              className="h-10 md:h-14 w-auto object-contain rounded mix-blend-multiply shrink-0"
+            />
+            <div className="min-w-0">
+              <p className="text-[5px] md:text-[7px] text-gray-500 leading-tight">
+                Present this postcard and enjoy a FREE Consultation + $250 off
+                your custom closet, as a gift from your friends at{" "}
+                {companyName || "your brokerage"}!
+              </p>
+              <p className="text-[5px] md:text-[6.5px] font-semibold text-gray-600 mt-0.5">
+                (505) 546-1788 &bull; customclosetguys.com
+              </p>
+            </div>
+          </div>
+
+          {/* Top-right: Brokerage branding panel */}
+          <div
+            className="relative flex w-1/2 flex-col p-2 md:p-3 overflow-hidden"
+            style={{ backgroundColor: brandColor }}
+          >
+            {/* Overlay for readability */}
             <div
-              className="h-20 w-20 shrink-0 rounded-lg border-2 overflow-hidden flex items-center justify-center bg-gray-100"
+              className="absolute inset-0"
+              style={{ backgroundColor: "rgba(0, 0, 0, 0.35)" }}
+            />
+            <div className="relative z-10 flex flex-col h-full">
+              {/* Logo */}
+              <div className="flex items-center gap-1.5">
+                {brokerageLogoUrl ? (
+                  <img
+                    src={brokerageLogoUrl}
+                    alt={companyName || "Brokerage"}
+                    className="h-4 md:h-7 w-auto object-contain"
+                  />
+                ) : (
+                  <p className="text-[7px] md:text-[9px] font-bold text-white">
+                    {companyName || "Your Brokerage"}
+                  </p>
+                )}
+                {teamLogoUrl && (
+                  <img
+                    src={teamLogoUrl}
+                    alt="Team Logo"
+                    className="h-4 md:h-6 w-auto object-contain"
+                  />
+                )}
+              </div>
+
+              {/* Slogan / tagline area */}
+              <div className="my-auto text-center">
+                <p className="text-[8px] md:text-[12px] font-serif italic text-white leading-snug">
+                  {companyName || "Your Brokerage"}
+                </p>
+              </div>
+
+              {/* Social icons + website */}
+              <div className="mt-auto">
+                <div className="flex items-center gap-0.5 md:gap-1">
+                  {["f", "in", "ig", "yt"].map((icon) => (
+                    <div
+                      key={icon}
+                      className="h-2 w-2 md:h-3 md:w-3 rounded-sm bg-white/20 flex items-center justify-center"
+                    >
+                      <span className="text-[3px] md:text-[5px] font-bold text-white">
+                        {icon}
+                      </span>
+                    </div>
+                  ))}
+                  {v.brokerage_info && brokeragePhone && (
+                    <p className="text-[4px] md:text-[6px] text-white/90 ml-auto font-medium">
+                      {brokeragePhone}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Fine horizontal line ── */}
+        <div className="h-[0.5px] bg-gray-300 w-full" />
+
+        {/* ── Bottom half ── */}
+        <div className="flex h-1/2">
+          {/* Bottom-left: Agent profile */}
+          <div className="flex w-1/2 items-start gap-2 p-3 md:p-4 border-r border-gray-200">
+            {/* Headshot */}
+            <div
+              className="h-14 w-12 md:h-20 md:w-16 shrink-0 rounded-md border-2 overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center"
               style={{ borderColor: brandColor }}
             >
               {photoUrl ? (
-                <img src={photoUrl} alt={agentName} className="h-full w-full object-cover" />
+                <img
+                  src={photoUrl}
+                  alt={agentName}
+                  className="h-full w-full object-cover"
+                />
               ) : (
-                <User className="h-8 w-8 text-gray-400" />
+                <User className="h-6 w-6 text-gray-400" />
               )}
             </div>
-            {(teamLogoUrl || brokerageLogoUrl) && (
-              <div className="min-w-0 flex flex-col justify-start -mt-3">
-                <div className="flex items-center gap-1.5">
-                  {brokerageLogoUrl && (
-                    <img
-                      src={brokerageLogoUrl}
-                      alt="Brokerage Logo"
-                      className="h-12 max-w-[48px] object-contain shrink-0"
-                    />
-                  )}
-                  {teamLogoUrl && (
-                    <img
-                      src={teamLogoUrl}
-                      alt="Team Logo"
-                      className="h-16 max-w-[64px] object-contain shrink-0"
-                    />
-                  )}
-                </div>
-                {v.brokerage_info && (brokeragePhone || brokerageAddress) && (
-                  <div className="-mt-0.5">
-                    {brokeragePhone && (
-                      <p className="text-[7px] text-gray-400 leading-none">{brokeragePhone}</p>
-                    )}
-                    {brokerageAddress && (
-                      <p className="text-[7px] text-gray-400 leading-none mt-px">{brokerageAddress}</p>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
 
-          {/* Agent name + contact details */}
-          <div className="mb-1">
-            <p className="text-[11px] font-bold text-gray-900 leading-tight">{agentName}</p>
-            {tagline && (
-              <p className="text-[8px] italic mt-0.5" style={{ color: brandColor }}>
-                {tagline}
+            {/* Contact info */}
+            <div className="min-w-0 flex flex-col justify-center mt-0.5 md:mt-1">
+              <p className="text-[9px] md:text-[12px] font-bold text-gray-900 leading-tight">
+                {agentName}
               </p>
-            )}
-            <div className="mt-0.5 space-y-0">
-              {(v.phone && phone) || (v.email && email) ? (
-                <p className="text-[6.5px] text-gray-500 whitespace-nowrap">
-                  {[v.phone && phone, v.email && email].filter(Boolean).join(" | ")}
+              {tagline && (
+                <p
+                  className="text-[5px] md:text-[7px] italic mt-0.5"
+                  style={{ color: brandColor }}
+                >
+                  {tagline}
                 </p>
-              ) : null}
+              )}
+              {companyName && (
+                <p className="text-[6px] md:text-[8px] font-semibold text-gray-700 mt-0.5">
+                  {companyName}
+                </p>
+              )}
+              {v.phone && phone && (
+                <p className="text-[5px] md:text-[7px] text-gray-500 mt-0.5">
+                  {phone}
+                </p>
+              )}
+              {v.email && email && (
+                <p className="text-[4px] md:text-[6px] text-gray-500">
+                  {email}
+                </p>
+              )}
               {v.website && website && (
-                <p className="text-[8px] text-gray-500">{website}</p>
+                <p className="text-[4px] md:text-[6px] text-gray-500">
+                  {website}
+                </p>
               )}
               {v.license && licenseNumber && (
-                <p className="text-[8px] text-gray-400">{licenseNumber}</p>
+                <p className="text-[4px] md:text-[6px] text-gray-400">
+                  {licenseNumber}
+                </p>
               )}
             </div>
           </div>
 
-          {/* Featured Deal */}
-          <div className="flex-1 flex items-start gap-1 -ml-2.5">
-            <img
-              src="/sample-deal-closet-back.png"
-              alt="Featured Deal"
-              className="h-full max-w-[55%] object-contain rounded mix-blend-multiply shrink-0"
-            />
-            <div className="min-w-0 space-y-px mt-5">
-              <p className="text-[9px] font-bold text-gray-900 leading-tight whitespace-nowrap">Custom Closet Guys</p>
-              <p className="text-[6.5px] italic text-gray-500 leading-tight whitespace-nowrap mb-4">Where Style Meets Storage</p>
-              <p className="text-[8px] font-bold text-gray-700 leading-tight">(505) 546-1788</p>
-              <p className="text-[5.5px] text-gray-500 leading-tight">richard@customclosetguys.com</p>
-              <p className="text-[6.5px] text-gray-500 leading-tight">customclosetguys.com</p>
+          {/* Bottom-right: Mailing area */}
+          <div className="flex w-1/2 flex-col justify-between p-2 md:p-3 bg-white">
+            <div className="flex justify-end">
+              <div className="h-5 w-7 md:h-7 md:w-9 border border-dashed border-gray-300 rounded-sm flex items-center justify-center">
+                <p className="text-[4px] md:text-[6px] text-gray-400 text-center leading-tight">
+                  POSTAGE
+                </p>
+              </div>
             </div>
-          </div>
 
-          {/* Custom footer message */}
-          {customMessage && (
-            <div className="mt-auto pt-1 border-t border-gray-100">
-              {customMessage.split("\n").map((line, i) => (
-                <p key={i} className="text-[7px] text-gray-500 leading-tight">{line}</p>
+            {/* Recipient */}
+            <div className="mt-auto">
+              <p className="text-[7px] md:text-[10px] font-semibold text-gray-900">
+                {recipientName}
+              </p>
+              {recipientAddress.split("\n").map((line, i) => (
+                <p
+                  key={i}
+                  className="text-[6px] md:text-[9px] text-gray-600"
+                >
+                  {line}
+                </p>
               ))}
             </div>
-          )}
-        </div>
 
-        {/* Right half — Mailing area */}
-        <div className="flex w-1/2 flex-col p-4">
-          {/* Stamp area */}
-          <div className="self-end mb-4">
-            <div className="h-8 w-10 rounded border-2 border-dashed border-gray-300 flex items-center justify-center">
-              <p className="text-[6px] text-gray-400 text-center leading-tight">POSTAGE</p>
+            {/* Address lines */}
+            <div className="mt-1 space-y-0.5">
+              <div className="h-[0.5px] bg-gray-300 w-3/4 ml-auto" />
+              <div className="h-[0.5px] bg-gray-300 w-3/4 ml-auto" />
+              <div className="h-[0.5px] bg-gray-300 w-3/4 ml-auto" />
             </div>
-          </div>
 
-          {/* Accent bar */}
-          <div
-            className="h-0.5 w-10 rounded-full mb-3"
-            style={{ backgroundColor: brandColor }}
-          />
-
-          {/* Recipient */}
-          <div className="mt-auto">
-            <p className="text-[10px] font-semibold text-gray-900">{recipientName}</p>
-            {recipientAddress.split("\n").map((line, i) => (
-              <p key={i} className="text-[9px] text-gray-600">{line}</p>
-            ))}
-          </div>
-
-          {/* Barcode placeholder */}
-          <div className="mt-3 flex gap-px">
-            {Array.from({ length: 30 }).map((_, i) => (
-              <div
-                key={i}
-                className="bg-gray-800"
-                style={{
-                  width: 1.5,
-                  height: Math.random() > 0.5 ? 8 : 12,
-                }}
-              />
-            ))}
+            {/* Footer disclaimer */}
+            <p className="text-[3px] md:text-[4.5px] text-gray-400 leading-tight mt-1">
+              For questions about this postcard or offer please call{" "}
+              {phone || "(555) 123-4567"} &bull; www.FromYourAgent.com &bull;
+              Each office is independently owned and operated.
+            </p>
           </div>
         </div>
       </div>
