@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserId } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { renderTemplate, buildMergeVariables } from "@/lib/lob/templates";
+import { resolveHtml, LOB_DIMENSIONS } from "@/lib/lob/render-design";
 
 // POST — Generate a preview of rendered HTML (no Lob call)
 export async function POST(req: NextRequest) {
@@ -72,9 +73,12 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  const sizeKey = (template.size || "6x9") as keyof typeof LOB_DIMENSIONS;
+  const dims = LOB_DIMENSIONS[sizeKey] || LOB_DIMENSIONS["6x9"];
+
   const mergeVars = buildMergeVariables(agent, contact, offer);
-  const frontHtml = renderTemplate(template.front_html, mergeVars);
-  const backHtml = renderTemplate(template.back_html, mergeVars);
+  const frontHtml = renderTemplate(resolveHtml(template.front_html, dims.front), mergeVars);
+  const backHtml = renderTemplate(resolveHtml(template.back_html, dims.back), mergeVars);
 
   return NextResponse.json({
     front_html: frontHtml,

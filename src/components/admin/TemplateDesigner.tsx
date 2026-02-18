@@ -112,8 +112,22 @@ interface TemplateDesignerProps {
     type?: "brokerage" | "monthly";
     brokerage_id?: string | null;
     design?: DesignConfig;
+    frontDesign?: DesignConfig;
   };
 }
+
+const DEFAULT_FRONT_DESIGN: DesignConfig = {
+  background: { color: "#ffffff", imageUrl: "", overlayColor: "rgba(0,0,0,0)", colorEnabled: false },
+  elements: [],
+  disclaimer: "",
+};
+
+const DEFAULT_BACK_DESIGN: DesignConfig = {
+  background: { color: "#1B3A5C", imageUrl: "", overlayColor: "rgba(0,0,0,0.3)", colorEnabled: true },
+  elements: [],
+  disclaimer: "Each office is independently owned and operated.",
+  disclaimerStyle: { fontSize: 8, color: "rgba(255,255,255,0.55)", fontFamily: "sans-serif" },
+};
 
 /* ── Helpers ── */
 
@@ -161,7 +175,11 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
   const [templateType, setTemplateType] = useState<"brokerage" | "monthly">(initialData?.type || "brokerage");
   const [brokerageId, setBrokerageId] = useState<string>(initialData?.brokerage_id || "");
 
-  // Design state
+  // Front/Back tab (monthly templates only)
+  const [activeTab, setActiveTab] = useState<"front" | "back">("back");
+  const isMonthly = templateType === "monthly";
+
+  // Back design state (existing — the brokerage panel or back of postcard)
   const [bgColor, setBgColor] = useState(initialData?.design?.background.color || "#1B3A5C");
   const [bgImage, setBgImage] = useState(initialData?.design?.background.imageUrl || "");
   const [overlayColor, setOverlayColor] = useState(initialData?.design?.background.overlayColor || "rgba(0,0,0,0.3)");
@@ -172,6 +190,30 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
   const [disclaimerColor, setDisclaimerColor] = useState(initialData?.design?.disclaimerStyle?.color || "rgba(255,255,255,0.55)");
   const [disclaimerFont, setDisclaimerFont] = useState<FontFamilyOption>(initialData?.design?.disclaimerStyle?.fontFamily || "sans-serif");
 
+  // Front design state (monthly templates — the front face of the 6x9 postcard)
+  const initFront = initialData?.frontDesign || DEFAULT_FRONT_DESIGN;
+  const [frontBgColor, setFrontBgColor] = useState(initFront.background.color);
+  const [frontBgImage, setFrontBgImage] = useState(initFront.background.imageUrl);
+  const [frontOverlayColor, setFrontOverlayColor] = useState(initFront.background.overlayColor);
+  const [frontColorEnabled, setFrontColorEnabled] = useState(initFront.background.colorEnabled !== false);
+  const [frontElements, setFrontElements] = useState<DesignElement[]>(initFront.elements || []);
+
+  // Active design: route to front or back state based on activeTab
+  const isFront = activeTab === "front" && isMonthly;
+  const curBgColor = isFront ? frontBgColor : bgColor;
+  const setCurBgColor = isFront ? setFrontBgColor : setBgColor;
+  const curBgImage = isFront ? frontBgImage : bgImage;
+  const setCurBgImage = isFront ? setFrontBgImage : setBgImage;
+  const curOverlayColor = isFront ? frontOverlayColor : overlayColor;
+  const setCurOverlayColor = isFront ? setFrontOverlayColor : setOverlayColor;
+  const curColorEnabled = isFront ? frontColorEnabled : colorEnabled;
+  const setCurColorEnabled = isFront ? setFrontColorEnabled : setColorEnabled;
+  const curElements = isFront ? frontElements : elements;
+  const setCurElements = isFront ? setFrontElements : setElements;
+
+  // Canvas design basis: front = 900px (full 6x9), back = 675px (4.5" panel)
+  const designBasis = isFront ? 900 : 675;
+
   // Interaction
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -179,17 +221,17 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
   const [resizing, setResizing] = useState<{ id: string; startX: number; startY: number; startW: number; startH: number; corner: string } | null>(null);
   const [scale, setScale] = useState(1);
 
-  const selected = elements.find((el) => el.id === selectedId) || null;
+  const selected = curElements.find((el) => el.id === selectedId) || null;
 
-  // Keep scale in sync with canvas width (design basis = 675px for 4.5" panel at 150dpi)
+  // Keep scale in sync with canvas width
   useEffect(() => {
     function sync() {
-      if (canvasRef.current) setScale(canvasRef.current.offsetWidth / 675);
+      if (canvasRef.current) setScale(canvasRef.current.offsetWidth / designBasis);
     }
     sync();
     window.addEventListener("resize", sync);
     return () => window.removeEventListener("resize", sync);
-  }, [open]);
+  }, [open, activeTab, designBasis]);
 
   // Reset state when initialData changes
   useEffect(() => {
@@ -198,6 +240,8 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
     setSeason(initialData?.season || "any");
     setTemplateType(initialData?.type || "brokerage");
     setBrokerageId(initialData?.brokerage_id || "");
+    setActiveTab(initialData?.type === "monthly" ? "front" : "back");
+    // Back design
     setBgColor(initialData?.design?.background.color || "#1B3A5C");
     setBgImage(initialData?.design?.background.imageUrl || "");
     setOverlayColor(initialData?.design?.background.overlayColor || "rgba(0,0,0,0.3)");
@@ -207,6 +251,13 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
     setDisclaimerFontSize(initialData?.design?.disclaimerStyle?.fontSize || 8);
     setDisclaimerColor(initialData?.design?.disclaimerStyle?.color || "rgba(255,255,255,0.55)");
     setDisclaimerFont(initialData?.design?.disclaimerStyle?.fontFamily || "sans-serif");
+    // Front design
+    const fd = initialData?.frontDesign || DEFAULT_FRONT_DESIGN;
+    setFrontBgColor(fd.background.color);
+    setFrontBgImage(fd.background.imageUrl);
+    setFrontOverlayColor(fd.background.overlayColor);
+    setFrontColorEnabled(fd.background.colorEnabled !== false);
+    setFrontElements(fd.elements || []);
     setSelectedId(null);
   }, [initialData]);
 
@@ -227,28 +278,28 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
     e.stopPropagation();
     e.preventDefault();
     const pos = canvasPos(e);
-    const el = elements.find((x) => x.id === id);
+    const el = curElements.find((x) => x.id === id);
     if (!el) return;
     setDragging({ id, offsetX: pos.x - el.x, offsetY: pos.y - el.y });
     setSelectedId(id);
-  }, [elements, canvasPos]);
+  }, [curElements, canvasPos]);
 
   const onResizeDown = useCallback((e: React.MouseEvent, id: string, corner: string) => {
     e.stopPropagation();
     e.preventDefault();
     const pos = canvasPos(e);
-    const el = elements.find((x) => x.id === id);
+    const el = curElements.find((x) => x.id === id);
     if (!el) return;
     setResizing({ id, startX: pos.x, startY: pos.y, startW: el.width, startH: el.height, corner });
     setSelectedId(id);
-  }, [elements, canvasPos]);
+  }, [curElements, canvasPos]);
 
   const onCanvasMove = useCallback((e: React.MouseEvent) => {
     if (resizing) {
       const pos = canvasPos(e);
       const dx = pos.x - resizing.startX;
       const dy = pos.y - resizing.startY;
-      setElements((prev) =>
+      setCurElements((prev) =>
         prev.map((el) => {
           if (el.id !== resizing.id) return el;
           const newW = Math.max(2, Math.min(100, resizing.startW + dx));
@@ -261,7 +312,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
     }
     if (!dragging) return;
     const pos = canvasPos(e);
-    setElements((prev) =>
+    setCurElements((prev) =>
       prev.map((el) =>
         el.id === dragging.id
           ? {
@@ -284,7 +335,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
       text: "New text", fontSize: 18, fontColor: "#FFFFFF",
       fontWeight: "normal", fontStyle: "normal", textAlign: "left", fontFamily: "sans-serif",
     };
-    setElements((p) => [...p, el]);
+    setCurElements((p) => [...p, el]);
     setSelectedId(el.id);
   }
 
@@ -316,14 +367,14 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
           const el: DesignElement = {
             id: genId(), type: "image", x: 10, y: 10, width: 30, height: Math.max(2, Math.min(80, fittedPct)), src: url, objectFit: "contain",
           };
-          setElements((p) => [...p, el]);
+          setCurElements((p) => [...p, el]);
           setSelectedId(el.id);
         };
         img.onerror = () => {
           const el: DesignElement = {
             id: genId(), type: "image", x: 10, y: 10, width: 30, height: 20, src: url, objectFit: "contain",
           };
-          setElements((p) => [...p, el]);
+          setCurElements((p) => [...p, el]);
           setSelectedId(el.id);
         };
         img.src = url;
@@ -336,16 +387,16 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
   }
 
   function deleteEl(id: string) {
-    setElements((p) => p.filter((x) => x.id !== id));
+    setCurElements((p) => p.filter((x) => x.id !== id));
     if (selectedId === id) setSelectedId(null);
   }
 
   function updateEl(id: string, u: Partial<DesignElement>) {
-    setElements((p) => p.map((el) => (el.id === id ? { ...el, ...u } : el)));
+    setCurElements((p) => p.map((el) => (el.id === id ? { ...el, ...u } : el)));
   }
 
   function fitImageHeight(id: string) {
-    const el = elements.find((e) => e.id === id);
+    const el = curElements.find((e) => e.id === id);
     if (!el || el.type !== "image" || !el.src || !canvasRef.current) return;
     const img = new window.Image();
     img.onload = () => {
@@ -361,10 +412,10 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
   }
 
   function duplicateEl(id: string) {
-    const src = elements.find((el) => el.id === id);
+    const src = curElements.find((el) => el.id === id);
     if (!src) return;
     const clone: DesignElement = { ...src, id: genId(), x: Math.min(src.x + 3, 90), y: Math.min(src.y + 3, 90) };
-    setElements((p) => [...p, clone]);
+    setCurElements((p) => [...p, clone]);
     setSelectedId(clone.id);
   }
 
@@ -418,14 +469,14 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
         const el: DesignElement = {
           id: genId(), type: "image", x: 5, y: 5, width: 35, height: Math.max(2, Math.min(80, fittedPct)), src: url, objectFit: "contain",
         };
-        setElements((p) => [...p, el]);
+        setCurElements((p) => [...p, el]);
         setSelectedId(el.id);
       };
       img.onerror = () => {
         const el: DesignElement = {
           id: genId(), type: "image", x: 5, y: 5, width: 35, height: 15, src: url, objectFit: "contain",
         };
-        setElements((p) => [...p, el]);
+        setCurElements((p) => [...p, el]);
         setSelectedId(el.id);
       };
       img.src = url;
@@ -445,7 +496,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
     setUploadingBanner(true);
     try {
       const url = await uploadFile(file);
-      setBgImage(url);
+      setCurBgImage(url);
       toast.success("Background banner set");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to upload banner");
@@ -470,11 +521,11 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
   function addSocialIcon(name: string) {
     const src = SOCIAL_ICONS[name];
     if (!src) return;
-    const existingIcons = elements.filter((e) => e.type === "image" && e.y >= 65 && e.width <= 10).length;
+    const existingIcons = curElements.filter((e) => e.type === "image" && e.y >= 65 && e.width <= 10).length;
     const el: DesignElement = {
       id: genId(), type: "image", x: 5 + existingIcons * 8, y: 70, width: 6, height: 8, src, objectFit: "contain",
     };
-    setElements((p) => [...p, el]);
+    setCurElements((p) => [...p, el]);
     setSelectedId(el.id);
   }
 
@@ -494,7 +545,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
     const el: DesignElement = {
       id: genId(), type: "image", x: 60, y: 75, width: 12, height: 15, src, objectFit: "contain",
     };
-    setElements((p) => [...p, el]);
+    setCurElements((p) => [...p, el]);
     setSelectedId(el.id);
   }
 
@@ -505,7 +556,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
     if (!file) return;
     try {
       const url = await uploadFile(file);
-      setBgImage(url);
+      setCurBgImage(url);
       toast.success("Background uploaded");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to upload background");
@@ -518,15 +569,19 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
     if (!isAgent && !name.trim()) { toast.error("Enter a template name"); return; }
     setSaving(true);
     try {
-      const design: DesignConfig = {
+      const backDesign: DesignConfig = {
         background: { color: bgColor, imageUrl: bgImage, overlayColor, colorEnabled },
         elements,
         disclaimer,
         disclaimerStyle: { fontSize: disclaimerFontSize, color: disclaimerColor, fontFamily: disclaimerFont },
       };
+      const frontDesign: DesignConfig = {
+        background: { color: frontBgColor, imageUrl: frontBgImage, overlayColor: frontOverlayColor, colorEnabled: frontColorEnabled },
+        elements: frontElements,
+        disclaimer: "",
+      };
       if (isAgent) {
-        // Agent mode: just submit the design config
-        await onSubmit({ design });
+        await onSubmit({ design: backDesign });
       } else {
         await onSubmit({
           ...(initialData?.id ? { id: initialData.id } : {}),
@@ -536,8 +591,8 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
           season,
           type: templateType,
           brokerage_id: templateType === "brokerage" && brokerageId ? brokerageId : null,
-          front_html: "",
-          back_html: JSON.stringify(design),
+          front_html: isMonthly ? JSON.stringify(frontDesign) : "",
+          back_html: JSON.stringify(backDesign),
         });
       }
       onClose();
@@ -595,8 +650,26 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
                 </SelectContent>
               </Select>
             )}
+            {isMonthly && (
+              <div className="flex rounded-md border overflow-hidden">
+                <button
+                  className={`px-3 py-1 text-xs font-medium transition-colors ${activeTab === "front" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+                  onClick={() => { setActiveTab("front"); setSelectedId(null); setEditingId(null); }}
+                >
+                  Front
+                </button>
+                <button
+                  className={`px-3 py-1 text-xs font-medium transition-colors border-l ${activeTab === "back" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+                  onClick={() => { setActiveTab("back"); setSelectedId(null); setEditingId(null); }}
+                >
+                  Back
+                </button>
+              </div>
+            )}
             <span className="text-xs text-muted-foreground whitespace-nowrap">
-              {templateType === "brokerage" ? "Top-right panel · 4.5\" × 3\"" : "Top-left + Front"}
+              {isMonthly
+                ? (isFront ? "Front face · 6\" × 9\"" : "Back panel · 4.5\" × 3\"")
+                : "Top-right panel · 4.5\" × 3\""}
             </span>
             <Select value={season} onValueChange={setSeason}>
               <SelectTrigger className="w-24 h-8 text-sm"><SelectValue /></SelectTrigger>
@@ -630,28 +703,31 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
 
       {/* ── Body ── */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Canvas area */}
-        <div className="flex-1 flex items-center justify-center p-6 bg-muted/30 overflow-auto">
+        {/* Canvas area — live preview */}
+        <div className="flex-1 min-w-0 flex flex-col items-center justify-center p-6 bg-muted/30 overflow-auto">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+            {isMonthly ? (isFront ? "Front — Live Preview" : "Back Panel — Live Preview") : "Live Preview"}
+          </p>
           <div
             ref={canvasRef}
-            className="relative rounded-lg shadow-xl overflow-hidden select-none"
-            style={{ aspectRatio: "3/2", width: "min(70vw, 675px)", backgroundColor: colorEnabled ? bgColor : "transparent" }}
+            className="relative rounded-lg shadow-xl overflow-hidden select-none border"
+            style={{ aspectRatio: "3/2", width: isFront ? "clamp(400px, 65vw, 900px)" : "clamp(400px, 60vw, 675px)", backgroundColor: curColorEnabled ? curBgColor : "#f0f0f0" }}
             onMouseMove={onCanvasMove}
             onMouseUp={onCanvasUp}
             onMouseLeave={onCanvasUp}
             onClick={() => { setSelectedId(null); setEditingId(null); }}
           >
             {/* Bg image */}
-            {bgImage && (
-              <img src={bgImage} alt="" className="absolute inset-0 h-full w-full object-cover pointer-events-none" style={{ opacity: colorEnabled ? 0.3 : 1 }} />
+            {curBgImage && (
+              <img src={curBgImage} alt="" className="absolute inset-0 h-full w-full object-cover pointer-events-none" style={{ opacity: curColorEnabled ? 0.3 : 1 }} />
             )}
             {/* Overlay (only when color enabled) */}
-            {colorEnabled && (
-              <div className="absolute inset-0 pointer-events-none" style={{ backgroundColor: overlayColor }} />
+            {curColorEnabled && (
+              <div className="absolute inset-0 pointer-events-none" style={{ backgroundColor: curOverlayColor }} />
             )}
 
             {/* Elements */}
-            {elements.map((el) => {
+            {curElements.map((el) => {
               const isEditing = editingId === el.id;
               const textStyle: React.CSSProperties = el.type === "text" ? {
                 fontSize: `${(el.fontSize || 16) * scale}px`,
@@ -809,15 +885,15 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
           <div className="space-y-3">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Background</p>
             <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={colorEnabled} onChange={(e) => setColorEnabled(e.target.checked)} className="rounded" />
+              <input type="checkbox" checked={curColorEnabled} onChange={(e) => setCurColorEnabled(e.target.checked)} className="rounded" />
               <span className="text-xs">Color tint &amp; overlay</span>
             </label>
-            {colorEnabled && (
+            {curColorEnabled && (
               <div className="space-y-1.5">
                 <Label className="text-xs">Color</Label>
                 <div className="flex gap-2">
-                  <input type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} className="h-8 w-10 rounded border cursor-pointer" />
-                  <Input value={bgColor} onChange={(e) => setBgColor(e.target.value)} className="flex-1 text-xs h-8" />
+                  <input type="color" value={curBgColor} onChange={(e) => setCurBgColor(e.target.value)} className="h-8 w-10 rounded border cursor-pointer" />
+                  <Input value={curBgColor} onChange={(e) => setCurBgColor(e.target.value)} className="flex-1 text-xs h-8" />
                 </div>
               </div>
             )}
@@ -825,21 +901,21 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
               <Label className="text-xs">Image</Label>
               <Button variant="outline" size="sm" className="w-full text-xs" onClick={uploadBg}>
                 <ImagePlus className="mr-1.5 h-3.5 w-3.5" />
-                {bgImage ? "Replace" : "Upload"}
+                {curBgImage ? "Replace" : "Upload"}
               </Button>
-              {bgImage && (
+              {curBgImage && (
                 <div className="relative">
-                  <img src={bgImage} alt="" className="h-14 w-full object-cover rounded border" />
-                  <Button variant="destructive" size="icon" className="absolute top-0.5 right-0.5 h-5 w-5" onClick={() => setBgImage("")}>
+                  <img src={curBgImage} alt="" className="h-14 w-full object-cover rounded border" />
+                  <Button variant="destructive" size="icon" className="absolute top-0.5 right-0.5 h-5 w-5" onClick={() => setCurBgImage("")}>
                     <X className="h-3 w-3" />
                   </Button>
                 </div>
               )}
             </div>
-            {colorEnabled && (
+            {curColorEnabled && (
               <div className="space-y-1.5">
                 <Label className="text-xs">Overlay</Label>
-                <Input value={overlayColor} onChange={(e) => setOverlayColor(e.target.value)} placeholder="rgba(0,0,0,0.3)" className="text-xs h-8" />
+                <Input value={curOverlayColor} onChange={(e) => setCurOverlayColor(e.target.value)} placeholder="rgba(0,0,0,0.3)" className="text-xs h-8" />
               </div>
             )}
           </div>
@@ -1081,7 +1157,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
                       onChange={(e) => {
                         if (e.target.checked) {
                           // Clear any existing team_logo placeholder first
-                          setElements((prev) => prev.map((el) =>
+                          setCurElements((prev) => prev.map((el) =>
                             el.id === selected.id
                               ? { ...el, placeholder: "team_logo" as const }
                               : el.placeholder === "team_logo" ? { ...el, placeholder: undefined } : el
@@ -1164,12 +1240,12 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
           {/* Elements list */}
           <div className="space-y-1.5">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Elements ({elements.length})
+              Elements ({curElements.length})
             </p>
-            {elements.length === 0 && (
+            {curElements.length === 0 && (
               <p className="text-xs text-muted-foreground">Click &quot;Text&quot; or &quot;Image&quot; above to add elements to the canvas.</p>
             )}
-            {elements.map((el) => (
+            {curElements.map((el) => (
               <div
                 key={el.id}
                 className={`flex items-center gap-2 rounded px-2 py-1.5 text-xs cursor-pointer transition-colors ${

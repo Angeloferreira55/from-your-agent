@@ -1,63 +1,294 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { CreditCard } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { CreditCard, Plus, Settings, Loader2 } from "lucide-react";
+
+interface PaymentMethod {
+  brand: string;
+  last4: string;
+  exp_month: number;
+  exp_year: number;
+}
+
+interface BillingRecord {
+  id: string;
+  description: string;
+  total_cards: number;
+  mailed_cards: number;
+  unmailed_cards: number;
+  total: number;
+  status: string;
+  billing_date: string;
+  stripe_invoice_id: string | null;
+}
+
+interface PricingTier {
+  name: string;
+  min_cards: number;
+  max_cards: number | null;
+  price_per_mailed: number;
+  price_per_unmailed: number;
+}
+
+interface BillingData {
+  subscription_status: string;
+  payment_method: PaymentMethod | null;
+  billing_records: BillingRecord[];
+  current_month_estimate: { unbilled_cards: number };
+  pricing_tiers: PricingTier[];
+}
 
 export default function BillingPage() {
+  const searchParams = useSearchParams();
+  const [data, setData] = useState<BillingData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get("success") === "true") {
+      toast.success("Payment method added successfully!");
+    }
+    if (searchParams.get("canceled") === "true") {
+      toast.info("Setup canceled. You can add a payment method anytime.");
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    fetch("/api/billing")
+      .then((r) => r.json())
+      .then(setData)
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function handleAddPayment() {
+    setActionLoading(true);
+    try {
+      const res = await fetch("/api/stripe/setup", { method: "POST" });
+      const { url, error } = await res.json();
+      if (error) {
+        toast.error(error);
+        return;
+      }
+      window.location.href = url;
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function handleManagePayment() {
+    setActionLoading(true);
+    try {
+      const res = await fetch("/api/stripe/portal", { method: "POST" });
+      const { url, error } = await res.json();
+      if (error) {
+        toast.error(error);
+        return;
+      }
+      window.location.href = url;
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  const statusBadge = (status: string) => {
+    switch (status) {
+      case "paid":
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Paid</Badge>;
+      case "pending":
+        return <Badge variant="outline">Pending</Badge>;
+      case "failed":
+        return <Badge variant="destructive">Failed</Badge>;
+      case "refunded":
+        return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100">Refunded</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Billing</h1>
         <p className="text-muted-foreground">
-          Manage your subscription and view payment history
+          Manage your payment method and view billing history
         </p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
+        {/* Payment Method */}
         <Card>
           <CardHeader>
-            <CardTitle>Current Plan</CardTitle>
-            <CardDescription>Your subscription details</CardDescription>
+            <CardTitle>Payment Method</CardTitle>
+            <CardDescription>
+              {data?.payment_method
+                ? "Your card on file"
+                : "Add a card to get started"}
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="rounded-lg border p-4">
-              <p className="text-sm font-medium">Pay Per Card</p>
-              <p className="mt-1 text-2xl font-bold">$1.25<span className="text-sm font-normal text-muted-foreground"> / mailed card</span></p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Volume discounts available at 100+ and 500+ cards
-              </p>
-            </div>
+            {data?.payment_method ? (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 rounded-lg border p-4">
+                  <CreditCard className="h-8 w-8 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium capitalize">
+                      {data.payment_method.brand} ending in {data.payment_method.last4}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Expires {data.payment_method.exp_month}/{data.payment_method.exp_year}
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleManagePayment}
+                  disabled={actionLoading}
+                >
+                  {actionLoading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Settings className="mr-2 h-4 w-4" />
+                  )}
+                  Manage Payment Method
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex flex-col items-center rounded-lg border border-dashed p-6">
+                  <CreditCard className="mb-2 h-8 w-8 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">No payment method on file</p>
+                </div>
+                <Button
+                  className="w-full bg-orange-600 hover:bg-orange-700"
+                  onClick={handleAddPayment}
+                  disabled={actionLoading}
+                >
+                  {actionLoading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Plus className="mr-2 h-4 w-4" />
+                  )}
+                  Add Payment Method
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
 
+        {/* Pricing */}
         <Card>
           <CardHeader>
-            <CardTitle>This Month</CardTitle>
-            <CardDescription>Current billing period</CardDescription>
+            <CardTitle>Pricing</CardTitle>
+            <CardDescription>Pay per card — no monthly fees</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Mailed cards</span>
-                <span className="font-medium">0</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Estimated cost</span>
-                <span className="font-medium">$0.00</span>
-              </div>
+            <div className="space-y-3">
+              {(data?.pricing_tiers || []).map((tier) => (
+                <div key={tier.name} className="flex items-center justify-between rounded-lg border p-3">
+                  <div>
+                    <p className="text-sm font-medium">{tier.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {tier.min_cards}–{tier.max_cards ?? "∞"} cards/month
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold">${tier.price_per_mailed.toFixed(2)}</p>
+                    <p className="text-xs text-muted-foreground">per mailed card</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
       </div>
 
+      {/* This Month */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Current Period</CardTitle>
+          <CardDescription>Unbilled cards pending next invoice</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-8">
+            <div>
+              <p className="text-3xl font-bold">{data?.current_month_estimate.unbilled_cards ?? 0}</p>
+              <p className="text-sm text-muted-foreground">unbilled cards</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Payment History */}
       <Card>
         <CardHeader>
           <CardTitle>Payment History</CardTitle>
           <CardDescription>Your recent invoices and payments</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col items-center py-8">
-            <CreditCard className="mb-2 h-8 w-8 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">No payment history yet</p>
-          </div>
+          {data?.billing_records && data.billing_records.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead className="text-center">Cards</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {data.billing_records.map((record) => (
+                  <TableRow key={record.id}>
+                    <TableCell className="text-sm">
+                      {new Date(record.billing_date).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell className="text-sm">{record.description}</TableCell>
+                    <TableCell className="text-center text-sm">
+                      {record.mailed_cards} mailed
+                      {record.unmailed_cards > 0 && `, ${record.unmailed_cards} unmailed`}
+                    </TableCell>
+                    <TableCell className="text-right font-medium">
+                      ${record.total.toFixed(2)}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {statusBadge(record.status)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="flex flex-col items-center py-8">
+              <CreditCard className="mb-2 h-8 w-8 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">No payment history yet</p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

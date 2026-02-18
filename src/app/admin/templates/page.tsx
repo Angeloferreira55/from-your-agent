@@ -154,9 +154,9 @@ export default function AdminTemplatesPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Brokerage Panel Templates</h1>
+            <h1 className="text-2xl font-bold tracking-tight">Postcard Templates</h1>
             <p className="text-muted-foreground">
-              Top-right corner of the postcard back &middot; {templates.length} template{templates.length !== 1 ? "s" : ""}
+              Brokerage panels &amp; monthly postcard designs &middot; {templates.length} template{templates.length !== 1 ? "s" : ""}
             </p>
           </div>
           <Button onClick={handleCreate}>
@@ -179,23 +179,30 @@ export default function AdminTemplatesPage() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {templates.map((template) => {
               const design = parseDesign(template.back_html);
+              const frontDesign = template.front_html ? parseDesign(template.front_html) : null;
+              const isMonthly = template.type === "monthly";
+              const showDesign = isMonthly && frontDesign ? frontDesign : design;
               return (
                 <Card key={template.id} className="overflow-hidden">
+                  {/* Label for monthly templates */}
+                  {isMonthly && frontDesign && (
+                    <div className="bg-muted px-3 py-1 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Front</div>
+                  )}
                   {/* Visual preview */}
                   <div
                     className="relative overflow-hidden"
                     style={{
                       aspectRatio: "3/2",
-                      backgroundColor: design?.background.colorEnabled !== false ? (design?.background.color || "#1B3A5C") : "transparent",
+                      backgroundColor: showDesign?.background.colorEnabled !== false ? (showDesign?.background.color || "#1B3A5C") : "transparent",
                     }}
                   >
-                    {design?.background.imageUrl && (
-                      <img src={design.background.imageUrl} alt="" className="absolute inset-0 h-full w-full object-cover" style={{ opacity: design.background.colorEnabled !== false ? 0.3 : 1 }} />
+                    {showDesign?.background.imageUrl && (
+                      <img src={showDesign.background.imageUrl} alt="" className="absolute inset-0 h-full w-full object-cover" style={{ opacity: showDesign.background.colorEnabled !== false ? 0.3 : 1 }} />
                     )}
-                    {design && design.background.colorEnabled !== false && (
-                      <div className="absolute inset-0" style={{ backgroundColor: design.background.overlayColor }} />
+                    {showDesign && showDesign.background.colorEnabled !== false && (
+                      <div className="absolute inset-0" style={{ backgroundColor: showDesign.background.overlayColor }} />
                     )}
-                    {design?.elements.map((el) => (
+                    {showDesign?.elements.map((el) => (
                       <div
                         key={el.id}
                         className="absolute"
@@ -230,7 +237,7 @@ export default function AdminTemplatesPage() {
                         )}
                       </div>
                     ))}
-                    {!design && (
+                    {!showDesign && (
                       <div className="absolute inset-0 flex items-center justify-center">
                         <FileImage className="h-8 w-8 text-white/40" />
                       </div>
@@ -309,6 +316,7 @@ export default function AdminTemplatesPage() {
           type: (editingTemplate.type as "brokerage" | "monthly") || "brokerage",
           brokerage_id: editingTemplate.brokerage_id,
           design: parseDesign(editingTemplate.back_html) || undefined,
+          frontDesign: editingTemplate.front_html ? parseDesign(editingTemplate.front_html) || undefined : undefined,
         } : undefined}
       />
     </>

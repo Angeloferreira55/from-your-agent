@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Calendar, MapPin, Gift } from "lucide-react";
 
 export const metadata = {
-  title: "Upcoming Postcard — From Your Agent",
+  title: "Next Campaign — From Your Agent",
   description: "See this month's curated local merchant deal featured on every postcard.",
 };
 
@@ -202,11 +202,11 @@ export default function UpcomingPostcardPage() {
             Postcards Your Clients and Friends Will Enjoy
           </h2>
           <p className="mt-3 text-muted-foreground">
-            Every month features a new curated local deal — here&apos;s a sample of what goes out.
+            Every month features a new curated local deal or exclusive offer we negotiate for you.
           </p>
           <div className="mt-10">
             <img
-              src="/postcards-enjoy.png"
+              src="/add-a-heading.png"
               alt="Sample postcards your clients and friends will enjoy"
               className="mx-auto w-full max-w-3xl rounded-xl shadow-lg"
             />

@@ -26,17 +26,18 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl px-6 py-24 md:py-36">
           <div className="mx-auto max-w-3xl text-center">
             <h1 className="font-serif text-4xl font-bold tracking-tight text-[#1a1a2e] md:text-6xl md:leading-[1.15]">
-              Helping Real Estate Agents Turn{" "}
-              <span className="text-[#E8733A]">Relationships</span> Into{" "}
-              <span className="text-[#E8733A]">Consistent Closings</span>.
+              Own Your Market Through{" "}
+              <span className="text-[#E8733A]">Relationship Marketing</span>.{" "}
+              Stay Top of Mind. You Will Stay{" "}
+              <span className="text-[#E8733A]">Top of Market</span>.
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground md:text-xl">
               Turn Your Database Into Your #1 Lead Source.
             </p>
             <div className="mt-8">
               <img
-                src="/fya-banner.png"
-                alt="From Your Agent"
+                src="/postcards-enjoy.png"
+                alt="Sample postcards your clients and friends will enjoy"
                 className="mx-auto max-w-4xl w-full rounded-lg shadow-lg"
               />
             </div>
@@ -46,22 +47,21 @@ export default function HomePage() {
                   size="lg"
                   className="bg-[#E8733A] hover:bg-[#CF6430] text-white text-lg px-8"
                 >
-                  Subscribe Today
+                  Get Started
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
               <Link href="/how-it-works">
                 <Button size="lg" variant="outline" className="text-lg px-8">
-                  See How It Works
+                  See The Process
                 </Button>
               </Link>
             </div>
             <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
               {[
-                "No Sign Up Fees",
+                "Zero Setup Fees",
                 "No Contracts",
-                "No Commitments",
-                "No Minimums",
+                "Cancel Anytime",
               ].map((item) => (
                 <span key={item} className="flex items-center gap-1.5">
                   <CheckCircle2 className="h-4 w-4 text-[#059669]" />
@@ -77,7 +77,7 @@ export default function HomePage() {
       <section className="border-t bg-[#F7F8FA] py-24">
         <div className="mx-auto max-w-6xl px-6">
           <h2 className="font-serif text-center text-3xl font-bold tracking-tight text-[#1a1a2e] md:text-4xl">
-            How It Works
+            The Process
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-center text-muted-foreground">
             Four simple steps from sign-up to your contacts&apos; mailboxes
@@ -90,14 +90,14 @@ export default function HomePage() {
                 step: "1",
                 title: "Upload",
                 description:
-                  "Import your sphere of influence — past clients, prospects, friends & family. Upload via CSV or add manually.",
+                  "Import your contacts — past clients, prospects, friends & family. Upload via CSV or add manually.",
               },
               {
                 icon: Gift,
                 step: "2",
                 title: "Monthly Offers",
                 description:
-                  "Each month we curate an exclusive local merchant deal — restaurants, cafes, spas, gyms, bakeries, vetted professionals & more.",
+                  "Each month we curate an exclusive local merchant deal — dining, wellness, home services, entertainment & more.",
               },
               {
                 icon: Palette,
@@ -130,15 +130,6 @@ export default function HomePage() {
               </Card>
             ))}
           </div>
-
-          <div className="mt-10 text-center">
-            <Link href="/how-it-works">
-              <Button variant="link" className="text-[#E8733A]">
-                Learn more about how it works{" "}
-                <ArrowRight className="ml-1 h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
         </div>
       </section>
 
@@ -148,7 +139,7 @@ export default function HomePage() {
           <div className="grid items-center gap-12 md:grid-cols-2">
             <div>
               <h2 className="font-serif text-3xl font-bold tracking-tight text-[#1a1a2e] md:text-4xl">
-                Why From Your Agent?
+                Our Approach
               </h2>
               <p className="mt-4 text-muted-foreground">
                 Physical mail doesn&apos;t get deleted, swiped away, or lost in
@@ -198,55 +189,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ═══════════════ PAST PROMOTIONS GALLERY ═══════════════ */}
-      <section className="border-t bg-[#F7F8FA] py-24">
-        <div className="mx-auto max-w-6xl px-6">
-          <h2 className="font-serif text-center text-3xl font-bold tracking-tight text-[#1a1a2e] md:text-4xl">
-            See What Your Contacts Receive
-          </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-center text-muted-foreground">
-            Each month features new curated local deals. Here are some past
-            promotions.
-          </p>
-
-          <div className="mt-14">
-            <img
-              src="/add-a-heading.png"
-              alt="See what your contacts receive"
-              className="mx-auto w-full max-w-5xl rounded-lg shadow-lg"
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════ TRUST SECTION ═══════════════ */}
-      <section className="border-t bg-white py-20">
-        <div className="mx-auto max-w-4xl px-6 text-center">
-          <h2 className="font-serif text-3xl font-bold tracking-tight text-[#1a1a2e] md:text-4xl">
-            Trusted by Agents at the Nation&apos;s Top Brokerages
-          </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
-            Real estate professionals across the country use From Your Agent to
-            stay top of mind and grow their referral business.
-          </p>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-            {[
-              "No Sign Up Fees",
-              "No Contracts",
-              "No Commitments",
-              "No Minimums",
-            ].map((badge) => (
-              <span
-                key={badge}
-                className="rounded-full border border-[#E8733A]/20 bg-[#FFF5EE] px-5 py-2 text-sm font-medium text-[#E8733A]"
-              >
-                {badge}
-              </span>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ═══════════════ FINAL CTA ═══════════════ */}
       <section className="border-t bg-[#FFF5EE] py-20">
         <div className="mx-auto max-w-3xl px-6 text-center">
@@ -254,8 +196,9 @@ export default function HomePage() {
             Ready to grow your referral business?
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            Join hundreds of agents who stay top of mind with monthly postcards.
-            One referral pays for an entire year.
+            A single referral doesn&apos;t just pay for itself — it funds your entire marketing pipeline.
+            <br />
+            One closing covers 12 months of monthly mailers to 150 contacts.
           </p>
           <Link href="/signup">
             <Button
@@ -267,7 +210,7 @@ export default function HomePage() {
             </Button>
           </Link>
           <div className="mt-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-1 text-sm text-muted-foreground">
-            <span>No sign up fees</span>
+            <span>Zero setup fees</span>
             <span>·</span>
             <span>No contracts</span>
             <span>·</span>

@@ -60,7 +60,7 @@ const faqCategories = [
       },
       {
         q: "What's on the front of the postcard?",
-        a: "The front features curated local merchant deals — discounts at restaurants, cafes, spas, gyms, bakeries, vetted professionals and more. These are the same for all agents in a given month.",
+        a: "The front features curated local merchant deals — discounts on dining, wellness, home services, entertainment and more. These are the same for all agents in a given month.",
       },
       {
         q: "What's on the back?",
@@ -81,7 +81,7 @@ const faqCategories = [
     questions: [
       {
         q: "Where do the offers come from?",
-        a: "Our team curates exclusive deals from popular local merchants in your market. We focus on businesses your contacts will love — restaurants, cafes, spas, gyms, bakeries, and more.",
+        a: "Our team curates exclusive deals from handpicked local businesses in your market. We focus on places your contacts will love — dining, wellness, home services, entertainment and more.",
       },
       {
         q: "Are the offers the same for everyone?",

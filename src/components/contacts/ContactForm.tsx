@@ -18,7 +18,7 @@ interface ContactFormProps {
 }
 
 const RELATIONSHIP_TYPES = [
-  { value: "sphere", label: "Sphere of Influence" },
+  { value: "sphere", label: "Personal Network" },
   { value: "past_client", label: "Past Client" },
   { value: "prospect", label: "Prospect" },
   { value: "referral", label: "Referral" },

@@ -11,9 +11,37 @@ export const metadata = {
 export default function WhyPage() {
   return (
     <div>
+      {/* Why From Your Agent — Stats */}
+      <section className="bg-[#F5F7FA] pt-16 pb-10">
+        <div className="mx-auto max-w-4xl px-6">
+          <ul className="space-y-4">
+            <li className="flex items-start gap-3 text-sm text-muted-foreground">
+              <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#E8733A]" />
+              <span><strong>91%</strong> of agents never contact clients after closing, yet <strong>88%</strong> of those clients say they&apos;d use the same agent again — the drop-off is almost entirely a follow-up failure.</span>
+            </li>
+            <li className="flex items-start gap-3 text-sm text-muted-foreground">
+              <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#E8733A]" />
+              <span>Fewer than <strong>15%</strong> of past clients actually return or refer, despite intending to, because agents lose touch during the gap between transactions.</span>
+            </li>
+            <li className="flex items-start gap-3 text-sm text-muted-foreground">
+              <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#E8733A]" />
+              <span>Texting is the dominant channel (<strong>94%</strong> of Realtors use it), followed by phone (<strong>91%</strong>) and email (<strong>89%</strong>), but this is mostly during active deals — not post-closing nurture.</span>
+            </li>
+            <li className="flex items-start gap-3 text-sm text-muted-foreground">
+              <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#E8733A]" />
+              <span><strong>41%</strong> of an agent&apos;s business comes from repeat and referral clients (<strong>20%</strong> repeat, <strong>21%</strong> referral), and that share climbs past <strong>50%</strong> for agents with <strong>16+</strong> years of experience.</span>
+            </li>
+            <li className="flex items-start gap-3 text-sm text-muted-foreground">
+              <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#E8733A]" />
+              <span><strong>48%</strong> of salespeople never follow up even once, and <strong>44%</strong> quit after a single &quot;no&quot; — yet data shows conversions spike after <strong>5–8</strong> touches.</span>
+            </li>
+          </ul>
+        </div>
+      </section>
+
       {/* Referral Banner */}
       <section className="bg-[#F5F7FA]">
-        <div className="mx-auto max-w-5xl px-6 pt-16 pb-10">
+        <div className="mx-auto max-w-5xl px-6 pb-10">
           <img
             src="/referral-banner.png"
             alt="70% Referral — One Success Spreading to Many"
@@ -28,32 +56,32 @@ export default function WhyPage() {
           <div className="grid gap-10 md:grid-cols-3">
             <div>
               <h3 className="font-serif text-xl font-bold text-[#1a1a2e] mb-3">
-                Building Trust to Build Your Referrals
+                Relationships That Turn Into Revenue
               </h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#E8733A]" />Consumers trust referrals — not bus bench ads</li>
-                <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#E8733A]" />54% of buyers already knew their agent or got a referral</li>
-                <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#E8733A]" />Relationship marketing builds know, like &amp; trust</li>
+                <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#E8733A]" />Relationships convert better than billboards</li>
+                <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#E8733A]" />More than half of transactions start with familiarity or referral</li>
+                <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#E8733A]" />Repetition builds recognition. Recognition builds trust.</li>
               </ul>
             </div>
             <div>
               <h3 className="font-serif text-xl font-bold text-[#1a1a2e] mb-3">
-                You Are Losing 80% of Your Customers
+                Most of Your Past Clients Are Slipping Away
               </h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#E8733A]" />80% say they&apos;d use their agent again — only 20% do</li>
-                <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#E8733A]" />#1 reason: the agent didn&apos;t keep in touch</li>
-                <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#E8733A]" />Consistent contact is critical to your success</li>
+                <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#E8733A]" />Loyalty fades without connection</li>
+                <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#E8733A]" />The main reason? No consistent follow-up</li>
+                <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#E8733A]" />Long-term success comes from consistent communication</li>
               </ul>
             </div>
             <div>
               <h3 className="font-serif text-xl font-bold text-[#1a1a2e] mb-3">
-                Staying Top of Mind is the Key
+                The Agent They Remember Gets the Call
               </h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#E8733A]" />Touch your sphere 2–3 times per month</li>
-                <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#E8733A]" />Without contact, you lose business to someone else</li>
-                <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#E8733A]" />When they hear &quot;real estate&quot; they should think of YOU</li>
+                <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#E8733A]" />Maintain regular touchpoints with your audience</li>
+                <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#E8733A]" />Out of sight means replaced</li>
+                <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#E8733A]" />Be the first agent that comes to mind</li>
               </ul>
             </div>
           </div>
@@ -70,8 +98,8 @@ export default function WhyPage() {
           />
 
           <p className="mt-10 text-lg text-gray-600 text-center max-w-2xl">
-            Because referrals are the name of the game, we make direct mail
-            marketing for your clients and friends simple, seamless, and
+            Your past clients are your best source of future business. We make direct mail
+            marketing for your sphere simple, seamless, and
             effective.
           </p>
 

@@ -52,7 +52,7 @@ const included = [
 const faqs = [
   {
     q: "What's the difference between mailed and unmailed pricing?",
-    a: "Mailed price applies to postcards that are printed, stamped, and delivered. Unmailed price applies when you opt in to a campaign but choose not to mail to certain contacts — you're still charged a smaller amount for the personalization and offer slot reserved for those contacts.",
+    a: "Mailed price applies to postcards that are printed, stamped, and mailed to your database. Unmailed price applies when you decide to not mail those through us. We will ship them directly to you (Shipping fee will vary depending on the quantity starting at $9.99 up to 100 cards).",
   },
   {
     q: "How does volume pricing work?",
@@ -168,9 +168,9 @@ export default function PricingPage() {
       {/* CTA */}
       <section className="border-t bg-[#FFF5EE] py-16">
         <div className="mx-auto max-w-3xl px-6 text-center">
-          <h2 className="font-serif text-3xl font-bold text-[#1a1a2e]">One referral pays for an entire year</h2>
+          <h2 className="font-serif text-3xl font-bold text-[#1a1a2e]">A single closing covers years of marketing</h2>
           <p className="mt-3 text-lg text-muted-foreground">
-            The average commission on a single referral easily covers the cost of mailing postcards to your entire sphere for 12 months.
+            The average commission on one referral easily covers the cost of mailing 150 postcards per month to your entire database for 12 months.
           </p>
           <Link href="/signup">
             <Button size="lg" className="mt-6 bg-[#E8733A] hover:bg-[#CF6430] text-white text-lg px-8">

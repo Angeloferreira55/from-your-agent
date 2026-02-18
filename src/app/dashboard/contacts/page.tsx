@@ -79,7 +79,7 @@ export default function ContactsPage() {
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Contacts</h1>
             <p className="text-muted-foreground">
-              Manage your sphere of influence database
+              Manage your client list
             </p>
           </div>
         </div>

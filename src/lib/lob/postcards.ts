@@ -1,5 +1,6 @@
 import { lobPostcards } from "./client";
 import { renderTemplate, buildMergeVariables } from "./templates";
+import { resolveHtml, LOB_DIMENSIONS } from "./render-design";
 import type { PostcardSize } from "@lob/lob-typescript-sdk";
 
 interface CreatePostcardParams {
@@ -58,8 +59,12 @@ export async function createPostcard({
   postcardDbId,
 }: CreatePostcardParams) {
   const mergeVars = buildMergeVariables(agent, contact, offer);
-  const frontHtml = renderTemplate(template.front_html, mergeVars);
-  const backHtml = renderTemplate(template.back_html, mergeVars);
+  const sizeKey = (template.size || "6x9") as keyof typeof LOB_DIMENSIONS;
+  const dims = LOB_DIMENSIONS[sizeKey] || LOB_DIMENSIONS["6x9"];
+
+  // Resolve JSON DesignConfig → print HTML, then apply merge variables
+  const frontHtml = renderTemplate(resolveHtml(template.front_html, dims.front), mergeVars);
+  const backHtml = renderTemplate(resolveHtml(template.back_html, dims.back), mergeVars);
 
   // Map our sizes to Lob sizes
   const sizeMap: Record<string, PostcardSize> = {

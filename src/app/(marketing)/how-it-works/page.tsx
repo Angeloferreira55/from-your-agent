@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 export const metadata = {
-  title: "How It Works — From Your Agent",
+  title: "The Process — From Your Agent",
   description: "Learn how From Your Agent helps real estate agents stay top of mind with monthly postcards.",
 };
 
@@ -24,7 +24,7 @@ const steps = [
     number: "01",
     title: "Upload Your Database",
     description:
-      "Import your sphere of influence — past clients, prospects, friends, and family members. Upload a CSV from any CRM, or add contacts manually. Our smart column mapping auto-detects fields.",
+      "Import your contacts — past clients, prospects, friends, and family members. Upload a CSV from any CRM, or add contacts manually. Our smart column mapping auto-detects fields.",
     details: [
       "CSV import with auto-column mapping",
       "Manual contact entry",
@@ -50,7 +50,7 @@ const steps = [
     number: "03",
     title: "We Match Local Offers",
     description:
-      "Each month, our team curates an exclusive deal from a popular local merchant — restaurants, cafes, spas, gyms, bakeries, vetted professionals and more. Everyone receives the same great offer.",
+      "Each month, our team curates an exclusive deal from a handpicked local business — dining, wellness, home services, entertainment and more. Everyone receives the same great offer.",
     details: [
       "Curated local merchant deals",
       "Same great offer for all your contacts",
@@ -106,7 +106,7 @@ export default function HowItWorksPage() {
       <section className="bg-[#FFF5EE] py-20">
         <div className="mx-auto max-w-3xl px-6 text-center">
           <h1 className="font-serif text-4xl font-bold tracking-tight text-[#1a1a2e] md:text-5xl">
-            How It Works
+            The Process
           </h1>
           <p className="mt-4 text-lg text-muted-foreground">
             Six simple steps from signup to your contacts&apos; mailboxes.
