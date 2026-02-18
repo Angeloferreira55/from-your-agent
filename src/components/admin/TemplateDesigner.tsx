@@ -196,10 +196,10 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
       setElements((prev) =>
         prev.map((el) => {
           if (el.id !== resizing.id) return el;
-          const newW = Math.max(5, Math.min(100, resizing.startW + dx));
-          if (el.type === "text") return { ...el, width: Math.round(newW) };
-          const newH = Math.max(5, Math.min(100, resizing.startH + dy));
-          return { ...el, width: Math.round(newW), height: Math.round(newH) };
+          const newW = Math.max(2, Math.min(100, resizing.startW + dx));
+          if (el.type === "text") return { ...el, width: +newW.toFixed(1) };
+          const newH = Math.max(2, Math.min(100, resizing.startH + dy));
+          return { ...el, width: +newW.toFixed(1), height: +newH.toFixed(1) };
         })
       );
       return;
@@ -250,11 +250,28 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
         });
         if (!res.ok) throw new Error("Upload failed");
         const { url } = await res.json();
-        const el: DesignElement = {
-          id: genId(), type: "image", x: 10, y: 10, width: 30, height: 25, src: url, objectFit: "contain",
+        // Auto-fit height from image ratio
+        const img = new window.Image();
+        img.onload = () => {
+          const canvasW = canvasRef.current?.offsetWidth || 675;
+          const canvasH = canvasRef.current?.offsetHeight || 450;
+          const elPxW = (30 / 100) * canvasW;
+          const fittedPxH = elPxW * (img.naturalHeight / img.naturalWidth);
+          const fittedPct = +((fittedPxH / canvasH) * 100).toFixed(1);
+          const el: DesignElement = {
+            id: genId(), type: "image", x: 10, y: 10, width: 30, height: Math.max(2, Math.min(80, fittedPct)), src: url, objectFit: "contain",
+          };
+          setElements((p) => [...p, el]);
+          setSelectedId(el.id);
         };
-        setElements((p) => [...p, el]);
-        setSelectedId(el.id);
+        img.onerror = () => {
+          const el: DesignElement = {
+            id: genId(), type: "image", x: 10, y: 10, width: 30, height: 20, src: url, objectFit: "contain",
+          };
+          setElements((p) => [...p, el]);
+          setSelectedId(el.id);
+        };
+        img.src = url;
         toast.success("Image added");
       } catch {
         toast.error("Failed to upload image");
@@ -270,6 +287,22 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
 
   function updateEl(id: string, u: Partial<DesignElement>) {
     setElements((p) => p.map((el) => (el.id === id ? { ...el, ...u } : el)));
+  }
+
+  function fitImageHeight(id: string) {
+    const el = elements.find((e) => e.id === id);
+    if (!el || el.type !== "image" || !el.src || !canvasRef.current) return;
+    const img = new window.Image();
+    img.onload = () => {
+      const canvasW = canvasRef.current!.offsetWidth;
+      const canvasH = canvasRef.current!.offsetHeight;
+      const elPxW = (el.width / 100) * canvasW;
+      const imgRatio = img.naturalHeight / img.naturalWidth;
+      const fittedPxH = elPxW * imgRatio;
+      const fittedPct = +(((fittedPxH / canvasH) * 100).toFixed(1));
+      updateEl(id, { height: Math.max(2, Math.min(100, fittedPct)) });
+    };
+    img.src = el.src;
   }
 
   function duplicateEl(id: string) {
@@ -316,11 +349,29 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
     setUploadingLogo(true);
     try {
       const url = await uploadFile(file);
-      const el: DesignElement = {
-        id: genId(), type: "image", x: 5, y: 5, width: 35, height: 20, src: url, objectFit: "contain",
+      // Auto-calculate height from image aspect ratio
+      const img = new window.Image();
+      img.onload = () => {
+        const canvasW = canvasRef.current?.offsetWidth || 675;
+        const canvasH = canvasRef.current?.offsetHeight || 450;
+        const elPxW = (35 / 100) * canvasW;
+        const imgRatio = img.naturalHeight / img.naturalWidth;
+        const fittedPxH = elPxW * imgRatio;
+        const fittedPct = +((fittedPxH / canvasH) * 100).toFixed(1);
+        const el: DesignElement = {
+          id: genId(), type: "image", x: 5, y: 5, width: 35, height: Math.max(2, Math.min(80, fittedPct)), src: url, objectFit: "contain",
+        };
+        setElements((p) => [...p, el]);
+        setSelectedId(el.id);
       };
-      setElements((p) => [...p, el]);
-      setSelectedId(el.id);
+      img.onerror = () => {
+        const el: DesignElement = {
+          id: genId(), type: "image", x: 5, y: 5, width: 35, height: 15, src: url, objectFit: "contain",
+        };
+        setElements((p) => [...p, el]);
+        setSelectedId(el.id);
+      };
+      img.src = url;
       toast.success("Team logo added — drag to position");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to upload logo");
@@ -719,15 +770,22 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
                 </div>
                 <div>
                   <Label className="text-[10px]">Width %</Label>
-                  <Input type="number" value={selected.width} onChange={(e) => updateEl(selected.id, { width: +e.target.value })} className="text-xs h-7" min={5} max={100} />
+                  <Input type="number" step={0.5} value={selected.width} onChange={(e) => updateEl(selected.id, { width: +e.target.value })} className="text-xs h-7" min={2} max={100} />
                 </div>
                 {selected.type === "image" && (
                   <div>
                     <Label className="text-[10px]">Height %</Label>
-                    <Input type="number" value={selected.height} onChange={(e) => updateEl(selected.id, { height: +e.target.value })} className="text-xs h-7" min={5} max={100} />
+                    <Input type="number" step={0.5} value={selected.height} onChange={(e) => updateEl(selected.id, { height: +e.target.value })} className="text-xs h-7" min={2} max={100} />
                   </div>
                 )}
               </div>
+
+              {/* Fit to image button */}
+              {selected.type === "image" && (
+                <Button variant="outline" size="sm" className="w-full text-xs h-7" onClick={() => fitImageHeight(selected.id)}>
+                  Fit height to image ratio
+                </Button>
+              )}
 
               {/* Opacity (all elements) */}
               <div>
