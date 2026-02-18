@@ -12,15 +12,8 @@ async function requireAdmin(admin: ReturnType<typeof createAdminClient>, userId:
   return profile;
 }
 
-const BUCKET = "template-assets";
-
-async function ensureBucket(admin: ReturnType<typeof createAdminClient>) {
-  // Try to create the bucket; ignore if it already exists
-  await admin.storage.createBucket(BUCKET, {
-    public: true,
-    fileSizeLimit: 10 * 1024 * 1024, // 10MB
-  });
-}
+// Try multiple buckets in order — use whichever one exists
+const BUCKET_CANDIDATES = ["brokerage-assets", "agent-logos", "agent-photos"];
 
 export async function POST(request: NextRequest) {
   const userId = getUserId(request);
@@ -35,24 +28,44 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "No image provided" }, { status: 400 });
   }
 
-  // Ensure bucket exists
-  await ensureBucket(admin);
-
   const filename = `${Date.now()}.${ext || "png"}`;
-  const filePath = `assets/${filename}`;
+  const filePath = `templates/${filename}`;
   const buffer = Buffer.from(base64, "base64");
 
-  const { error: uploadError } = await admin.storage
-    .from(BUCKET)
-    .upload(filePath, buffer, { upsert: true, contentType: contentType || "image/png" });
+  // Try each bucket until one works
+  let uploadedBucket: string | null = null;
+  let lastError: string = "";
 
-  if (uploadError) {
-    console.error("Template upload error:", uploadError);
-    return NextResponse.json({ error: uploadError.message }, { status: 500 });
+  for (const bucket of BUCKET_CANDIDATES) {
+    const { error } = await admin.storage
+      .from(bucket)
+      .upload(filePath, buffer, { upsert: true, contentType: contentType || "image/png" });
+
+    if (!error) {
+      uploadedBucket = bucket;
+      break;
+    }
+    lastError = error.message;
+  }
+
+  // If none of the existing buckets worked, try creating a new one
+  if (!uploadedBucket) {
+    const newBucket = "template-assets";
+    await admin.storage.createBucket(newBucket, { public: true, fileSizeLimit: 10 * 1024 * 1024 });
+
+    const { error } = await admin.storage
+      .from(newBucket)
+      .upload(filePath, buffer, { upsert: true, contentType: contentType || "image/png" });
+
+    if (error) {
+      console.error("Template upload failed on all buckets:", lastError, error.message);
+      return NextResponse.json({ error: `Upload failed: ${error.message}` }, { status: 500 });
+    }
+    uploadedBucket = newBucket;
   }
 
   const { data: { publicUrl } } = admin.storage
-    .from(BUCKET)
+    .from(uploadedBucket)
     .getPublicUrl(filePath);
 
   return NextResponse.json({ url: publicUrl });

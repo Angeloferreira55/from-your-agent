@@ -253,7 +253,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
       };
       setElements((p) => [...p, el]);
       setSelectedId(el.id);
-      toast.success("Brokerage logo added — drag to position");
+      toast.success("Team logo added — drag to position");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to upload logo");
     } finally {
@@ -357,7 +357,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
         <div className="h-5 w-px bg-border" />
         <Button variant="outline" size="sm" onClick={addBrokerageLogo} disabled={uploadingLogo}>
           {uploadingLogo ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Building2 className="mr-1.5 h-4 w-4" />}
-          Brokerage Logo
+          Team Logo
         </Button>
         <Button variant="outline" size="sm" onClick={addBackgroundBanner} disabled={uploadingBanner}>
           {uploadingBanner ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <ImageIcon className="mr-1.5 h-4 w-4" />}
