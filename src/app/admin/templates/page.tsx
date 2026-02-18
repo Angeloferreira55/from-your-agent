@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { TemplateDesigner, recolorSvgDataUri, type DesignConfig, type FontFamilyOption } from "@/components/admin/TemplateDesigner";
+import { TemplateDesigner, recolorSvgDataUri, type DesignConfig, type FontFamilyOption, type BrokerageOption } from "@/components/admin/TemplateDesigner";
 
 const FONT_MAP: Record<string, string> = {
   "sans-serif": "Arial, Helvetica, sans-serif",
@@ -58,6 +58,16 @@ export default function AdminTemplatesPage() {
       return res.json();
     },
   });
+
+  const { data: brokeragesData } = useQuery({
+    queryKey: ["brokerages"],
+    queryFn: async () => {
+      const res = await fetch("/api/brokerages");
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
+  });
+  const brokeragesList: BrokerageOption[] = (brokeragesData?.brokerages || []).map((b: { id: string; name: string }) => ({ id: b.id, name: b.name }));
 
   const createMutation = useMutation({
     mutationFn: async (formData: Record<string, unknown>) => {
@@ -260,8 +270,17 @@ export default function AdminTemplatesPage() {
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
-                    <div className="mt-2 flex items-center gap-2">
-                      <Badge variant="outline">4.5&quot; × 3&quot;</Badge>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <Badge variant="outline">
+                        {template.type === "monthly" ? "Top-left + Front" : "4.5\" × 3\""}
+                      </Badge>
+                      <Badge variant={template.type === "monthly" ? "secondary" : "outline"} className={template.type === "brokerage" ? "bg-blue-50 text-blue-700 border-blue-200" : ""}>
+                        {template.type === "monthly" ? "Monthly" : "Brokerage"}
+                      </Badge>
+                      {template.brokerage_id && (() => {
+                        const brok = brokeragesList.find((b) => b.id === template.brokerage_id);
+                        return brok ? <Badge className="bg-green-50 text-green-700 border-green-200" variant="outline">{brok.name}</Badge> : null;
+                      })()}
                       {template.season && template.season !== "any" && (
                         <Badge variant="secondary">{template.season}</Badge>
                       )}
@@ -281,11 +300,14 @@ export default function AdminTemplatesPage() {
         open={designerOpen}
         onClose={() => { setDesignerOpen(false); setEditingTemplate(null); }}
         onSubmit={handleSubmit}
+        brokerages={brokeragesList}
         initialData={editingTemplate ? {
           id: editingTemplate.id || undefined,
           name: editingTemplate.name,
           description: editingTemplate.description || "",
           season: editingTemplate.season || "any",
+          type: (editingTemplate.type as "brokerage" | "monthly") || "brokerage",
+          brokerage_id: editingTemplate.brokerage_id,
           design: parseDesign(editingTemplate.back_html) || undefined,
         } : undefined}
       />

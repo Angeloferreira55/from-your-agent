@@ -92,15 +92,23 @@ export interface DesignConfig {
   disclaimerStyle?: DisclaimerStyle;
 }
 
+export interface BrokerageOption {
+  id: string;
+  name: string;
+}
+
 interface TemplateDesignerProps {
   open: boolean;
   onClose: () => void;
   onSubmit: (data: Record<string, unknown>) => Promise<void>;
+  brokerages?: BrokerageOption[];
   initialData?: {
     id?: string;
     name?: string;
     description?: string;
     season?: string;
+    type?: "brokerage" | "monthly";
+    brokerage_id?: string | null;
     design?: DesignConfig;
   };
 }
@@ -137,7 +145,7 @@ export function recolorSvgDataUri(dataUri: string, color: string): string {
 
 /* ── Component ── */
 
-export function TemplateDesigner({ open, onClose, onSubmit, initialData }: TemplateDesignerProps) {
+export function TemplateDesigner({ open, onClose, onSubmit, brokerages, initialData }: TemplateDesignerProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -147,6 +155,8 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
   const [name, setName] = useState(initialData?.name || "");
   const [description, setDescription] = useState(initialData?.description || "");
   const [season, setSeason] = useState(initialData?.season || "any");
+  const [templateType, setTemplateType] = useState<"brokerage" | "monthly">(initialData?.type || "brokerage");
+  const [brokerageId, setBrokerageId] = useState<string>(initialData?.brokerage_id || "");
 
   // Design state
   const [bgColor, setBgColor] = useState(initialData?.design?.background.color || "#1B3A5C");
@@ -183,6 +193,8 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
     setName(initialData?.name || "");
     setDescription(initialData?.description || "");
     setSeason(initialData?.season || "any");
+    setTemplateType(initialData?.type || "brokerage");
+    setBrokerageId(initialData?.brokerage_id || "");
     setBgColor(initialData?.design?.background.color || "#1B3A5C");
     setBgImage(initialData?.design?.background.imageUrl || "");
     setOverlayColor(initialData?.design?.background.overlayColor || "rgba(0,0,0,0.3)");
@@ -513,6 +525,8 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
         description: description || null,
         size: "6x9",
         season,
+        type: templateType,
+        brokerage_id: templateType === "brokerage" && brokerageId ? brokerageId : null,
         front_html: "",
         back_html: JSON.stringify(design),
       });
@@ -546,7 +560,27 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
           placeholder="Description"
           className="max-w-[180px] h-8 text-sm"
         />
-        <span className="text-xs text-muted-foreground whitespace-nowrap">Top-right panel · 4.5&quot; × 3&quot;</span>
+        <Select value={templateType} onValueChange={(v) => setTemplateType(v as "brokerage" | "monthly")}>
+          <SelectTrigger className="w-28 h-8 text-sm"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="brokerage">Brokerage</SelectItem>
+            <SelectItem value="monthly">Monthly</SelectItem>
+          </SelectContent>
+        </Select>
+        {templateType === "brokerage" && brokerages && brokerages.length > 0 && (
+          <Select value={brokerageId} onValueChange={setBrokerageId}>
+            <SelectTrigger className="w-44 h-8 text-sm"><SelectValue placeholder="Link to brokerage..." /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">No specific brokerage</SelectItem>
+              {brokerages.map((b) => (
+                <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+        <span className="text-xs text-muted-foreground whitespace-nowrap">
+          {templateType === "brokerage" ? "Top-right panel · 4.5\" × 3\"" : "Top-left + Front"}
+        </span>
         <Select value={season} onValueChange={setSeason}>
           <SelectTrigger className="w-24 h-8 text-sm"><SelectValue /></SelectTrigger>
           <SelectContent>

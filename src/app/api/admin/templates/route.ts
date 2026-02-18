@@ -45,6 +45,8 @@ export async function POST(request: NextRequest) {
       name: body.name,
       description: body.description || null,
       size: body.size || "6x9",
+      type: body.type || "brokerage",
+      brokerage_id: body.brokerage_id || null,
       front_html: body.front_html,
       back_html: body.back_html,
       merge_variables: body.merge_variables || [],

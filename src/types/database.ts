@@ -181,11 +181,15 @@ export interface Region {
   updated_at: string;
 }
 
+export type TemplateType = "brokerage" | "monthly";
+
 export interface PostcardTemplate {
   id: string;
   name: string;
   description: string | null;
   size: "4x6" | "6x9" | "6x11";
+  type: TemplateType;
+  brokerage_id: string | null;
   front_html: string;
   back_html: string;
   front_preview_url: string | null;

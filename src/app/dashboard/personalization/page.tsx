@@ -39,12 +39,16 @@ export default function PersonalizationPage() {
   });
 
   const { data: templateData } = useQuery({
-    queryKey: ["default-template"],
+    queryKey: ["brokerage-template", profile?.brokerage_id],
     queryFn: async () => {
-      const res = await fetch("/api/templates");
+      const url = profile?.brokerage_id
+        ? `/api/templates?brokerage_id=${profile.brokerage_id}`
+        : "/api/templates";
+      const res = await fetch(url);
       if (!res.ok) throw new Error("Failed to fetch");
       return res.json();
     },
+    enabled: !!profile,
   });
 
   const brokerages: BrokerageConfig[] = brokeragesData?.brokerages || [];
