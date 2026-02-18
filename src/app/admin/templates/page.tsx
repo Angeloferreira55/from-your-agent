@@ -34,7 +34,7 @@ const FONT_MAP: Record<string, string> = {
   candara: "Candara, Calibri, sans-serif",
   franklin: "'Franklin Gothic Medium', 'Franklin Gothic', sans-serif",
 };
-import { Plus, FileImage, MoreHorizontal, Trash2, Pencil } from "lucide-react";
+import { Plus, FileImage, MoreHorizontal, Trash2, Pencil, Copy } from "lucide-react";
 import { toast } from "sonner";
 import type { PostcardTemplate } from "@/types/database";
 
@@ -121,8 +121,18 @@ export default function AdminTemplatesPage() {
     setDesignerOpen(true);
   }
 
+  function handleDuplicate(template: PostcardTemplate) {
+    // Create a fake template with no id so the designer creates a new one
+    setEditingTemplate({
+      ...template,
+      id: "", // empty id = create mode
+      name: `${template.name} (Copy)`,
+    });
+    setDesignerOpen(true);
+  }
+
   async function handleSubmit(formData: Record<string, unknown>) {
-    if (editingTemplate) {
+    if (editingTemplate?.id) {
       await updateMutation.mutateAsync({ ...formData, id: editingTemplate.id });
     } else {
       await createMutation.mutateAsync(formData);
@@ -236,6 +246,9 @@ export default function AdminTemplatesPage() {
                           <DropdownMenuItem onClick={() => handleEdit(template)}>
                             <Pencil className="mr-2 h-4 w-4" /> Edit
                           </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDuplicate(template)}>
+                            <Copy className="mr-2 h-4 w-4" /> Duplicate
+                          </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-destructive"
                             onClick={() => {
@@ -269,7 +282,7 @@ export default function AdminTemplatesPage() {
         onClose={() => { setDesignerOpen(false); setEditingTemplate(null); }}
         onSubmit={handleSubmit}
         initialData={editingTemplate ? {
-          id: editingTemplate.id,
+          id: editingTemplate.id || undefined,
           name: editingTemplate.name,
           description: editingTemplate.description || "",
           season: editingTemplate.season || "any",
