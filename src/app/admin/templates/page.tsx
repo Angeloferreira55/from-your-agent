@@ -48,6 +48,7 @@ function parseDesign(backHtml: string): DesignConfig | null {
 export default function AdminTemplatesPage() {
   const [designerOpen, setDesignerOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<PostcardTemplate | null>(null);
+  const [activeFilter, setActiveFilter] = useState<"all" | "brokerage" | "monthly">("all");
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
@@ -120,6 +121,11 @@ export default function AdminTemplatesPage() {
   });
 
   const templates: PostcardTemplate[] = data?.templates || [];
+  const filteredTemplates = activeFilter === "all"
+    ? templates
+    : templates.filter((t) => t.type === activeFilter);
+  const brokerageCount = templates.filter((t) => t.type === "brokerage").length;
+  const monthlyCount = templates.filter((t) => t.type === "monthly").length;
 
   function handleCreate() {
     setEditingTemplate(null);
@@ -165,6 +171,30 @@ export default function AdminTemplatesPage() {
           </Button>
         </div>
 
+        {/* Filter tabs */}
+        {templates.length > 0 && (
+          <div className="flex gap-1 border-b">
+            {([
+              { key: "all", label: "All", count: templates.length },
+              { key: "brokerage", label: "Brokerage", count: brokerageCount },
+              { key: "monthly", label: "Monthly Deals", count: monthlyCount },
+            ] as const).map((tab) => (
+              <button
+                key={tab.key}
+                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                  activeFilter === tab.key
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/30"
+                }`}
+                onClick={() => setActiveFilter(tab.key)}
+              >
+                {tab.label}
+                <span className="ml-1.5 text-xs text-muted-foreground">({tab.count})</span>
+              </button>
+            ))}
+          </div>
+        )}
+
         {!isLoading && templates.length === 0 ? (
           <Card>
             <CardHeader className="text-center py-12">
@@ -175,9 +205,13 @@ export default function AdminTemplatesPage() {
               <CardDescription>Design the brokerage branding panel (top-right of postcard back).</CardDescription>
             </CardHeader>
           </Card>
+        ) : filteredTemplates.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground text-sm">
+            No {activeFilter} templates yet.
+          </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {templates.map((template) => {
+            {filteredTemplates.map((template) => {
               const design = parseDesign(template.back_html);
               const frontDesign = template.front_html ? parseDesign(template.front_html) : null;
               const isMonthly = template.type === "monthly";
