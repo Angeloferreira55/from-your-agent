@@ -107,9 +107,9 @@ export default function AdminTemplatesPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Postcard Templates</h1>
+            <h1 className="text-2xl font-bold tracking-tight">Brokerage Panel Templates</h1>
             <p className="text-muted-foreground">
-              {templates.length} template{templates.length !== 1 ? "s" : ""} available
+              Top-right corner of the postcard back &middot; {templates.length} template{templates.length !== 1 ? "s" : ""}
             </p>
           </div>
           <Button onClick={handleCreate}>
@@ -125,7 +125,7 @@ export default function AdminTemplatesPage() {
                 <FileImage className="h-8 w-8 text-muted-foreground" />
               </div>
               <CardTitle>No templates yet</CardTitle>
-              <CardDescription>Create your first postcard template with the visual designer.</CardDescription>
+              <CardDescription>Design the brokerage branding panel (top-right of postcard back).</CardDescription>
             </CardHeader>
           </Card>
         ) : (
@@ -138,7 +138,7 @@ export default function AdminTemplatesPage() {
                   <div
                     className="relative overflow-hidden"
                     style={{
-                      aspectRatio: "9/6",
+                      aspectRatio: "3/2",
                       backgroundColor: design?.background.color || "#1B3A5C",
                     }}
                   >
@@ -217,7 +217,7 @@ export default function AdminTemplatesPage() {
                       </DropdownMenu>
                     </div>
                     <div className="mt-2 flex items-center gap-2">
-                      <Badge variant="outline">{template.size}</Badge>
+                      <Badge variant="outline">4.5&quot; × 3&quot;</Badge>
                       {template.season && template.season !== "any" && (
                         <Badge variant="secondary">{template.season}</Badge>
                       )}
@@ -241,7 +241,6 @@ export default function AdminTemplatesPage() {
           id: editingTemplate.id,
           name: editingTemplate.name,
           description: editingTemplate.description || "",
-          size: editingTemplate.size,
           season: editingTemplate.season || "any",
           design: parseDesign(editingTemplate.back_html) || undefined,
         } : undefined}

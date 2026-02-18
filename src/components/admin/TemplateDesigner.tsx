@@ -49,7 +49,6 @@ interface TemplateDesignerProps {
     id?: string;
     name?: string;
     description?: string;
-    size?: string;
     season?: string;
     design?: DesignConfig;
   };
@@ -82,7 +81,6 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
   // Metadata
   const [name, setName] = useState(initialData?.name || "");
   const [description, setDescription] = useState(initialData?.description || "");
-  const [size, setSize] = useState(initialData?.size || "6x9");
   const [season, setSeason] = useState(initialData?.season || "any");
 
   // Design state
@@ -99,10 +97,10 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
 
   const selected = elements.find((el) => el.id === selectedId) || null;
 
-  // Keep scale in sync with canvas width (design basis = 900px)
+  // Keep scale in sync with canvas width (design basis = 675px for 4.5" panel at 150dpi)
   useEffect(() => {
     function sync() {
-      if (canvasRef.current) setScale(canvasRef.current.offsetWidth / 900);
+      if (canvasRef.current) setScale(canvasRef.current.offsetWidth / 675);
     }
     sync();
     window.addEventListener("resize", sync);
@@ -113,7 +111,6 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
   useEffect(() => {
     setName(initialData?.name || "");
     setDescription(initialData?.description || "");
-    setSize(initialData?.size || "6x9");
     setSeason(initialData?.season || "any");
     setBgColor(initialData?.design?.background.color || "#1B3A5C");
     setBgImage(initialData?.design?.background.imageUrl || "");
@@ -310,7 +307,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
         ...(initialData?.id ? { id: initialData.id } : {}),
         name,
         description: description || null,
-        size,
+        size: "6x9",
         season,
         front_html: "",
         back_html: JSON.stringify(design),
@@ -345,14 +342,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
           placeholder="Description"
           className="max-w-[180px] h-8 text-sm"
         />
-        <Select value={size} onValueChange={setSize}>
-          <SelectTrigger className="w-20 h-8 text-sm"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="4x6">4x6</SelectItem>
-            <SelectItem value="6x9">6x9</SelectItem>
-            <SelectItem value="6x11">6x11</SelectItem>
-          </SelectContent>
-        </Select>
+        <span className="text-xs text-muted-foreground whitespace-nowrap">Top-right panel · 4.5&quot; × 3&quot;</span>
         <Select value={season} onValueChange={setSeason}>
           <SelectTrigger className="w-24 h-8 text-sm"><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -388,7 +378,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
           <div
             ref={canvasRef}
             className="relative rounded-lg shadow-xl overflow-hidden select-none"
-            style={{ aspectRatio: "9/6", width: "min(75vw, 900px)", backgroundColor: bgColor }}
+            style={{ aspectRatio: "3/2", width: "min(70vw, 675px)", backgroundColor: bgColor }}
             onMouseMove={onCanvasMove}
             onMouseUp={onCanvasUp}
             onMouseLeave={onCanvasUp}
