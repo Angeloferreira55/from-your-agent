@@ -46,6 +46,7 @@ export interface DesignElement {
   // image
   src?: string;
   objectFit?: "contain" | "cover";
+  tintColor?: string; // recolor SVG icons/logos
 }
 
 export interface DisclaimerStyle {
@@ -93,6 +94,20 @@ function fileToBase64(file: File): Promise<string> {
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
+}
+
+/** Re-encode an SVG data URI with a different fill/stroke color */
+export function recolorSvgDataUri(dataUri: string, color: string): string {
+  if (!dataUri.startsWith("data:image/svg+xml,")) return dataUri;
+  try {
+    const svgStr = decodeURIComponent(dataUri.replace("data:image/svg+xml,", ""));
+    const recolored = svgStr
+      .replace(/fill="(?!none)[^"]*"/g, `fill="${color}"`)
+      .replace(/stroke="(?!none)[^"]*"/g, `stroke="${color}"`);
+    return "data:image/svg+xml," + encodeURIComponent(recolored);
+  } catch {
+    return dataUri;
+  }
 }
 
 /* ── Component ── */
@@ -619,7 +634,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
                   )}
                   {el.type === "image" && el.src && (
                     <img
-                      src={el.src}
+                      src={el.tintColor && el.src.startsWith("data:image/svg+xml,") ? recolorSvgDataUri(el.src, el.tintColor) : el.src}
                       alt=""
                       className="w-full h-full pointer-events-none"
                       style={{ objectFit: el.objectFit || "contain" }}
@@ -925,14 +940,31 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
 
               {/* Image props */}
               {selected.type === "image" && (
-                <div className="grid grid-cols-2 gap-1">
-                  <Button variant={selected.objectFit === "contain" ? "default" : "outline"} size="sm" className="text-xs h-7" onClick={() => updateEl(selected.id, { objectFit: "contain" })}>
-                    Contain
-                  </Button>
-                  <Button variant={selected.objectFit === "cover" ? "default" : "outline"} size="sm" className="text-xs h-7" onClick={() => updateEl(selected.id, { objectFit: "cover" })}>
-                    Cover
-                  </Button>
-                </div>
+                <>
+                  <div className="grid grid-cols-2 gap-1">
+                    <Button variant={selected.objectFit === "contain" ? "default" : "outline"} size="sm" className="text-xs h-7" onClick={() => updateEl(selected.id, { objectFit: "contain" })}>
+                      Contain
+                    </Button>
+                    <Button variant={selected.objectFit === "cover" ? "default" : "outline"} size="sm" className="text-xs h-7" onClick={() => updateEl(selected.id, { objectFit: "cover" })}>
+                      Cover
+                    </Button>
+                  </div>
+                  {/* Tint color for SVG icons/logos */}
+                  {selected.src?.startsWith("data:image/svg+xml,") && (
+                    <div>
+                      <Label className="text-[10px]">Icon Color</Label>
+                      <div className="flex gap-1">
+                        <input type="color" value={selected.tintColor || "#FFFFFF"} onChange={(e) => updateEl(selected.id, { tintColor: e.target.value })} className="h-7 w-7 rounded border cursor-pointer" />
+                        <Input value={selected.tintColor || "#FFFFFF"} onChange={(e) => updateEl(selected.id, { tintColor: e.target.value })} className="flex-1 text-xs h-7" />
+                        {selected.tintColor && (
+                          <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" title="Reset to white" onClick={() => updateEl(selected.id, { tintColor: undefined })}>
+                            <X className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}

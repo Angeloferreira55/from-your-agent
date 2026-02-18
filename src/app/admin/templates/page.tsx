@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { TemplateDesigner, type DesignConfig, type FontFamilyOption } from "@/components/admin/TemplateDesigner";
+import { TemplateDesigner, recolorSvgDataUri, type DesignConfig, type FontFamilyOption } from "@/components/admin/TemplateDesigner";
 
 const FONT_MAP: Record<string, string> = {
   "sans-serif": "Arial, Helvetica, sans-serif",
@@ -190,7 +190,7 @@ export default function AdminTemplatesPage() {
                           </p>
                         )}
                         {el.type === "image" && el.src && (
-                          <img src={el.src} alt="" className="w-full h-full" style={{ objectFit: el.objectFit || "contain" }} />
+                          <img src={el.tintColor && el.src.startsWith("data:image/svg+xml,") ? recolorSvgDataUri(el.src, el.tintColor) : el.src} alt="" className="w-full h-full" style={{ objectFit: el.objectFit || "contain" }} />
                         )}
                       </div>
                     ))}
