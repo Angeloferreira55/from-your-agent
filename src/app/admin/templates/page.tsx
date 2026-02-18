@@ -6,7 +6,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { TemplateDesigner, type DesignConfig } from "@/components/admin/TemplateDesigner";
+import { TemplateDesigner, type DesignConfig, type FontFamilyOption } from "@/components/admin/TemplateDesigner";
+
+const FONT_MAP: Record<string, string> = {
+  "sans-serif": "Arial, Helvetica, sans-serif",
+  serif: "Georgia, serif",
+  georgia: "Georgia, serif",
+  times: "'Times New Roman', Times, serif",
+  palatino: "'Palatino Linotype', Palatino, serif",
+  garamond: "Garamond, serif",
+  courier: "'Courier New', Courier, monospace",
+  impact: "Impact, 'Arial Black', sans-serif",
+};
 import { Plus, FileImage, MoreHorizontal, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import type { PostcardTemplate } from "@/types/database";
@@ -161,14 +172,18 @@ export default function AdminTemplatesPage() {
                       >
                         {el.type === "text" && (
                           <p
-                            className="break-words whitespace-pre-wrap leading-snug"
+                            className="break-words whitespace-pre-wrap"
                             style={{
                               fontSize: `${(el.fontSize || 16) * 0.35}px`,
                               color: el.fontColor || "#fff",
                               fontWeight: el.fontWeight || "normal",
                               fontStyle: el.fontStyle || "normal",
                               textAlign: el.textAlign || "left",
-                              fontFamily: el.fontFamily === "serif" ? "Georgia, serif" : "Arial, sans-serif",
+                              fontFamily: FONT_MAP[el.fontFamily || "sans-serif"] || "Arial, sans-serif",
+                              lineHeight: el.lineHeight || 1.3,
+                              letterSpacing: el.letterSpacing ? `${el.letterSpacing * 0.35}px` : undefined,
+                              textTransform: el.textTransform || "none",
+                              opacity: el.opacity ?? 1,
                             }}
                           >
                             {el.text}

@@ -6,10 +6,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Type, ImagePlus, Trash2, Save, ArrowLeft, X, Building2, Image as ImageIcon } from "lucide-react";
+import { Loader2, Type, ImagePlus, Trash2, Save, ArrowLeft, X, Building2, Image as ImageIcon, Copy } from "lucide-react";
 import { toast } from "sonner";
 
 /* ── Types ── */
+
+export type FontFamilyOption = "sans-serif" | "serif" | "georgia" | "times" | "palatino" | "garamond" | "courier" | "impact";
+
+const FONT_MAP: Record<FontFamilyOption, string> = {
+  "sans-serif": "Arial, Helvetica, sans-serif",
+  serif: "Georgia, serif",
+  georgia: "Georgia, serif",
+  times: "'Times New Roman', Times, serif",
+  palatino: "'Palatino Linotype', Palatino, serif",
+  garamond: "Garamond, serif",
+  courier: "'Courier New', Courier, monospace",
+  impact: "Impact, 'Arial Black', sans-serif",
+};
 
 export interface DesignElement {
   id: string;
@@ -20,12 +33,16 @@ export interface DesignElement {
   height: number; // % of canvas (images only; text auto-heights)
   // text
   text?: string;
-  fontSize?: number; // design-px at 900px canvas width
+  fontSize?: number; // design-px at 675px canvas width
   fontColor?: string;
   fontWeight?: "normal" | "bold";
   fontStyle?: "normal" | "italic";
   textAlign?: "left" | "center" | "right";
-  fontFamily?: "sans-serif" | "serif";
+  fontFamily?: FontFamilyOption;
+  lineHeight?: number; // multiplier, e.g. 1.2
+  letterSpacing?: number; // px at design scale
+  textTransform?: "none" | "uppercase" | "lowercase";
+  opacity?: number; // 0-1
   // image
   src?: string;
   objectFit?: "contain" | "cover";
@@ -94,6 +111,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
 
   // Interaction
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [dragging, setDragging] = useState<{ id: string; offsetX: number; offsetY: number } | null>(null);
   const [scale, setScale] = useState(1);
 
@@ -213,6 +231,14 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
 
   function updateEl(id: string, u: Partial<DesignElement>) {
     setElements((p) => p.map((el) => (el.id === id ? { ...el, ...u } : el)));
+  }
+
+  function duplicateEl(id: string) {
+    const src = elements.find((el) => el.id === id);
+    if (!src) return;
+    const clone: DesignElement = { ...src, id: genId(), x: Math.min(src.x + 3, 90), y: Math.min(src.y + 3, 90) };
+    setElements((p) => [...p, clone]);
+    setSelectedId(clone.id);
   }
 
   /* ── Upload helper ── */
@@ -385,7 +411,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
             onMouseMove={onCanvasMove}
             onMouseUp={onCanvasUp}
             onMouseLeave={onCanvasUp}
-            onClick={() => setSelectedId(null)}
+            onClick={() => { setSelectedId(null); setEditingId(null); }}
           >
             {/* Bg image */}
             {bgImage && (
@@ -397,48 +423,76 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
             )}
 
             {/* Elements */}
-            {elements.map((el) => (
-              <div
-                key={el.id}
-                className={`absolute cursor-move transition-shadow ${
-                  selectedId === el.id
-                    ? "ring-2 ring-blue-500 ring-offset-1 ring-offset-transparent"
-                    : "hover:ring-1 hover:ring-blue-300"
-                }`}
-                style={{
-                  left: `${el.x}%`,
-                  top: `${el.y}%`,
-                  width: `${el.width}%`,
-                  height: el.type === "image" ? `${el.height}%` : "auto",
-                }}
-                onMouseDown={(e) => onElDown(e, el.id)}
-                onClick={(e) => { e.stopPropagation(); setSelectedId(el.id); }}
-              >
-                {el.type === "text" && (
-                  <p
-                    className="w-full break-words whitespace-pre-wrap leading-snug pointer-events-none"
-                    style={{
-                      fontSize: `${(el.fontSize || 16) * scale}px`,
-                      color: el.fontColor || "#fff",
-                      fontWeight: el.fontWeight || "normal",
-                      fontStyle: el.fontStyle || "normal",
-                      textAlign: el.textAlign || "left",
-                      fontFamily: el.fontFamily === "serif" ? "Georgia, serif" : "Arial, sans-serif",
-                    }}
-                  >
-                    {el.text}
-                  </p>
-                )}
-                {el.type === "image" && el.src && (
-                  <img
-                    src={el.src}
-                    alt=""
-                    className="w-full h-full pointer-events-none"
-                    style={{ objectFit: el.objectFit || "contain" }}
-                  />
-                )}
-              </div>
-            ))}
+            {elements.map((el) => {
+              const isEditing = editingId === el.id;
+              const textStyle: React.CSSProperties = el.type === "text" ? {
+                fontSize: `${(el.fontSize || 16) * scale}px`,
+                color: el.fontColor || "#fff",
+                fontWeight: el.fontWeight || "normal",
+                fontStyle: el.fontStyle || "normal",
+                textAlign: el.textAlign || "left",
+                fontFamily: FONT_MAP[el.fontFamily || "sans-serif"],
+                lineHeight: el.lineHeight || 1.3,
+                letterSpacing: el.letterSpacing ? `${el.letterSpacing * scale}px` : undefined,
+                textTransform: el.textTransform || "none",
+              } : {};
+
+              return (
+                <div
+                  key={el.id}
+                  className={`absolute transition-shadow ${
+                    isEditing ? "ring-2 ring-green-500" :
+                    selectedId === el.id
+                      ? "ring-2 ring-blue-500 ring-offset-1 ring-offset-transparent cursor-move"
+                      : "hover:ring-1 hover:ring-blue-300 cursor-move"
+                  }`}
+                  style={{
+                    left: `${el.x}%`,
+                    top: `${el.y}%`,
+                    width: `${el.width}%`,
+                    height: el.type === "image" ? `${el.height}%` : "auto",
+                    opacity: el.opacity ?? 1,
+                  }}
+                  onMouseDown={(e) => { if (!isEditing) onElDown(e, el.id); }}
+                  onClick={(e) => { e.stopPropagation(); setSelectedId(el.id); }}
+                  onDoubleClick={(e) => {
+                    if (el.type === "text") {
+                      e.stopPropagation();
+                      setEditingId(el.id);
+                    }
+                  }}
+                >
+                  {el.type === "text" && !isEditing && (
+                    <p
+                      className="w-full break-words whitespace-pre-wrap pointer-events-none"
+                      style={textStyle}
+                    >
+                      {el.text}
+                    </p>
+                  )}
+                  {el.type === "text" && isEditing && (
+                    <textarea
+                      autoFocus
+                      className="w-full bg-transparent border-none outline-none resize-none break-words whitespace-pre-wrap"
+                      style={{ ...textStyle, minHeight: "1.5em" }}
+                      value={el.text || ""}
+                      onChange={(e) => updateEl(el.id, { text: e.target.value })}
+                      onBlur={() => setEditingId(null)}
+                      onKeyDown={(e) => { if (e.key === "Escape") setEditingId(null); }}
+                      onMouseDown={(e) => e.stopPropagation()}
+                    />
+                  )}
+                  {el.type === "image" && el.src && (
+                    <img
+                      src={el.src}
+                      alt=""
+                      className="w-full h-full pointer-events-none"
+                      style={{ objectFit: el.objectFit || "contain" }}
+                    />
+                  )}
+                </div>
+              );
+            })}
 
             {/* Disclaimer */}
             {disclaimer && (
@@ -512,9 +566,14 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
                 <p className="text-xs font-semibold uppercase tracking-wider">
                   {selected.type === "text" ? "Text" : "Image"}
                 </p>
-                <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => deleteEl(selected.id)}>
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="icon" className="h-6 w-6" title="Duplicate" onClick={() => duplicateEl(selected.id)}>
+                    <Copy className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => deleteEl(selected.id)}>
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </div>
 
               {/* Position & size */}
@@ -539,17 +598,64 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
                 )}
               </div>
 
+              {/* Opacity (all elements) */}
+              <div>
+                <Label className="text-[10px]">Opacity</Label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="range" min={0} max={1} step={0.05}
+                    value={selected.opacity ?? 1}
+                    onChange={(e) => updateEl(selected.id, { opacity: +e.target.value })}
+                    className="flex-1 h-1.5 accent-blue-500"
+                  />
+                  <span className="text-[10px] w-8 text-right text-muted-foreground">{Math.round((selected.opacity ?? 1) * 100)}%</span>
+                </div>
+              </div>
+
               {/* Text props */}
               {selected.type === "text" && (
                 <>
                   <div>
-                    <Label className="text-[10px]">Content</Label>
-                    <Textarea value={selected.text || ""} onChange={(e) => updateEl(selected.id, { text: e.target.value })} rows={2} className="text-xs" />
+                    <div className="flex items-center justify-between mb-1">
+                      <Label className="text-[10px]">Content</Label>
+                      <span className="text-[10px] text-muted-foreground">Double-click to edit on canvas</span>
+                    </div>
+                    <Textarea value={selected.text || ""} onChange={(e) => updateEl(selected.id, { text: e.target.value })} rows={3} className="text-xs" />
                   </div>
+
+                  {/* Font family */}
+                  <div>
+                    <Label className="text-[10px]">Font</Label>
+                    <Select value={selected.fontFamily || "sans-serif"} onValueChange={(v) => updateEl(selected.id, { fontFamily: v as FontFamilyOption })}>
+                      <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="sans-serif"><span style={{ fontFamily: "Arial, sans-serif" }}>Arial (Sans)</span></SelectItem>
+                        <SelectItem value="georgia"><span style={{ fontFamily: "Georgia, serif" }}>Georgia</span></SelectItem>
+                        <SelectItem value="times"><span style={{ fontFamily: "'Times New Roman', serif" }}>Times New Roman</span></SelectItem>
+                        <SelectItem value="palatino"><span style={{ fontFamily: "'Palatino Linotype', serif" }}>Palatino</span></SelectItem>
+                        <SelectItem value="garamond"><span style={{ fontFamily: "Garamond, serif" }}>Garamond</span></SelectItem>
+                        <SelectItem value="courier"><span style={{ fontFamily: "'Courier New', monospace" }}>Courier</span></SelectItem>
+                        <SelectItem value="impact"><span style={{ fontFamily: "Impact, sans-serif" }}>Impact</span></SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Size + Color row */}
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <Label className="text-[10px]">Size</Label>
-                      <Input type="number" value={selected.fontSize || 16} onChange={(e) => updateEl(selected.id, { fontSize: +e.target.value })} className="text-xs h-7" min={8} max={72} />
+                      <div className="flex gap-1">
+                        <Input type="number" value={selected.fontSize || 16} onChange={(e) => updateEl(selected.id, { fontSize: +e.target.value })} className="text-xs h-7 w-14" min={6} max={120} />
+                        <div className="flex gap-0.5">
+                          {[12, 18, 24, 36, 48].map((s) => (
+                            <button
+                              key={s}
+                              className={`text-[9px] px-1 h-7 rounded border ${selected.fontSize === s ? "bg-blue-100 border-blue-300" : "hover:bg-muted border-transparent"}`}
+                              onClick={() => updateEl(selected.id, { fontSize: s })}
+                            >{s}</button>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                     <div>
                       <Label className="text-[10px]">Color</Label>
@@ -559,10 +665,12 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
                       </div>
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-1">
+
+                  {/* Style toggles: B I U Aa */}
+                  <div className="grid grid-cols-4 gap-1">
                     <Button
                       variant={selected.fontWeight === "bold" ? "default" : "outline"}
-                      size="sm" className="text-xs h-7"
+                      size="sm" className="text-xs h-7 font-bold"
                       onClick={() => updateEl(selected.id, { fontWeight: selected.fontWeight === "bold" ? "normal" : "bold" })}
                     >B</Button>
                     <Button
@@ -571,11 +679,20 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
                       onClick={() => updateEl(selected.id, { fontStyle: selected.fontStyle === "italic" ? "normal" : "italic" })}
                     >I</Button>
                     <Button
-                      variant={selected.fontFamily === "serif" ? "default" : "outline"}
+                      variant={selected.textTransform === "uppercase" ? "default" : "outline"}
                       size="sm" className="text-xs h-7"
-                      onClick={() => updateEl(selected.id, { fontFamily: selected.fontFamily === "serif" ? "sans-serif" : "serif" })}
-                    >Serif</Button>
+                      title="Uppercase"
+                      onClick={() => updateEl(selected.id, { textTransform: selected.textTransform === "uppercase" ? "none" : "uppercase" })}
+                    >AA</Button>
+                    <Button
+                      variant={selected.textTransform === "lowercase" ? "default" : "outline"}
+                      size="sm" className="text-xs h-7"
+                      title="Lowercase"
+                      onClick={() => updateEl(selected.id, { textTransform: selected.textTransform === "lowercase" ? "none" : "lowercase" })}
+                    >aa</Button>
                   </div>
+
+                  {/* Alignment */}
                   <div className="grid grid-cols-3 gap-1">
                     {(["left", "center", "right"] as const).map((a) => (
                       <Button
@@ -585,6 +702,34 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
                         onClick={() => updateEl(selected.id, { textAlign: a })}
                       >{a}</Button>
                     ))}
+                  </div>
+
+                  {/* Line height + Letter spacing */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-[10px]">Line Height</Label>
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="range" min={0.8} max={2.5} step={0.1}
+                          value={selected.lineHeight || 1.3}
+                          onChange={(e) => updateEl(selected.id, { lineHeight: +e.target.value })}
+                          className="flex-1 h-1.5 accent-blue-500"
+                        />
+                        <span className="text-[10px] w-6 text-right text-muted-foreground">{(selected.lineHeight || 1.3).toFixed(1)}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-[10px]">Spacing</Label>
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="range" min={-1} max={8} step={0.5}
+                          value={selected.letterSpacing || 0}
+                          onChange={(e) => updateEl(selected.id, { letterSpacing: +e.target.value })}
+                          className="flex-1 h-1.5 accent-blue-500"
+                        />
+                        <span className="text-[10px] w-6 text-right text-muted-foreground">{(selected.letterSpacing || 0).toFixed(1)}</span>
+                      </div>
+                    </div>
                   </div>
                 </>
               )}
