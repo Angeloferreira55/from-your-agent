@@ -12,6 +12,16 @@ async function requireAdmin(admin: ReturnType<typeof createAdminClient>, userId:
   return profile;
 }
 
+const BUCKET = "template-assets";
+
+async function ensureBucket(admin: ReturnType<typeof createAdminClient>) {
+  // Try to create the bucket; ignore if it already exists
+  await admin.storage.createBucket(BUCKET, {
+    public: true,
+    fileSizeLimit: 10 * 1024 * 1024, // 10MB
+  });
+}
+
 export async function POST(request: NextRequest) {
   const userId = getUserId(request);
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -25,20 +35,24 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "No image provided" }, { status: 400 });
   }
 
+  // Ensure bucket exists
+  await ensureBucket(admin);
+
   const filename = `${Date.now()}.${ext || "png"}`;
-  const filePath = `templates/assets/${filename}`;
+  const filePath = `assets/${filename}`;
   const buffer = Buffer.from(base64, "base64");
 
   const { error: uploadError } = await admin.storage
-    .from("brokerage-assets")
+    .from(BUCKET)
     .upload(filePath, buffer, { upsert: true, contentType: contentType || "image/png" });
 
   if (uploadError) {
+    console.error("Template upload error:", uploadError);
     return NextResponse.json({ error: uploadError.message }, { status: 500 });
   }
 
   const { data: { publicUrl } } = admin.storage
-    .from("brokerage-assets")
+    .from(BUCKET)
     .getPublicUrl(filePath);
 
   return NextResponse.json({ url: publicUrl });

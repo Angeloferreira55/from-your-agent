@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Type, ImagePlus, Trash2, Save, ArrowLeft, X } from "lucide-react";
+import { Loader2, Type, ImagePlus, Trash2, Save, ArrowLeft, X, Building2, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 
 /* ── Types ── */
@@ -76,6 +76,8 @@ function fileToBase64(file: File): Promise<string> {
 export function TemplateDesigner({ open, onClose, onSubmit, initialData }: TemplateDesignerProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [saving, setSaving] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
 
   // Metadata
   const [name, setName] = useState(initialData?.name || "");
@@ -213,32 +215,84 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
     setElements((p) => p.map((el) => (el.id === id ? { ...el, ...u } : el)));
   }
 
-  /* ── Background image upload ── */
+  /* ── Upload helper ── */
 
-  function uploadBg() {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/*";
-    input.onchange = async (ev) => {
-      const file = (ev.target as HTMLInputElement).files?.[0];
-      if (!file) return;
-      try {
-        const b64 = await fileToBase64(file);
-        const ext = file.name.split(".").pop() || "png";
-        const res = await fetch("/api/admin/templates/upload", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ base64: b64, ext, contentType: file.type }),
-        });
-        if (!res.ok) throw new Error("Upload failed");
-        const { url } = await res.json();
-        setBgImage(url);
-        toast.success("Background uploaded");
-      } catch {
-        toast.error("Failed to upload background");
-      }
-    };
-    input.click();
+  async function uploadFile(file: File): Promise<string> {
+    const b64 = await fileToBase64(file);
+    const ext = file.name.split(".").pop() || "png";
+    const res = await fetch("/api/admin/templates/upload", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ base64: b64, ext, contentType: file.type }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "Upload failed" }));
+      throw new Error(err.error || "Upload failed");
+    }
+    const { url } = await res.json();
+    return url;
+  }
+
+  function pickFile(accept: string): Promise<File | null> {
+    return new Promise((resolve) => {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = accept;
+      input.onchange = () => resolve(input.files?.[0] || null);
+      input.click();
+    });
+  }
+
+  /* ── Brokerage Logo (adds as draggable image element) ── */
+
+  async function addBrokerageLogo() {
+    const file = await pickFile("image/png,image/jpeg,image/webp,image/svg+xml");
+    if (!file) return;
+    setUploadingLogo(true);
+    try {
+      const url = await uploadFile(file);
+      const el: DesignElement = {
+        id: genId(), type: "image", x: 5, y: 5, width: 35, height: 20, src: url, objectFit: "contain",
+      };
+      setElements((p) => [...p, el]);
+      setSelectedId(el.id);
+      toast.success("Brokerage logo added — drag to position");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to upload logo");
+    } finally {
+      setUploadingLogo(false);
+    }
+  }
+
+  /* ── Background Banner (sets as canvas background image) ── */
+
+  async function addBackgroundBanner() {
+    const file = await pickFile("image/*");
+    if (!file) return;
+    setUploadingBanner(true);
+    try {
+      const url = await uploadFile(file);
+      setBgImage(url);
+      toast.success("Background banner set");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to upload banner");
+    } finally {
+      setUploadingBanner(false);
+    }
+  }
+
+  /* ── Generic background image upload (sidebar) ── */
+
+  async function uploadBg() {
+    const file = await pickFile("image/*");
+    if (!file) return;
+    try {
+      const url = await uploadFile(file);
+      setBgImage(url);
+      toast.success("Background uploaded");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to upload background");
+    }
   }
 
   /* ── Save ── */
@@ -310,6 +364,15 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
             <SelectItem value="holiday">Holiday</SelectItem>
           </SelectContent>
         </Select>
+        <div className="h-5 w-px bg-border" />
+        <Button variant="outline" size="sm" onClick={addBrokerageLogo} disabled={uploadingLogo}>
+          {uploadingLogo ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Building2 className="mr-1.5 h-4 w-4" />}
+          Brokerage Logo
+        </Button>
+        <Button variant="outline" size="sm" onClick={addBackgroundBanner} disabled={uploadingBanner}>
+          {uploadingBanner ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <ImageIcon className="mr-1.5 h-4 w-4" />}
+          Background Banner
+        </Button>
         <div className="ml-auto">
           <Button size="sm" onClick={handleSave} disabled={saving}>
             {saving ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Save className="mr-1.5 h-4 w-4" />}
