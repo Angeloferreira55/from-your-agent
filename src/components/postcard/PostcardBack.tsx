@@ -67,6 +67,7 @@ interface PostcardBackProps {
   brokerageSocialLinks?: Record<string, string> | null;
   brokerageDisclaimer?: string | null;
   templateDesign?: DesignConfig | null;
+  agentCardDesign?: DesignConfig | null;
   className?: string;
 }
 
@@ -95,6 +96,7 @@ export function PostcardBack({
   brokerageSocialLinks = null,
   brokerageDisclaimer = null,
   templateDesign = null,
+  agentCardDesign = null,
   className,
 }: PostcardBackProps) {
   const v = { ...DEFAULT_VISIBLE, ...visibleFields };
@@ -306,63 +308,128 @@ export function PostcardBack({
         {/* ── Bottom half ── */}
         <div className="flex h-1/2">
           {/* Bottom-left: Agent profile */}
-          <div className="flex w-1/2 items-start gap-2 p-3 md:p-4 border-r border-gray-200">
-            {/* Headshot */}
+          {agentCardDesign ? (
+            /* Agent-designed panel */
             <div
-              className="h-14 w-12 md:h-20 md:w-16 shrink-0 rounded-md border-2 overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center"
-              style={{ borderColor: brandColor }}
+              className="relative w-1/2 overflow-hidden border-r border-gray-200"
+              style={{
+                backgroundColor: agentCardDesign.background.colorEnabled !== false
+                  ? agentCardDesign.background.color
+                  : "transparent",
+              }}
             >
-              {photoUrl ? (
+              {agentCardDesign.background.imageUrl && (
                 <img
-                  src={photoUrl}
-                  alt={agentName}
-                  className="h-full w-full object-cover"
+                  src={agentCardDesign.background.imageUrl}
+                  alt=""
+                  className="absolute inset-0 h-full w-full object-cover"
+                  style={{ opacity: agentCardDesign.background.colorEnabled !== false ? 0.3 : 1 }}
                 />
-              ) : (
-                <User className="h-6 w-6 text-gray-400" />
               )}
-            </div>
-
-            {/* Contact info */}
-            <div className="min-w-0 flex flex-col justify-center mt-0.5 md:mt-1">
-              <p className="text-[9px] md:text-[12px] font-bold text-gray-900 leading-tight">
-                {agentName}
-              </p>
-              {tagline && (
-                <p
-                  className="text-[5px] md:text-[7px] italic mt-0.5"
-                  style={{ color: brandColor }}
+              {agentCardDesign.background.colorEnabled !== false && (
+                <div className="absolute inset-0" style={{ backgroundColor: agentCardDesign.background.overlayColor }} />
+              )}
+              {agentCardDesign.elements.map((el) => (
+                <div
+                  key={el.id}
+                  className="absolute"
+                  style={{
+                    left: `${el.x}%`,
+                    top: `${el.y}%`,
+                    width: `${el.width}%`,
+                    height: el.type === "image" ? `${el.height}%` : "auto",
+                    opacity: el.opacity ?? 1,
+                  }}
                 >
-                  {tagline}
-                </p>
-              )}
-              {companyName && (
-                <p className="text-[6px] md:text-[8px] font-semibold text-gray-700 mt-0.5">
-                  {companyName}
-                </p>
-              )}
-              {v.phone && phone && (
-                <p className="text-[5px] md:text-[7px] text-gray-500 mt-0.5">
-                  {phone}
-                </p>
-              )}
-              {v.email && email && (
-                <p className="text-[4px] md:text-[6px] text-gray-500">
-                  {email}
-                </p>
-              )}
-              {v.website && website && (
-                <p className="text-[4px] md:text-[6px] text-gray-500">
-                  {website}
-                </p>
-              )}
-              {v.license && licenseNumber && (
-                <p className="text-[4px] md:text-[6px] text-gray-400">
-                  {licenseNumber}
-                </p>
-              )}
+                  {el.type === "text" && (
+                    <p
+                      className="break-words whitespace-pre-wrap"
+                      style={{
+                        fontSize: `${(el.fontSize || 16) * 0.35}px`,
+                        color: el.fontColor || "#000",
+                        fontWeight: el.fontWeight || "normal",
+                        fontStyle: el.fontStyle || "normal",
+                        textAlign: el.textAlign || "left",
+                        fontFamily: FONT_MAP[el.fontFamily || "sans-serif"] || "Arial, sans-serif",
+                        lineHeight: el.lineHeight || 1.3,
+                        letterSpacing: el.letterSpacing ? `${el.letterSpacing * 0.35}px` : undefined,
+                        textTransform: el.textTransform || "none",
+                      }}
+                    >
+                      {el.text}
+                    </p>
+                  )}
+                  {el.type === "image" && el.src && (
+                    <img
+                      src={el.tintColor && el.src.startsWith("data:image/svg+xml,") ? recolorSvgDataUri(el.src, el.tintColor) : el.src}
+                      alt=""
+                      className="w-full h-full"
+                      style={{ objectFit: el.objectFit || "contain" }}
+                    />
+                  )}
+                </div>
+              ))}
             </div>
-          </div>
+          ) : (
+            /* Fallback: hardcoded agent panel */
+            <div className="flex w-1/2 items-start gap-2 p-3 md:p-4 border-r border-gray-200">
+              {/* Headshot */}
+              <div
+                className="h-14 w-12 md:h-20 md:w-16 shrink-0 rounded-md border-2 overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center"
+                style={{ borderColor: brandColor }}
+              >
+                {photoUrl ? (
+                  <img
+                    src={photoUrl}
+                    alt={agentName}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <User className="h-6 w-6 text-gray-400" />
+                )}
+              </div>
+
+              {/* Contact info */}
+              <div className="min-w-0 flex flex-col justify-center mt-0.5 md:mt-1">
+                <p className="text-[9px] md:text-[12px] font-bold text-gray-900 leading-tight">
+                  {agentName}
+                </p>
+                {tagline && (
+                  <p
+                    className="text-[5px] md:text-[7px] italic mt-0.5"
+                    style={{ color: brandColor }}
+                  >
+                    {tagline}
+                  </p>
+                )}
+                {companyName && (
+                  <p className="text-[6px] md:text-[8px] font-semibold text-gray-700 mt-0.5">
+                    {companyName}
+                  </p>
+                )}
+                {v.phone && phone && (
+                  <p className="text-[5px] md:text-[7px] text-gray-500 mt-0.5">
+                    {phone}
+                  </p>
+                )}
+                {v.email && email && (
+                  <p className="text-[4px] md:text-[6px] text-gray-500">
+                    {email}
+                  </p>
+                )}
+                {v.website && website && (
+                  <p className="text-[4px] md:text-[6px] text-gray-500">
+                    {website}
+                  </p>
+                )}
+                {v.license && licenseNumber && (
+                  <p className="text-[4px] md:text-[6px] text-gray-400">
+                    {licenseNumber}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Bottom-right: Mailing area */}
           <div className="flex w-1/2 flex-col justify-between p-2 md:p-3 bg-white">

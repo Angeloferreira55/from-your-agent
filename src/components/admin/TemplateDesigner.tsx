@@ -102,6 +102,8 @@ interface TemplateDesignerProps {
   onClose: () => void;
   onSubmit: (data: Record<string, unknown>) => Promise<void>;
   brokerages?: BrokerageOption[];
+  /** "admin" (default) = full template editor; "agent" = bottom-left panel only */
+  mode?: "admin" | "agent";
   initialData?: {
     id?: string;
     name?: string;
@@ -145,7 +147,8 @@ export function recolorSvgDataUri(dataUri: string, color: string): string {
 
 /* ── Component ── */
 
-export function TemplateDesigner({ open, onClose, onSubmit, brokerages, initialData }: TemplateDesignerProps) {
+export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "admin", initialData }: TemplateDesignerProps) {
+  const isAgent = mode === "agent";
   const canvasRef = useRef<HTMLDivElement>(null);
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -295,7 +298,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, initialD
       try {
         const b64 = await fileToBase64(file);
         const ext = file.name.split(".").pop() || "png";
-        const res = await fetch("/api/admin/templates/upload", {
+        const res = await fetch(uploadEndpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ base64: b64, ext, contentType: file.type }),
@@ -367,10 +370,12 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, initialD
 
   /* ── Upload helper ── */
 
+  const uploadEndpoint = isAgent ? "/api/profile/design-upload" : "/api/admin/templates/upload";
+
   async function uploadFile(file: File): Promise<string> {
     const b64 = await fileToBase64(file);
     const ext = file.name.split(".").pop() || "png";
-    const res = await fetch("/api/admin/templates/upload", {
+    const res = await fetch(uploadEndpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ base64: b64, ext, contentType: file.type }),
@@ -510,7 +515,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, initialD
   /* ── Save ── */
 
   async function handleSave() {
-    if (!name.trim()) { toast.error("Enter a template name"); return; }
+    if (!isAgent && !name.trim()) { toast.error("Enter a template name"); return; }
     setSaving(true);
     try {
       const design: DesignConfig = {
@@ -519,17 +524,22 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, initialD
         disclaimer,
         disclaimerStyle: { fontSize: disclaimerFontSize, color: disclaimerColor, fontFamily: disclaimerFont },
       };
-      await onSubmit({
-        ...(initialData?.id ? { id: initialData.id } : {}),
-        name,
-        description: description || null,
-        size: "6x9",
-        season,
-        type: templateType,
-        brokerage_id: templateType === "brokerage" && brokerageId ? brokerageId : null,
-        front_html: "",
-        back_html: JSON.stringify(design),
-      });
+      if (isAgent) {
+        // Agent mode: just submit the design config
+        await onSubmit({ design });
+      } else {
+        await onSubmit({
+          ...(initialData?.id ? { id: initialData.id } : {}),
+          name,
+          description: description || null,
+          size: "6x9",
+          season,
+          type: templateType,
+          brokerage_id: templateType === "brokerage" && brokerageId ? brokerageId : null,
+          front_html: "",
+          back_html: JSON.stringify(design),
+        });
+      }
       onClose();
     } catch {
       toast.error("Failed to save");
@@ -548,59 +558,68 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, initialD
           <ArrowLeft className="mr-1.5 h-4 w-4" /> Back
         </Button>
         <div className="h-5 w-px bg-border" />
-        <Input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Template name..."
-          className="max-w-[200px] h-8 text-sm"
-        />
-        <Input
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Description"
-          className="max-w-[180px] h-8 text-sm"
-        />
-        <Select value={templateType} onValueChange={(v) => setTemplateType(v as "brokerage" | "monthly")}>
-          <SelectTrigger className="w-28 h-8 text-sm"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="brokerage">Brokerage</SelectItem>
-            <SelectItem value="monthly">Monthly</SelectItem>
-          </SelectContent>
-        </Select>
-        {templateType === "brokerage" && brokerages && brokerages.length > 0 && (
-          <Select value={brokerageId} onValueChange={setBrokerageId}>
-            <SelectTrigger className="w-44 h-8 text-sm"><SelectValue placeholder="Link to brokerage..." /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">No specific brokerage</SelectItem>
-              {brokerages.map((b) => (
-                <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        {isAgent ? (
+          <>
+            <span className="text-sm font-medium">Customize Your Panel</span>
+            <span className="text-xs text-muted-foreground whitespace-nowrap">Bottom-left · 4.5&quot; × 3&quot;</span>
+          </>
+        ) : (
+          <>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Template name..."
+              className="max-w-[200px] h-8 text-sm"
+            />
+            <Input
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Description"
+              className="max-w-[180px] h-8 text-sm"
+            />
+            <Select value={templateType} onValueChange={(v) => setTemplateType(v as "brokerage" | "monthly")}>
+              <SelectTrigger className="w-28 h-8 text-sm"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="brokerage">Brokerage</SelectItem>
+                <SelectItem value="monthly">Monthly</SelectItem>
+              </SelectContent>
+            </Select>
+            {templateType === "brokerage" && brokerages && brokerages.length > 0 && (
+              <Select value={brokerageId} onValueChange={setBrokerageId}>
+                <SelectTrigger className="w-44 h-8 text-sm"><SelectValue placeholder="Link to brokerage..." /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">No specific brokerage</SelectItem>
+                  {brokerages.map((b) => (
+                    <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            <span className="text-xs text-muted-foreground whitespace-nowrap">
+              {templateType === "brokerage" ? "Top-right panel · 4.5\" × 3\"" : "Top-left + Front"}
+            </span>
+            <Select value={season} onValueChange={setSeason}>
+              <SelectTrigger className="w-24 h-8 text-sm"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="any">Any</SelectItem>
+                <SelectItem value="spring">Spring</SelectItem>
+                <SelectItem value="summer">Summer</SelectItem>
+                <SelectItem value="fall">Fall</SelectItem>
+                <SelectItem value="winter">Winter</SelectItem>
+                <SelectItem value="holiday">Holiday</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="h-5 w-px bg-border" />
+            <Button variant="outline" size="sm" onClick={addBrokerageLogo} disabled={uploadingLogo}>
+              {uploadingLogo ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Building2 className="mr-1.5 h-4 w-4" />}
+              Team Logo
+            </Button>
+            <Button variant="outline" size="sm" onClick={addBackgroundBanner} disabled={uploadingBanner}>
+              {uploadingBanner ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <ImageIcon className="mr-1.5 h-4 w-4" />}
+              Background Banner
+            </Button>
+          </>
         )}
-        <span className="text-xs text-muted-foreground whitespace-nowrap">
-          {templateType === "brokerage" ? "Top-right panel · 4.5\" × 3\"" : "Top-left + Front"}
-        </span>
-        <Select value={season} onValueChange={setSeason}>
-          <SelectTrigger className="w-24 h-8 text-sm"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="any">Any</SelectItem>
-            <SelectItem value="spring">Spring</SelectItem>
-            <SelectItem value="summer">Summer</SelectItem>
-            <SelectItem value="fall">Fall</SelectItem>
-            <SelectItem value="winter">Winter</SelectItem>
-            <SelectItem value="holiday">Holiday</SelectItem>
-          </SelectContent>
-        </Select>
-        <div className="h-5 w-px bg-border" />
-        <Button variant="outline" size="sm" onClick={addBrokerageLogo} disabled={uploadingLogo}>
-          {uploadingLogo ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Building2 className="mr-1.5 h-4 w-4" />}
-          Team Logo
-        </Button>
-        <Button variant="outline" size="sm" onClick={addBackgroundBanner} disabled={uploadingBanner}>
-          {uploadingBanner ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <ImageIcon className="mr-1.5 h-4 w-4" />}
-          Background Banner
-        </Button>
         <div className="ml-auto">
           <Button size="sm" onClick={handleSave} disabled={saving}>
             {saving ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Save className="mr-1.5 h-4 w-4" />}
@@ -716,8 +735,8 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, initialD
               );
             })}
 
-            {/* Disclaimer */}
-            {disclaimer && (
+            {/* Disclaimer (admin only) */}
+            {!isAgent && disclaimer && (
               <div className="absolute bottom-0 left-0 right-0 px-[15%] py-2 pointer-events-none">
                 <p className="leading-tight text-center" style={{
                   fontSize: `${disclaimerFontSize * scale}px`,
@@ -746,7 +765,8 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, initialD
             </div>
           </div>
 
-          {/* Social media icons */}
+          {/* Social media icons (admin only) */}
+          {!isAgent && (
           <div>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Social Icons</p>
             <div className="flex flex-wrap gap-1.5">
@@ -763,8 +783,10 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, initialD
               ))}
             </div>
           </div>
+          )}
 
-          {/* Real estate logos */}
+          {/* Real estate logos (admin only) */}
+          {!isAgent && (
           <div>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Real Estate Logos</p>
             <div className="flex flex-wrap gap-1.5">
@@ -781,6 +803,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, initialD
               ))}
             </div>
           </div>
+          )}
 
           {/* Background */}
           <div className="space-y-3">
@@ -1049,7 +1072,8 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, initialD
                       </div>
                     </div>
                   )}
-                  {/* Team logo placeholder toggle */}
+                  {/* Team logo placeholder toggle (admin only) */}
+                  {!isAgent && (
                   <label className="flex items-center gap-2 cursor-pointer rounded border p-2 hover:bg-muted/50 transition-colors">
                     <input
                       type="checkbox"
@@ -1073,12 +1097,14 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, initialD
                       <p className="text-[10px] text-muted-foreground">Agent&apos;s uploaded logo replaces this</p>
                     </div>
                   </label>
+                  )}
                 </>
               )}
             </div>
           )}
 
-          {/* Disclaimer */}
+          {/* Disclaimer (admin only) */}
+          {!isAgent && (
           <div className="space-y-2">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Disclaimer</p>
             <Textarea
@@ -1133,6 +1159,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, initialD
               </Select>
             </div>
           </div>
+          )}
 
           {/* Elements list */}
           <div className="space-y-1.5">

@@ -44,6 +44,7 @@ export interface AgentProfile {
   stripe_subscription_id: string | null;
   subscription_status: SubscriptionStatus;
   brokerage_id: string | null;
+  agent_card_design: Record<string, unknown> | null;
   role: AgentRole;
   onboarding_completed: boolean;
   created_at: string;

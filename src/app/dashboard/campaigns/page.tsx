@@ -247,6 +247,7 @@ export default function CampaignsPage() {
                 }
                 visibleFields={profile?.postcard_visible_fields}
                 templateDesign={campaignTemplateDesign}
+                agentCardDesign={profile?.agent_card_design ? (profile.agent_card_design as unknown as import("@/components/admin/TemplateDesigner").DesignConfig) : null}
               />
             </TabsContent>
           </Tabs>

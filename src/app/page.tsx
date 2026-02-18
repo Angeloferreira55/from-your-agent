@@ -26,13 +26,12 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl px-6 py-24 md:py-36">
           <div className="mx-auto max-w-3xl text-center">
             <h1 className="font-serif text-4xl font-bold tracking-tight text-[#1a1a2e] md:text-6xl md:leading-[1.15]">
-              Helping Real Estate Agents Build{" "}
-              <span className="text-[#E8733A]">Repeat</span> &{" "}
-              <span className="text-[#E8733A]">Referral</span> Business.
+              Helping Real Estate Agents Turn{" "}
+              <span className="text-[#E8733A]">Relationships</span> Into{" "}
+              <span className="text-[#E8733A]">Consistent Closings</span>.
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground md:text-xl">
-              Reward your customers and friends with
-              outstanding free offers &amp; discounts as a gift from their agent.
+              Turn Your Database Into Your #1 Lead Source.
             </p>
             <div className="mt-8">
               <img

@@ -75,7 +75,7 @@ export async function PATCH(req: NextRequest) {
     "address_line1", "address_line2", "city", "state", "zip",
     "brokerage_phone", "brokerage_address_line1", "brokerage_address_line2",
     "brokerage_city", "brokerage_state", "brokerage_zip",
-    "website", "postcard_visible_fields", "brokerage_id",
+    "website", "postcard_visible_fields", "brokerage_id", "agent_card_design",
   ];
 
   const updates: Record<string, unknown> = {};
