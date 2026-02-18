@@ -10,13 +10,29 @@ import { TemplateDesigner, recolorSvgDataUri, type DesignConfig, type FontFamily
 
 const FONT_MAP: Record<string, string> = {
   "sans-serif": "Arial, Helvetica, sans-serif",
+  helvetica: "Helvetica, Arial, sans-serif",
+  verdana: "Verdana, Geneva, sans-serif",
+  tahoma: "Tahoma, Geneva, sans-serif",
+  trebuchet: "'Trebuchet MS', Helvetica, sans-serif",
+  calibri: "Calibri, 'Gill Sans', sans-serif",
+  segoe: "'Segoe UI', Tahoma, sans-serif",
   serif: "Georgia, serif",
   georgia: "Georgia, serif",
   times: "'Times New Roman', Times, serif",
   palatino: "'Palatino Linotype', Palatino, serif",
   garamond: "Garamond, serif",
+  bookman: "'Bookman Old Style', Bookman, serif",
+  cambria: "Cambria, Georgia, serif",
   courier: "'Courier New', Courier, monospace",
+  consolas: "Consolas, 'Courier New', monospace",
+  monaco: "Monaco, 'Courier New', monospace",
   impact: "Impact, 'Arial Black', sans-serif",
+  "century-gothic": "'Century Gothic', 'Apple Gothic', sans-serif",
+  futura: "Futura, 'Century Gothic', sans-serif",
+  "gill-sans": "'Gill Sans', 'Gill Sans MT', Calibri, sans-serif",
+  optima: "Optima, 'Segoe UI', sans-serif",
+  candara: "Candara, Calibri, sans-serif",
+  franklin: "'Franklin Gothic Medium', 'Franklin Gothic', sans-serif",
 };
 import { Plus, FileImage, MoreHorizontal, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";

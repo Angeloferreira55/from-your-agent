@@ -11,17 +11,41 @@ import { toast } from "sonner";
 
 /* ── Types ── */
 
-export type FontFamilyOption = "sans-serif" | "serif" | "georgia" | "times" | "palatino" | "garamond" | "courier" | "impact";
+export type FontFamilyOption =
+  | "sans-serif" | "helvetica" | "verdana" | "tahoma" | "trebuchet" | "calibri" | "segoe"
+  | "serif" | "georgia" | "times" | "palatino" | "garamond" | "bookman" | "cambria"
+  | "courier" | "consolas" | "monaco"
+  | "impact" | "century-gothic" | "futura" | "gill-sans" | "optima" | "candara" | "franklin";
 
 const FONT_MAP: Record<FontFamilyOption, string> = {
+  // Sans-serif
   "sans-serif": "Arial, Helvetica, sans-serif",
+  helvetica: "Helvetica, Arial, sans-serif",
+  verdana: "Verdana, Geneva, sans-serif",
+  tahoma: "Tahoma, Geneva, sans-serif",
+  trebuchet: "'Trebuchet MS', Helvetica, sans-serif",
+  calibri: "Calibri, 'Gill Sans', sans-serif",
+  segoe: "'Segoe UI', Tahoma, sans-serif",
+  // Serif
   serif: "Georgia, serif",
   georgia: "Georgia, serif",
   times: "'Times New Roman', Times, serif",
   palatino: "'Palatino Linotype', Palatino, serif",
   garamond: "Garamond, serif",
+  bookman: "'Bookman Old Style', Bookman, serif",
+  cambria: "Cambria, Georgia, serif",
+  // Monospace
   courier: "'Courier New', Courier, monospace",
+  consolas: "Consolas, 'Courier New', monospace",
+  monaco: "Monaco, 'Courier New', monospace",
+  // Display
   impact: "Impact, 'Arial Black', sans-serif",
+  "century-gothic": "'Century Gothic', 'Apple Gothic', sans-serif",
+  futura: "Futura, 'Century Gothic', sans-serif",
+  "gill-sans": "'Gill Sans', 'Gill Sans MT', Calibri, sans-serif",
+  optima: "Optima, 'Segoe UI', sans-serif",
+  candara: "Candara, Calibri, sans-serif",
+  franklin: "'Franklin Gothic Medium', 'Franklin Gothic', sans-serif",
 };
 
 export interface DesignElement {
@@ -653,7 +677,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
 
             {/* Disclaimer */}
             {disclaimer && (
-              <div className="absolute bottom-0 left-0 right-0 px-4 py-2 pointer-events-none">
+              <div className="absolute bottom-0 left-0 right-0 px-[15%] py-2 pointer-events-none">
                 <p className="leading-tight text-center" style={{
                   fontSize: `${disclaimerFontSize * scale}px`,
                   color: disclaimerColor,
@@ -832,14 +856,34 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
                     <Label className="text-[10px]">Font</Label>
                     <Select value={selected.fontFamily || "sans-serif"} onValueChange={(v) => updateEl(selected.id, { fontFamily: v as FontFamilyOption })}>
                       <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="sans-serif"><span style={{ fontFamily: "Arial, sans-serif" }}>Arial (Sans)</span></SelectItem>
+                      <SelectContent className="max-h-[300px]">
+                        {/* Sans-serif */}
+                        <SelectItem value="sans-serif"><span style={{ fontFamily: "Arial, sans-serif" }}>Arial</span></SelectItem>
+                        <SelectItem value="helvetica"><span style={{ fontFamily: "Helvetica, Arial, sans-serif" }}>Helvetica</span></SelectItem>
+                        <SelectItem value="verdana"><span style={{ fontFamily: "Verdana, sans-serif" }}>Verdana</span></SelectItem>
+                        <SelectItem value="tahoma"><span style={{ fontFamily: "Tahoma, sans-serif" }}>Tahoma</span></SelectItem>
+                        <SelectItem value="trebuchet"><span style={{ fontFamily: "'Trebuchet MS', sans-serif" }}>Trebuchet MS</span></SelectItem>
+                        <SelectItem value="calibri"><span style={{ fontFamily: "Calibri, sans-serif" }}>Calibri</span></SelectItem>
+                        <SelectItem value="segoe"><span style={{ fontFamily: "'Segoe UI', sans-serif" }}>Segoe UI</span></SelectItem>
+                        {/* Serif */}
                         <SelectItem value="georgia"><span style={{ fontFamily: "Georgia, serif" }}>Georgia</span></SelectItem>
                         <SelectItem value="times"><span style={{ fontFamily: "'Times New Roman', serif" }}>Times New Roman</span></SelectItem>
                         <SelectItem value="palatino"><span style={{ fontFamily: "'Palatino Linotype', serif" }}>Palatino</span></SelectItem>
                         <SelectItem value="garamond"><span style={{ fontFamily: "Garamond, serif" }}>Garamond</span></SelectItem>
-                        <SelectItem value="courier"><span style={{ fontFamily: "'Courier New', monospace" }}>Courier</span></SelectItem>
+                        <SelectItem value="bookman"><span style={{ fontFamily: "'Bookman Old Style', serif" }}>Bookman</span></SelectItem>
+                        <SelectItem value="cambria"><span style={{ fontFamily: "Cambria, serif" }}>Cambria</span></SelectItem>
+                        {/* Monospace */}
+                        <SelectItem value="courier"><span style={{ fontFamily: "'Courier New', monospace" }}>Courier New</span></SelectItem>
+                        <SelectItem value="consolas"><span style={{ fontFamily: "Consolas, monospace" }}>Consolas</span></SelectItem>
+                        <SelectItem value="monaco"><span style={{ fontFamily: "Monaco, monospace" }}>Monaco</span></SelectItem>
+                        {/* Display */}
                         <SelectItem value="impact"><span style={{ fontFamily: "Impact, sans-serif" }}>Impact</span></SelectItem>
+                        <SelectItem value="century-gothic"><span style={{ fontFamily: "'Century Gothic', sans-serif" }}>Century Gothic</span></SelectItem>
+                        <SelectItem value="futura"><span style={{ fontFamily: "Futura, sans-serif" }}>Futura</span></SelectItem>
+                        <SelectItem value="gill-sans"><span style={{ fontFamily: "'Gill Sans', sans-serif" }}>Gill Sans</span></SelectItem>
+                        <SelectItem value="optima"><span style={{ fontFamily: "Optima, sans-serif" }}>Optima</span></SelectItem>
+                        <SelectItem value="candara"><span style={{ fontFamily: "Candara, sans-serif" }}>Candara</span></SelectItem>
+                        <SelectItem value="franklin"><span style={{ fontFamily: "'Franklin Gothic Medium', sans-serif" }}>Franklin Gothic</span></SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -996,14 +1040,30 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
               <Label className="text-[10px]">Font</Label>
               <Select value={disclaimerFont} onValueChange={(v) => setDisclaimerFont(v as FontFamilyOption)}>
                 <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="sans-serif">Arial (Sans)</SelectItem>
+                <SelectContent className="max-h-[300px]">
+                  <SelectItem value="sans-serif">Arial</SelectItem>
+                  <SelectItem value="helvetica">Helvetica</SelectItem>
+                  <SelectItem value="verdana">Verdana</SelectItem>
+                  <SelectItem value="tahoma">Tahoma</SelectItem>
+                  <SelectItem value="trebuchet">Trebuchet MS</SelectItem>
+                  <SelectItem value="calibri">Calibri</SelectItem>
+                  <SelectItem value="segoe">Segoe UI</SelectItem>
                   <SelectItem value="georgia">Georgia</SelectItem>
                   <SelectItem value="times">Times New Roman</SelectItem>
                   <SelectItem value="palatino">Palatino</SelectItem>
                   <SelectItem value="garamond">Garamond</SelectItem>
-                  <SelectItem value="courier">Courier</SelectItem>
+                  <SelectItem value="bookman">Bookman</SelectItem>
+                  <SelectItem value="cambria">Cambria</SelectItem>
+                  <SelectItem value="courier">Courier New</SelectItem>
+                  <SelectItem value="consolas">Consolas</SelectItem>
+                  <SelectItem value="monaco">Monaco</SelectItem>
                   <SelectItem value="impact">Impact</SelectItem>
+                  <SelectItem value="century-gothic">Century Gothic</SelectItem>
+                  <SelectItem value="futura">Futura</SelectItem>
+                  <SelectItem value="gill-sans">Gill Sans</SelectItem>
+                  <SelectItem value="optima">Optima</SelectItem>
+                  <SelectItem value="candara">Candara</SelectItem>
+                  <SelectItem value="franklin">Franklin Gothic</SelectItem>
                 </SelectContent>
               </Select>
             </div>
