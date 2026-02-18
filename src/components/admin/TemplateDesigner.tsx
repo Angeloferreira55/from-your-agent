@@ -48,6 +48,12 @@ export interface DesignElement {
   objectFit?: "contain" | "cover";
 }
 
+export interface DisclaimerStyle {
+  fontSize: number;
+  color: string;
+  fontFamily: FontFamilyOption;
+}
+
 export interface DesignConfig {
   background: {
     color: string;
@@ -57,6 +63,7 @@ export interface DesignConfig {
   };
   elements: DesignElement[];
   disclaimer: string;
+  disclaimerStyle?: DisclaimerStyle;
 }
 
 interface TemplateDesignerProps {
@@ -108,6 +115,9 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
   const [colorEnabled, setColorEnabled] = useState(initialData?.design?.background.colorEnabled !== false);
   const [elements, setElements] = useState<DesignElement[]>(initialData?.design?.elements || []);
   const [disclaimer, setDisclaimer] = useState(initialData?.design?.disclaimer || "Each office is independently owned and operated.");
+  const [disclaimerFontSize, setDisclaimerFontSize] = useState(initialData?.design?.disclaimerStyle?.fontSize || 8);
+  const [disclaimerColor, setDisclaimerColor] = useState(initialData?.design?.disclaimerStyle?.color || "rgba(255,255,255,0.55)");
+  const [disclaimerFont, setDisclaimerFont] = useState<FontFamilyOption>(initialData?.design?.disclaimerStyle?.fontFamily || "sans-serif");
 
   // Interaction
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -139,6 +149,9 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
     setColorEnabled(initialData?.design?.background.colorEnabled !== false);
     setElements(initialData?.design?.elements || []);
     setDisclaimer(initialData?.design?.disclaimer || "Each office is independently owned and operated.");
+    setDisclaimerFontSize(initialData?.design?.disclaimerStyle?.fontSize || 8);
+    setDisclaimerColor(initialData?.design?.disclaimerStyle?.color || "rgba(255,255,255,0.55)");
+    setDisclaimerFont(initialData?.design?.disclaimerStyle?.fontFamily || "sans-serif");
     setSelectedId(null);
   }, [initialData]);
 
@@ -401,6 +414,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
         background: { color: bgColor, imageUrl: bgImage, overlayColor, colorEnabled },
         elements,
         disclaimer,
+        disclaimerStyle: { fontSize: disclaimerFontSize, color: disclaimerColor, fontFamily: disclaimerFont },
       };
       await onSubmit({
         ...(initialData?.id ? { id: initialData.id } : {}),
@@ -574,7 +588,11 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
             {/* Disclaimer */}
             {disclaimer && (
               <div className="absolute bottom-0 left-0 right-0 px-4 py-2 pointer-events-none">
-                <p className="leading-tight text-center" style={{ fontSize: `${8 * scale}px`, color: "rgba(255,255,255,0.55)" }}>
+                <p className="leading-tight text-center" style={{
+                  fontSize: `${disclaimerFontSize * scale}px`,
+                  color: disclaimerColor,
+                  fontFamily: FONT_MAP[disclaimerFont],
+                }}>
                   {disclaimer}
                 </p>
               </div>
@@ -862,7 +880,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
           )}
 
           {/* Disclaimer */}
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Disclaimer</p>
             <Textarea
               value={disclaimer}
@@ -871,6 +889,34 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
               className="text-xs"
               placeholder="Each office is independently owned..."
             />
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-[10px]">Size</Label>
+                <Input type="number" value={disclaimerFontSize} onChange={(e) => setDisclaimerFontSize(+e.target.value)} className="text-xs h-7" min={4} max={24} />
+              </div>
+              <div>
+                <Label className="text-[10px]">Color</Label>
+                <div className="flex gap-1">
+                  <input type="color" value={disclaimerColor.startsWith("#") ? disclaimerColor : "#ffffff"} onChange={(e) => setDisclaimerColor(e.target.value)} className="h-7 w-7 rounded border cursor-pointer" />
+                  <Input value={disclaimerColor} onChange={(e) => setDisclaimerColor(e.target.value)} className="flex-1 text-xs h-7" />
+                </div>
+              </div>
+            </div>
+            <div>
+              <Label className="text-[10px]">Font</Label>
+              <Select value={disclaimerFont} onValueChange={(v) => setDisclaimerFont(v as FontFamilyOption)}>
+                <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="sans-serif">Arial (Sans)</SelectItem>
+                  <SelectItem value="georgia">Georgia</SelectItem>
+                  <SelectItem value="times">Times New Roman</SelectItem>
+                  <SelectItem value="palatino">Palatino</SelectItem>
+                  <SelectItem value="garamond">Garamond</SelectItem>
+                  <SelectItem value="courier">Courier</SelectItem>
+                  <SelectItem value="impact">Impact</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* Elements list */}
