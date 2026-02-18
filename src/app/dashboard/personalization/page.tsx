@@ -8,6 +8,7 @@ import { BrandingForm } from "@/components/personalization/BrandingForm";
 import { PostcardFront } from "@/components/postcard/PostcardFront";
 import { PostcardBack } from "@/components/postcard/PostcardBack";
 import { useAgentProfile } from "@/hooks/use-agent-profile";
+import type { DesignConfig } from "@/components/admin/TemplateDesigner";
 
 interface BrokerageConfig {
   id: string;
@@ -37,10 +38,28 @@ export default function PersonalizationPage() {
     },
   });
 
+  const { data: templateData } = useQuery({
+    queryKey: ["default-template"],
+    queryFn: async () => {
+      const res = await fetch("/api/templates");
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
+  });
+
   const brokerages: BrokerageConfig[] = brokeragesData?.brokerages || [];
   const selectedBrokerage = profile?.brokerage_id
     ? brokerages.find((b) => b.id === profile.brokerage_id) || null
     : null;
+
+  // Parse the template design config
+  let templateDesign: DesignConfig | null = null;
+  if (templateData?.template?.back_html) {
+    try {
+      const parsed = JSON.parse(templateData.template.back_html);
+      if (parsed.elements) templateDesign = parsed;
+    } catch { /* not JSON */ }
+  }
 
   return (
     <div className="space-y-6">
@@ -103,6 +122,7 @@ export default function PersonalizationPage() {
                     brokerageTextColor={selectedBrokerage?.text_color}
                     brokerageSocialLinks={selectedBrokerage?.social_links}
                     brokerageDisclaimer={selectedBrokerage?.disclaimer}
+                    templateDesign={templateDesign}
                   />
                 </TabsContent>
 

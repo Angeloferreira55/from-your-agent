@@ -16,6 +16,7 @@ import { useAgentCampaigns, useOptInCampaign, useOptOutCampaign } from "@/hooks/
 import { Send, Eye, Check, X, Loader2, Calendar, Users, Mail } from "lucide-react";
 import { toast } from "sonner";
 import type { Campaign } from "@/types/database";
+import type { DesignConfig } from "@/components/admin/TemplateDesigner";
 
 const MONTHS = ["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
@@ -29,6 +30,22 @@ export default function CampaignsPage() {
   const { data: campaigns, isLoading } = useAgentCampaigns();
   const optIn = useOptInCampaign();
   const optOut = useOptOutCampaign();
+
+  const { data: templateData } = useQuery({
+    queryKey: ["default-template"],
+    queryFn: async () => {
+      const res = await fetch("/api/templates");
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
+  });
+  let campaignTemplateDesign: DesignConfig | null = null;
+  if (templateData?.template?.back_html) {
+    try {
+      const parsed = JSON.parse(templateData.template.back_html);
+      if (parsed.elements) campaignTemplateDesign = parsed;
+    } catch { /* not JSON */ }
+  }
 
   const [previewCampaign, setPreviewCampaign] = useState<EnrichedCampaign | null>(null);
   const [optInCampaign, setOptInCampaign] = useState<EnrichedCampaign | null>(null);
@@ -225,6 +242,7 @@ export default function CampaignsPage() {
                     : null
                 }
                 visibleFields={profile?.postcard_visible_fields}
+                templateDesign={campaignTemplateDesign}
               />
             </TabsContent>
           </Tabs>

@@ -3,6 +3,35 @@
 import { cn } from "@/lib/utils";
 import { User } from "lucide-react";
 import type { PostcardVisibleFields } from "@/types/database";
+import type { DesignConfig } from "@/components/admin/TemplateDesigner";
+import { recolorSvgDataUri } from "@/components/admin/TemplateDesigner";
+
+const FONT_MAP: Record<string, string> = {
+  "sans-serif": "Arial, Helvetica, sans-serif",
+  helvetica: "Helvetica, Arial, sans-serif",
+  verdana: "Verdana, Geneva, sans-serif",
+  tahoma: "Tahoma, Geneva, sans-serif",
+  trebuchet: "'Trebuchet MS', Helvetica, sans-serif",
+  calibri: "Calibri, 'Gill Sans', sans-serif",
+  segoe: "'Segoe UI', Tahoma, sans-serif",
+  serif: "Georgia, serif",
+  georgia: "Georgia, serif",
+  times: "'Times New Roman', Times, serif",
+  palatino: "'Palatino Linotype', Palatino, serif",
+  garamond: "Garamond, serif",
+  bookman: "'Bookman Old Style', Bookman, serif",
+  cambria: "Cambria, Georgia, serif",
+  courier: "'Courier New', Courier, monospace",
+  consolas: "Consolas, 'Courier New', monospace",
+  monaco: "Monaco, 'Courier New', monospace",
+  impact: "Impact, 'Arial Black', sans-serif",
+  "century-gothic": "'Century Gothic', 'Apple Gothic', sans-serif",
+  futura: "Futura, 'Century Gothic', sans-serif",
+  "gill-sans": "'Gill Sans', 'Gill Sans MT', Calibri, sans-serif",
+  optima: "Optima, 'Segoe UI', sans-serif",
+  candara: "Candara, Calibri, sans-serif",
+  franklin: "'Franklin Gothic Medium', 'Franklin Gothic', sans-serif",
+};
 
 const DEFAULT_VISIBLE: PostcardVisibleFields = {
   phone: true,
@@ -37,6 +66,7 @@ interface PostcardBackProps {
   brokerageTextColor?: string | null;
   brokerageSocialLinks?: Record<string, string> | null;
   brokerageDisclaimer?: string | null;
+  templateDesign?: DesignConfig | null;
   className?: string;
 }
 
@@ -64,6 +94,7 @@ export function PostcardBack({
   brokerageTextColor = null,
   brokerageSocialLinks = null,
   brokerageDisclaimer = null,
+  templateDesign = null,
   className,
 }: PostcardBackProps) {
   const v = { ...DEFAULT_VISIBLE, ...visibleFields };
@@ -115,80 +146,158 @@ export function PostcardBack({
           </div>
 
           {/* Top-right: Brokerage branding panel */}
-          <div
-            className="relative flex w-1/2 flex-col p-2 md:p-3 overflow-hidden"
-            style={{ backgroundColor: brandColor }}
-          >
-            {/* Background image */}
-            {brokerageBackgroundUrl && (
-              <img
-                src={brokerageBackgroundUrl}
-                alt=""
-                className="absolute inset-0 h-full w-full object-cover opacity-30"
-              />
-            )}
-            {/* Overlay for readability */}
+          {templateDesign ? (
+            /* Template-driven panel */
             <div
-              className="absolute inset-0"
-              style={{ backgroundColor: overlayColor }}
-            />
-            <div className="relative z-10 flex flex-col h-full">
-              {/* Brokerage + Team Logos */}
-              <div className="flex items-center gap-2">
-                {brokerageLogoUrl ? (
-                  <img
-                    src={brokerageLogoUrl}
-                    alt={companyName || "Brokerage"}
-                    className="h-5 md:h-8 w-auto object-contain"
-                  />
-                ) : (
-                  <p className="text-[7px] md:text-[9px] font-bold" style={{ color: textColor }}>
-                    {companyName || "Your Brokerage"}
+              className="relative w-1/2 overflow-hidden"
+              style={{
+                backgroundColor: templateDesign.background.colorEnabled !== false
+                  ? templateDesign.background.color
+                  : "transparent",
+              }}
+            >
+              {templateDesign.background.imageUrl && (
+                <img
+                  src={templateDesign.background.imageUrl}
+                  alt=""
+                  className="absolute inset-0 h-full w-full object-cover"
+                  style={{ opacity: templateDesign.background.colorEnabled !== false ? 0.3 : 1 }}
+                />
+              )}
+              {templateDesign.background.colorEnabled !== false && (
+                <div className="absolute inset-0" style={{ backgroundColor: templateDesign.background.overlayColor }} />
+              )}
+              {/* Render elements */}
+              {templateDesign.elements.map((el) => {
+                // If this is the team_logo placeholder, swap in agent's logo
+                const imgSrc = el.placeholder === "team_logo" && teamLogoUrl
+                  ? teamLogoUrl
+                  : el.src;
+
+                return (
+                  <div
+                    key={el.id}
+                    className="absolute"
+                    style={{
+                      left: `${el.x}%`,
+                      top: `${el.y}%`,
+                      width: `${el.width}%`,
+                      height: el.type === "image" ? `${el.height}%` : "auto",
+                      opacity: el.opacity ?? 1,
+                    }}
+                  >
+                    {el.type === "text" && (
+                      <p
+                        className="break-words whitespace-pre-wrap"
+                        style={{
+                          fontSize: `${(el.fontSize || 16) * 0.35}px`,
+                          color: el.fontColor || "#fff",
+                          fontWeight: el.fontWeight || "normal",
+                          fontStyle: el.fontStyle || "normal",
+                          textAlign: el.textAlign || "left",
+                          fontFamily: FONT_MAP[el.fontFamily || "sans-serif"] || "Arial, sans-serif",
+                          lineHeight: el.lineHeight || 1.3,
+                          letterSpacing: el.letterSpacing ? `${el.letterSpacing * 0.35}px` : undefined,
+                          textTransform: el.textTransform || "none",
+                        }}
+                      >
+                        {el.text}
+                      </p>
+                    )}
+                    {el.type === "image" && imgSrc && (
+                      <img
+                        src={el.tintColor && imgSrc.startsWith("data:image/svg+xml,") ? recolorSvgDataUri(imgSrc, el.tintColor) : imgSrc}
+                        alt=""
+                        className="w-full h-full"
+                        style={{ objectFit: el.objectFit || "contain" }}
+                      />
+                    )}
+                  </div>
+                );
+              })}
+              {/* Disclaimer */}
+              {templateDesign.disclaimer && (
+                <div className="absolute bottom-0 left-0 right-0 px-[15%] py-1 pointer-events-none">
+                  <p className="leading-tight text-center" style={{
+                    fontSize: `${(templateDesign.disclaimerStyle?.fontSize || 8) * 0.35}px`,
+                    color: templateDesign.disclaimerStyle?.color || "rgba(255,255,255,0.55)",
+                    fontFamily: FONT_MAP[templateDesign.disclaimerStyle?.fontFamily || "sans-serif"],
+                  }}>
+                    {templateDesign.disclaimer}
                   </p>
-                )}
-                {teamLogoUrl && (
-                  <img
-                    src={teamLogoUrl}
-                    alt="Team Logo"
-                    className="h-5 md:h-8 w-auto object-contain"
-                  />
-                )}
-              </div>
-
-              {/* Slogan area */}
-              <div className="my-auto text-center">
-                <p
-                  className="text-[8px] md:text-[12px] font-serif italic leading-snug"
-                  style={{ color: textColor }}
-                >
-                  {brokerageSlogan
-                    ? brokerageSlogan.replace(/\n/g, " ")
-                    : companyName || "Your Brokerage"}
-                </p>
-              </div>
-
-              {/* Social icons + brokerage phone */}
-              <div className="mt-auto">
-                <div className="flex items-center gap-0.5 md:gap-1">
-                  {displayIcons.map((icon) => (
-                    <div
-                      key={icon.key}
-                      className="h-2 w-2 md:h-3 md:w-3 rounded-sm bg-white/20 flex items-center justify-center"
-                    >
-                      <span className="text-[3px] md:text-[5px] font-bold" style={{ color: textColor }}>
-                        {icon.label}
-                      </span>
-                    </div>
-                  ))}
-                  {v.brokerage_info && brokeragePhone && (
-                    <p className="text-[4px] md:text-[6px] ml-auto font-medium" style={{ color: `${textColor}E6` }}>
-                      {brokeragePhone}
+                </div>
+              )}
+            </div>
+          ) : (
+            /* Fallback: hardcoded panel */
+            <div
+              className="relative flex w-1/2 flex-col p-2 md:p-3 overflow-hidden"
+              style={{ backgroundColor: brandColor }}
+            >
+              {brokerageBackgroundUrl && (
+                <img
+                  src={brokerageBackgroundUrl}
+                  alt=""
+                  className="absolute inset-0 h-full w-full object-cover opacity-30"
+                />
+              )}
+              <div
+                className="absolute inset-0"
+                style={{ backgroundColor: overlayColor }}
+              />
+              <div className="relative z-10 flex flex-col h-full">
+                <div className="flex items-center gap-2">
+                  {brokerageLogoUrl ? (
+                    <img
+                      src={brokerageLogoUrl}
+                      alt={companyName || "Brokerage"}
+                      className="h-5 md:h-8 w-auto object-contain"
+                    />
+                  ) : (
+                    <p className="text-[7px] md:text-[9px] font-bold" style={{ color: textColor }}>
+                      {companyName || "Your Brokerage"}
                     </p>
                   )}
+                  {teamLogoUrl && (
+                    <img
+                      src={teamLogoUrl}
+                      alt="Team Logo"
+                      className="h-5 md:h-8 w-auto object-contain"
+                    />
+                  )}
+                </div>
+                <div className="my-auto text-center">
+                  <p
+                    className="text-[8px] md:text-[12px] font-serif italic leading-snug"
+                    style={{ color: textColor }}
+                  >
+                    {brokerageSlogan
+                      ? brokerageSlogan.replace(/\n/g, " ")
+                      : companyName || "Your Brokerage"}
+                  </p>
+                </div>
+                <div className="mt-auto">
+                  <div className="flex items-center gap-0.5 md:gap-1">
+                    {displayIcons.map((icon) => (
+                      <div
+                        key={icon.key}
+                        className="h-2 w-2 md:h-3 md:w-3 rounded-sm bg-white/20 flex items-center justify-center"
+                      >
+                        <span className="text-[3px] md:text-[5px] font-bold" style={{ color: textColor }}>
+                          {icon.label}
+                        </span>
+                      </div>
+                    ))}
+                    {v.brokerage_info && brokeragePhone && (
+                      <p className="text-[4px] md:text-[6px] ml-auto font-medium" style={{ color: `${textColor}E6` }}>
+                        {brokeragePhone}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* ── Fine horizontal line ── */}

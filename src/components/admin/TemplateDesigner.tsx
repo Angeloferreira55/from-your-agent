@@ -71,6 +71,7 @@ export interface DesignElement {
   src?: string;
   objectFit?: "contain" | "cover";
   tintColor?: string; // recolor SVG icons/logos
+  placeholder?: "team_logo"; // agent's uploaded logo replaces this at render time
 }
 
 export interface DisclaimerStyle {
@@ -618,7 +619,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
                     isEditing ? "ring-2 ring-green-500" :
                     selectedId === el.id
                       ? "ring-2 ring-blue-500 ring-offset-1 ring-offset-transparent cursor-move"
-                      : "hover:ring-1 hover:ring-blue-300 cursor-move"
+                      : el.placeholder ? "ring-1 ring-dashed ring-emerald-400 hover:ring-emerald-500 cursor-move" : "hover:ring-1 hover:ring-blue-300 cursor-move"
                   }`}
                   style={{
                     left: `${el.x}%`,
@@ -663,6 +664,12 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
                       className="w-full h-full pointer-events-none"
                       style={{ objectFit: el.objectFit || "contain" }}
                     />
+                  )}
+                  {/* Placeholder badge */}
+                  {el.placeholder === "team_logo" && (
+                    <div className="absolute -top-3 left-0 bg-emerald-500 text-white text-[7px] font-bold px-1 py-0.5 rounded-sm leading-none pointer-events-none whitespace-nowrap">
+                      TEAM LOGO
+                    </div>
                   )}
                   {/* Resize handle */}
                   {selectedId === el.id && !isEditing && (
@@ -1008,6 +1015,30 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
                       </div>
                     </div>
                   )}
+                  {/* Team logo placeholder toggle */}
+                  <label className="flex items-center gap-2 cursor-pointer rounded border p-2 hover:bg-muted/50 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={selected.placeholder === "team_logo"}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          // Clear any existing team_logo placeholder first
+                          setElements((prev) => prev.map((el) =>
+                            el.id === selected.id
+                              ? { ...el, placeholder: "team_logo" as const }
+                              : el.placeholder === "team_logo" ? { ...el, placeholder: undefined } : el
+                          ));
+                        } else {
+                          updateEl(selected.id, { placeholder: undefined });
+                        }
+                      }}
+                      className="rounded"
+                    />
+                    <div>
+                      <span className="text-xs font-medium">Team Logo Spot</span>
+                      <p className="text-[10px] text-muted-foreground">Agent&apos;s uploaded logo replaces this</p>
+                    </div>
+                  </label>
                 </>
               )}
             </div>
@@ -1087,8 +1118,11 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
               >
                 {el.type === "text" ? <Type className="h-3 w-3 shrink-0" /> : <ImagePlus className="h-3 w-3 shrink-0" />}
                 <span className="truncate flex-1">
-                  {el.type === "text" ? (el.text || "Text").substring(0, 25) : "Image"}
+                  {el.type === "text" ? (el.text || "Text").substring(0, 25) : el.placeholder === "team_logo" ? "Team Logo Spot" : "Image"}
                 </span>
+                {el.placeholder === "team_logo" && (
+                  <span className="text-[9px] bg-emerald-100 text-emerald-700 px-1 rounded shrink-0">TL</span>
+                )}
                 <Button
                   variant="ghost"
                   size="icon"
