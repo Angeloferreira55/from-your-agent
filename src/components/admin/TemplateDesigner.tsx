@@ -36,6 +36,7 @@ export interface DesignConfig {
     color: string;
     imageUrl: string;
     overlayColor: string;
+    colorEnabled?: boolean; // false = no color/overlay, full image
   };
   elements: DesignElement[];
   disclaimer: string;
@@ -87,6 +88,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
   const [bgColor, setBgColor] = useState(initialData?.design?.background.color || "#1B3A5C");
   const [bgImage, setBgImage] = useState(initialData?.design?.background.imageUrl || "");
   const [overlayColor, setOverlayColor] = useState(initialData?.design?.background.overlayColor || "rgba(0,0,0,0.3)");
+  const [colorEnabled, setColorEnabled] = useState(initialData?.design?.background.colorEnabled !== false);
   const [elements, setElements] = useState<DesignElement[]>(initialData?.design?.elements || []);
   const [disclaimer, setDisclaimer] = useState(initialData?.design?.disclaimer || "Each office is independently owned and operated.");
 
@@ -115,6 +117,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
     setBgColor(initialData?.design?.background.color || "#1B3A5C");
     setBgImage(initialData?.design?.background.imageUrl || "");
     setOverlayColor(initialData?.design?.background.overlayColor || "rgba(0,0,0,0.3)");
+    setColorEnabled(initialData?.design?.background.colorEnabled !== false);
     setElements(initialData?.design?.elements || []);
     setDisclaimer(initialData?.design?.disclaimer || "Each office is independently owned and operated.");
     setSelectedId(null);
@@ -299,7 +302,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
     setSaving(true);
     try {
       const design: DesignConfig = {
-        background: { color: bgColor, imageUrl: bgImage, overlayColor },
+        background: { color: bgColor, imageUrl: bgImage, overlayColor, colorEnabled },
         elements,
         disclaimer,
       };
@@ -378,7 +381,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
           <div
             ref={canvasRef}
             className="relative rounded-lg shadow-xl overflow-hidden select-none"
-            style={{ aspectRatio: "3/2", width: "min(70vw, 675px)", backgroundColor: bgColor }}
+            style={{ aspectRatio: "3/2", width: "min(70vw, 675px)", backgroundColor: colorEnabled ? bgColor : "transparent" }}
             onMouseMove={onCanvasMove}
             onMouseUp={onCanvasUp}
             onMouseLeave={onCanvasUp}
@@ -386,10 +389,12 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
           >
             {/* Bg image */}
             {bgImage && (
-              <img src={bgImage} alt="" className="absolute inset-0 h-full w-full object-cover pointer-events-none" style={{ opacity: 0.3 }} />
+              <img src={bgImage} alt="" className="absolute inset-0 h-full w-full object-cover pointer-events-none" style={{ opacity: colorEnabled ? 0.3 : 1 }} />
             )}
-            {/* Overlay */}
-            <div className="absolute inset-0 pointer-events-none" style={{ backgroundColor: overlayColor }} />
+            {/* Overlay (only when color enabled) */}
+            {colorEnabled && (
+              <div className="absolute inset-0 pointer-events-none" style={{ backgroundColor: overlayColor }} />
+            )}
 
             {/* Elements */}
             {elements.map((el) => (
@@ -464,13 +469,19 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
           {/* Background */}
           <div className="space-y-3">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Background</p>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Color</Label>
-              <div className="flex gap-2">
-                <input type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} className="h-8 w-10 rounded border cursor-pointer" />
-                <Input value={bgColor} onChange={(e) => setBgColor(e.target.value)} className="flex-1 text-xs h-8" />
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={colorEnabled} onChange={(e) => setColorEnabled(e.target.checked)} className="rounded" />
+              <span className="text-xs">Color tint &amp; overlay</span>
+            </label>
+            {colorEnabled && (
+              <div className="space-y-1.5">
+                <Label className="text-xs">Color</Label>
+                <div className="flex gap-2">
+                  <input type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} className="h-8 w-10 rounded border cursor-pointer" />
+                  <Input value={bgColor} onChange={(e) => setBgColor(e.target.value)} className="flex-1 text-xs h-8" />
+                </div>
               </div>
-            </div>
+            )}
             <div className="space-y-1.5">
               <Label className="text-xs">Image</Label>
               <Button variant="outline" size="sm" className="w-full text-xs" onClick={uploadBg}>
@@ -486,10 +497,12 @@ export function TemplateDesigner({ open, onClose, onSubmit, initialData }: Templ
                 </div>
               )}
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Overlay</Label>
-              <Input value={overlayColor} onChange={(e) => setOverlayColor(e.target.value)} placeholder="rgba(0,0,0,0.3)" className="text-xs h-8" />
-            </div>
+            {colorEnabled && (
+              <div className="space-y-1.5">
+                <Label className="text-xs">Overlay</Label>
+                <Input value={overlayColor} onChange={(e) => setOverlayColor(e.target.value)} placeholder="rgba(0,0,0,0.3)" className="text-xs h-8" />
+              </div>
+            )}
           </div>
 
           {/* Selected element properties */}

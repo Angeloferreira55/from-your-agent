@@ -139,13 +139,13 @@ export default function AdminTemplatesPage() {
                     className="relative overflow-hidden"
                     style={{
                       aspectRatio: "3/2",
-                      backgroundColor: design?.background.color || "#1B3A5C",
+                      backgroundColor: design?.background.colorEnabled !== false ? (design?.background.color || "#1B3A5C") : "transparent",
                     }}
                   >
                     {design?.background.imageUrl && (
-                      <img src={design.background.imageUrl} alt="" className="absolute inset-0 h-full w-full object-cover opacity-30" />
+                      <img src={design.background.imageUrl} alt="" className="absolute inset-0 h-full w-full object-cover" style={{ opacity: design.background.colorEnabled !== false ? 0.3 : 1 }} />
                     )}
-                    {design && (
+                    {design && design.background.colorEnabled !== false && (
                       <div className="absolute inset-0" style={{ backgroundColor: design.background.overlayColor }} />
                     )}
                     {design?.elements.map((el) => (
