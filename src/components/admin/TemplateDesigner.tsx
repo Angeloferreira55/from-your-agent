@@ -173,7 +173,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
   const [description, setDescription] = useState(initialData?.description || "");
   const [season, setSeason] = useState(initialData?.season || "any");
   const [templateType, setTemplateType] = useState<"brokerage" | "monthly">(initialData?.type || "brokerage");
-  const [brokerageId, setBrokerageId] = useState<string>(initialData?.brokerage_id || "");
+  const [brokerageId, setBrokerageId] = useState<string>(initialData?.brokerage_id || "none");
 
   // Front/Back tab (monthly templates only)
   const [activeTab, setActiveTab] = useState<"front" | "back">("back");
@@ -239,7 +239,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
     setDescription(initialData?.description || "");
     setSeason(initialData?.season || "any");
     setTemplateType(initialData?.type || "brokerage");
-    setBrokerageId(initialData?.brokerage_id || "");
+    setBrokerageId(initialData?.brokerage_id || "none");
     setActiveTab(initialData?.type === "monthly" ? "front" : "back");
     // Back design
     setBgColor(initialData?.design?.background.color || "#1B3A5C");
@@ -590,7 +590,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
           size: "6x9",
           season,
           type: templateType,
-          brokerage_id: templateType === "brokerage" && brokerageId ? brokerageId : null,
+          brokerage_id: templateType === "brokerage" && brokerageId && brokerageId !== "none" ? brokerageId : null,
           front_html: isMonthly ? JSON.stringify(frontDesign) : "",
           back_html: JSON.stringify(backDesign),
         });
@@ -643,7 +643,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
               <Select value={brokerageId} onValueChange={setBrokerageId}>
                 <SelectTrigger className="w-44 h-8 text-sm"><SelectValue placeholder="Link to brokerage..." /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No specific brokerage</SelectItem>
+                  <SelectItem value="none">No specific brokerage</SelectItem>
                   {brokerages.map((b) => (
                     <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
                   ))}

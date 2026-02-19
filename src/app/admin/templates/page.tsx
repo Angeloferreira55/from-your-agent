@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { TemplateDesigner, recolorSvgDataUri, type DesignConfig, type FontFamilyOption, type BrokerageOption } from "@/components/admin/TemplateDesigner";
+import { TemplateDesigner, recolorSvgDataUri, type DesignConfig, type BrokerageOption } from "@/components/admin/TemplateDesigner";
 
 const FONT_MAP: Record<string, string> = {
   "sans-serif": "Arial, Helvetica, sans-serif",
@@ -38,9 +38,9 @@ import { Plus, FileImage, MoreHorizontal, Trash2, Pencil, Copy } from "lucide-re
 import { toast } from "sonner";
 import type { PostcardTemplate } from "@/types/database";
 
-function parseDesign(backHtml: string): DesignConfig | null {
+function parseDesign(html: string): DesignConfig | null {
   try {
-    if (backHtml.startsWith("{")) return JSON.parse(backHtml);
+    if (html.startsWith("{")) return JSON.parse(html);
   } catch { /* not JSON */ }
   return null;
 }
@@ -48,7 +48,6 @@ function parseDesign(backHtml: string): DesignConfig | null {
 export default function AdminTemplatesPage() {
   const [designerOpen, setDesignerOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<PostcardTemplate | null>(null);
-  const [activeFilter, setActiveFilter] = useState<"all" | "brokerage" | "monthly">("all");
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
@@ -120,12 +119,9 @@ export default function AdminTemplatesPage() {
     onError: (err) => toast.error(err.message),
   });
 
-  const templates: PostcardTemplate[] = data?.templates || [];
-  const filteredTemplates = activeFilter === "all"
-    ? templates
-    : templates.filter((t) => t.type === activeFilter);
-  const brokerageCount = templates.filter((t) => t.type === "brokerage").length;
-  const monthlyCount = templates.filter((t) => t.type === "monthly").length;
+  const allTemplates: PostcardTemplate[] = data?.templates || [];
+  // Only show monthly templates — brokerage templates are now managed on the Brokerages page
+  const templates = allTemplates.filter((t) => t.type === "monthly");
 
   function handleCreate() {
     setEditingTemplate(null);
@@ -138,10 +134,9 @@ export default function AdminTemplatesPage() {
   }
 
   function handleDuplicate(template: PostcardTemplate) {
-    // Create a fake template with no id so the designer creates a new one
     setEditingTemplate({
       ...template,
-      id: "", // empty id = create mode
+      id: "",
       name: `${template.name} (Copy)`,
     });
     setDesignerOpen(true);
@@ -160,9 +155,9 @@ export default function AdminTemplatesPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Postcard Templates</h1>
+            <h1 className="text-2xl font-bold tracking-tight">Templates</h1>
             <p className="text-muted-foreground">
-              Brokerage panels &amp; monthly postcard designs &middot; {templates.length} template{templates.length !== 1 ? "s" : ""}
+              Monthly &amp; seasonal postcard designs · {templates.length} template{templates.length !== 1 ? "s" : ""}
             </p>
           </div>
           <Button onClick={handleCreate}>
@@ -171,30 +166,6 @@ export default function AdminTemplatesPage() {
           </Button>
         </div>
 
-        {/* Filter tabs */}
-        {templates.length > 0 && (
-          <div className="flex gap-1 border-b">
-            {([
-              { key: "all", label: "All", count: templates.length },
-              { key: "brokerage", label: "Brokerage", count: brokerageCount },
-              { key: "monthly", label: "Monthly Deals", count: monthlyCount },
-            ] as const).map((tab) => (
-              <button
-                key={tab.key}
-                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                  activeFilter === tab.key
-                    ? "border-primary text-primary"
-                    : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/30"
-                }`}
-                onClick={() => setActiveFilter(tab.key)}
-              >
-                {tab.label}
-                <span className="ml-1.5 text-xs text-muted-foreground">({tab.count})</span>
-              </button>
-            ))}
-          </div>
-        )}
-
         {!isLoading && templates.length === 0 ? (
           <Card>
             <CardHeader className="text-center py-12">
@@ -202,24 +173,18 @@ export default function AdminTemplatesPage() {
                 <FileImage className="h-8 w-8 text-muted-foreground" />
               </div>
               <CardTitle>No templates yet</CardTitle>
-              <CardDescription>Design the brokerage branding panel (top-right of postcard back).</CardDescription>
+              <CardDescription>Create monthly or seasonal postcard templates (Christmas, Thanksgiving, etc.).</CardDescription>
             </CardHeader>
           </Card>
-        ) : filteredTemplates.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground text-sm">
-            No {activeFilter} templates yet.
-          </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {filteredTemplates.map((template) => {
+            {templates.map((template) => {
               const design = parseDesign(template.back_html);
               const frontDesign = template.front_html ? parseDesign(template.front_html) : null;
-              const isMonthly = template.type === "monthly";
-              const showDesign = isMonthly && frontDesign ? frontDesign : design;
+              const showDesign = frontDesign || design;
               return (
                 <Card key={template.id} className="overflow-hidden">
-                  {/* Label for monthly templates */}
-                  {isMonthly && frontDesign && (
+                  {frontDesign && (
                     <div className="bg-muted px-3 py-1 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Front</div>
                   )}
                   {/* Visual preview */}
@@ -312,16 +277,6 @@ export default function AdminTemplatesPage() {
                       </DropdownMenu>
                     </div>
                     <div className="mt-2 flex flex-wrap items-center gap-2">
-                      <Badge variant="outline">
-                        {template.type === "monthly" ? "Top-left + Front" : "4.5\" × 3\""}
-                      </Badge>
-                      <Badge variant={template.type === "monthly" ? "secondary" : "outline"} className={template.type === "brokerage" ? "bg-blue-50 text-blue-700 border-blue-200" : ""}>
-                        {template.type === "monthly" ? "Monthly" : "Brokerage"}
-                      </Badge>
-                      {template.brokerage_id && (() => {
-                        const brok = brokeragesList.find((b) => b.id === template.brokerage_id);
-                        return brok ? <Badge className="bg-green-50 text-green-700 border-green-200" variant="outline">{brok.name}</Badge> : null;
-                      })()}
                       {template.season && template.season !== "any" && (
                         <Badge variant="secondary">{template.season}</Badge>
                       )}
@@ -347,11 +302,13 @@ export default function AdminTemplatesPage() {
           name: editingTemplate.name,
           description: editingTemplate.description || "",
           season: editingTemplate.season || "any",
-          type: (editingTemplate.type as "brokerage" | "monthly") || "brokerage",
+          type: "monthly",
           brokerage_id: editingTemplate.brokerage_id,
           design: parseDesign(editingTemplate.back_html) || undefined,
           frontDesign: editingTemplate.front_html ? parseDesign(editingTemplate.front_html) || undefined : undefined,
-        } : undefined}
+        } : {
+          type: "monthly",
+        }}
       />
     </>
   );
