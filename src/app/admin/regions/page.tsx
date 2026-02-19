@@ -8,13 +8,14 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { RegionForm } from "@/components/admin/RegionForm";
-import { Plus, MapPin, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Plus, MapPin, MoreHorizontal, Pencil, Trash2, Archive, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import type { Region } from "@/types/database";
 
 export default function AdminRegionsPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingRegion, setEditingRegion] = useState<Region | null>(null);
+  const [showTrash, setShowTrash] = useState(false);
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
@@ -24,6 +25,16 @@ export default function AdminRegionsPage() {
       if (!res.ok) throw new Error("Failed to fetch");
       return res.json();
     },
+  });
+
+  const { data: allData } = useQuery({
+    queryKey: ["admin", "regions", "all"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/regions?include_deleted=true");
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
+    enabled: showTrash,
   });
 
   const saveMutation = useMutation({
@@ -55,12 +66,31 @@ export default function AdminRegionsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "regions"] });
-      toast.success("Region deleted");
+      toast.success("Moved to trash");
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const restoreMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch("/api/admin/regions", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, is_active: true }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "regions"] });
+      toast.success("Region restored");
     },
     onError: (err) => toast.error(err.message),
   });
 
   const regions: Region[] = data?.regions || [];
+  const allRegions: Region[] = allData?.regions || [];
+  const deletedRegions = allRegions.filter((r) => !r.is_active);
 
   return (
     <div className="space-y-6">
@@ -71,11 +101,54 @@ export default function AdminRegionsPage() {
             {regions.length} geographic zone{regions.length !== 1 ? "s" : ""} defined
           </p>
         </div>
-        <Button onClick={() => { setEditingRegion(null); setFormOpen(true); }}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Region
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant={showTrash ? "default" : "outline"}
+            size="sm"
+            onClick={() => setShowTrash(!showTrash)}
+          >
+            <Archive className="mr-2 h-4 w-4" />
+            Trash
+          </Button>
+          <Button onClick={() => { setEditingRegion(null); setFormOpen(true); }}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Region
+          </Button>
+        </div>
       </div>
+
+      {/* Trash section */}
+      {showTrash && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Trash2 className="h-4 w-4" /> Deleted Regions
+            </CardTitle>
+            <CardDescription>
+              {deletedRegions.length} deleted region{deletedRegions.length !== 1 ? "s" : ""}
+            </CardDescription>
+          </CardHeader>
+          {deletedRegions.length > 0 && (
+            <div className="px-6 pb-6">
+              <Table>
+                <TableBody>
+                  {deletedRegions.map((region) => (
+                    <TableRow key={region.id} className="opacity-70">
+                      <TableCell className="font-medium">{region.name}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{region.description || "—"}</TableCell>
+                      <TableCell>
+                        <Button size="sm" variant="outline" onClick={() => restoreMutation.mutate(region.id)}>
+                          <RotateCcw className="mr-1.5 h-3.5 w-3.5" /> Restore
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </Card>
+      )}
 
       {!isLoading && regions.length === 0 ? (
         <Card>
@@ -124,7 +197,7 @@ export default function AdminRegionsPage() {
                           <Pencil className="mr-2 h-4 w-4" />Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem className="text-destructive" onClick={() => {
-                          if (confirm("Delete this region?")) deleteMutation.mutate(region.id);
+                          if (confirm("Move this region to trash?")) deleteMutation.mutate(region.id);
                         }}>
                           <Trash2 className="mr-2 h-4 w-4" />Delete
                         </DropdownMenuItem>

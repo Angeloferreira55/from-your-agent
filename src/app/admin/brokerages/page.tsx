@@ -264,7 +264,7 @@ export default function AdminBrokeragesPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "templates"] });
-      toast.success("Ad template deleted");
+      toast.success("Ad template moved to trash");
     },
     onError: (err) => toast.error(err.message),
   });

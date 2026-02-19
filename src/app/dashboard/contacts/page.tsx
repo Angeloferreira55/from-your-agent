@@ -8,8 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ContactTable } from "@/components/contacts/ContactTable";
 import { ContactForm } from "@/components/contacts/ContactForm";
-import { useContacts, useCreateContact, useUpdateContact, useDeleteContacts } from "@/hooks/use-contacts";
-import { Upload, Plus, Users, Search, Trash2 } from "lucide-react";
+import { useContacts, useCreateContact, useUpdateContact, useDeleteContacts, useRestoreContacts } from "@/hooks/use-contacts";
+import { Upload, Plus, Users, Search, Trash2, Archive, RotateCcw } from "lucide-react";
+import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import type { Contact } from "@/types/database";
 
@@ -20,19 +21,23 @@ export default function ContactsPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [formOpen, setFormOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
+  const [showTrash, setShowTrash] = useState(false);
 
   const { data, isLoading } = useContacts({
     search: search.length >= 2 ? search : "",
     status: statusFilter,
     page,
   });
+  const { data: trashData } = useContacts({ status: "inactive", limit: 50 });
   const createContact = useCreateContact();
   const updateContact = useUpdateContact();
   const deleteContacts = useDeleteContacts();
+  const restoreContacts = useRestoreContacts();
 
   const contacts = data?.contacts || [];
   const total = data?.total || 0;
   const totalPages = Math.ceil(total / 50);
+  const deletedContacts: Contact[] = trashData?.contacts || [];
 
   function handleSelectAll(checked: boolean) {
     if (checked) {
@@ -65,10 +70,15 @@ export default function ContactsPage() {
   }
 
   async function handleDelete(ids: string[]) {
-    if (!confirm(`Delete ${ids.length} contact(s)?`)) return;
+    if (!confirm(`Move ${ids.length} contact(s) to trash?`)) return;
     await deleteContacts.mutateAsync(ids);
     setSelectedIds(new Set());
-    toast.success(`${ids.length} contact(s) deleted`);
+    toast.success(`${ids.length} contact(s) moved to trash`);
+  }
+
+  async function handleRestore(ids: string[]) {
+    await restoreContacts.mutateAsync(ids);
+    toast.success(`${ids.length} contact(s) restored`);
   }
 
   // Empty state
@@ -133,6 +143,14 @@ export default function ContactsPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button
+            variant={showTrash ? "default" : "outline"}
+            size="sm"
+            onClick={() => setShowTrash(!showTrash)}
+          >
+            <Archive className="mr-2 h-4 w-4" />
+            Trash{deletedContacts.length > 0 ? ` (${deletedContacts.length})` : ""}
+          </Button>
           <Link href="/dashboard/contacts/upload">
             <Button variant="outline">
               <Upload className="mr-2 h-4 w-4" />
@@ -151,6 +169,50 @@ export default function ContactsPage() {
           </Button>
         </div>
       </div>
+
+      {/* Trash section */}
+      {showTrash && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Trash2 className="h-4 w-4" /> Deleted Contacts
+            </CardTitle>
+            <CardDescription>
+              {deletedContacts.length} deleted contact{deletedContacts.length !== 1 ? "s" : ""}
+            </CardDescription>
+          </CardHeader>
+          {deletedContacts.length > 0 && (
+            <CardContent>
+              <Table>
+                <TableBody>
+                  {deletedContacts.map((contact) => (
+                    <TableRow key={contact.id} className="opacity-70">
+                      <TableCell className="font-medium">
+                        {contact.first_name} {contact.last_name}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {contact.email || "—"}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {contact.city}{contact.state ? `, ${contact.state}` : ""}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleRestore([contact.id])}
+                        >
+                          <RotateCcw className="mr-1.5 h-3.5 w-3.5" /> Restore
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          )}
+        </Card>
+      )}
 
       {/* Filters */}
       <div className="flex items-center gap-3">

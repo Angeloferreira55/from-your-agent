@@ -115,7 +115,7 @@ export async function PATCH(request: NextRequest) {
   return NextResponse.json(data);
 }
 
-// DELETE /api/contacts — delete contacts
+// DELETE /api/contacts — soft-delete contacts (sets status to "inactive")
 export async function DELETE(request: NextRequest) {
   const userId = getUserId(request);
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -127,7 +127,7 @@ export async function DELETE(request: NextRequest) {
 
   const { error } = await admin
     .from("contacts")
-    .delete()
+    .update({ status: "inactive" })
     .in("id", ids);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

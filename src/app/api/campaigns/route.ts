@@ -97,7 +97,7 @@ export async function PATCH(request: NextRequest) {
   return NextResponse.json(data);
 }
 
-// DELETE — delete campaign (admin only)
+// DELETE — soft-delete campaign (sets status to "canceled")
 export async function DELETE(request: NextRequest) {
   const userId = getUserId(request);
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -107,7 +107,7 @@ export async function DELETE(request: NextRequest) {
   if (!adminProfile) return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
 
   const body = await request.json();
-  const { error } = await admin.from("campaigns").delete().eq("id", body.id);
+  const { error } = await admin.from("campaigns").update({ status: "canceled" }).eq("id", body.id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ deleted: true });
 }

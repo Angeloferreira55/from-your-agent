@@ -20,10 +20,18 @@ export async function GET(request: NextRequest) {
   const adminProfile = await requireAdmin(admin, userId);
   if (!adminProfile) return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
 
-  const { data, error } = await admin
+  const includeDeleted = request.nextUrl.searchParams.get("include_deleted") === "true";
+
+  let query = admin
     .from("regions")
     .select("*")
     .order("name");
+
+  if (!includeDeleted) {
+    query = query.eq("is_active", true);
+  }
+
+  const { data, error } = await query;
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ regions: data });
@@ -88,7 +96,7 @@ export async function DELETE(request: NextRequest) {
   if (!adminProfile) return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
 
   const body = await request.json();
-  const { error } = await admin.from("regions").delete().eq("id", body.id);
+  const { error } = await admin.from("regions").update({ is_active: false }).eq("id", body.id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ deleted: true });
 }

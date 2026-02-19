@@ -21,10 +21,18 @@ export async function GET(request: NextRequest) {
   const adminProfile = await requireAdmin(admin, userId);
   if (!adminProfile) return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
 
-  const { data: merchants, error } = await admin
+  const includeDeleted = request.nextUrl.searchParams.get("include_deleted") === "true";
+
+  let query = admin
     .from("merchants")
     .select("*, offers(*)")
     .order("created_at", { ascending: false });
+
+  if (!includeDeleted) {
+    query = query.eq("is_active", true);
+  }
+
+  const { data: merchants, error } = await query;
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ merchants });
@@ -119,7 +127,7 @@ export async function PATCH(request: NextRequest) {
   return NextResponse.json(data);
 }
 
-// DELETE — delete merchant (cascades to offers) or single offer
+// DELETE — soft-delete merchant or offer (sets is_active = false)
 export async function DELETE(request: NextRequest) {
   const userId = getUserId(request);
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -131,11 +139,13 @@ export async function DELETE(request: NextRequest) {
   const body = await request.json();
 
   if (body.type === "offer") {
-    const { error } = await admin.from("offers").delete().eq("id", body.id);
+    const { error } = await admin.from("offers").update({ is_active: false }).eq("id", body.id);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   } else {
-    const { error } = await admin.from("merchants").delete().eq("id", body.id);
+    // Soft-delete merchant and its offers
+    const { error } = await admin.from("merchants").update({ is_active: false }).eq("id", body.id);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    await admin.from("offers").update({ is_active: false }).eq("merchant_id", body.id);
   }
 
   return NextResponse.json({ deleted: true });

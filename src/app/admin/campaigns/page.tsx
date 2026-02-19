@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { CampaignForm } from "@/components/admin/CampaignForm";
-import { Plus, Send, MoreHorizontal, Trash2, Eye } from "lucide-react";
+import { Plus, Send, MoreHorizontal, Trash2, Eye, Archive, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import type { Campaign } from "@/types/database";
@@ -28,6 +28,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function AdminCampaignsPage() {
   const [formOpen, setFormOpen] = useState(false);
+  const [showTrash, setShowTrash] = useState(false);
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
@@ -85,12 +86,31 @@ export default function AdminCampaignsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "campaigns"] });
-      toast.success("Campaign deleted");
+      toast.success("Campaign moved to trash");
     },
     onError: (err) => toast.error(err.message),
   });
 
-  const campaigns: (Campaign & { postcard_templates?: { name: string } })[] = data?.campaigns || [];
+  const restoreMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch("/api/campaigns", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, status: "draft" }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "campaigns"] });
+      toast.success("Campaign restored");
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const allCampaigns: (Campaign & { postcard_templates?: { name: string } })[] = data?.campaigns || [];
+  const campaigns = showTrash ? allCampaigns : allCampaigns.filter((c) => c.status !== "canceled");
+  const canceledCampaigns = allCampaigns.filter((c) => c.status === "canceled");
   const templates = (templatesData?.templates || []).map((t: { id: string; name: string }) => ({ id: t.id, name: t.name }));
 
   // Flatten merchants -> offers for the campaign form
@@ -108,10 +128,20 @@ export default function AdminCampaignsPage() {
             {campaigns.length} campaign{campaigns.length !== 1 ? "s" : ""}
           </p>
         </div>
-        <Button onClick={() => setFormOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Create Campaign
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant={showTrash ? "default" : "outline"}
+            size="sm"
+            onClick={() => setShowTrash(!showTrash)}
+          >
+            <Archive className="mr-2 h-4 w-4" />
+            Trash{canceledCampaigns.length > 0 ? ` (${canceledCampaigns.length})` : ""}
+          </Button>
+          <Button onClick={() => setFormOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create Campaign
+          </Button>
+        </div>
       </div>
 
       {!isLoading && campaigns.length === 0 ? (
@@ -170,11 +200,17 @@ export default function AdminCampaignsPage() {
                             <Eye className="mr-2 h-4 w-4" />View Details
                           </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive" onClick={() => {
-                          if (confirm("Delete this campaign?")) deleteMutation.mutate(campaign.id);
-                        }}>
-                          <Trash2 className="mr-2 h-4 w-4" />Delete
-                        </DropdownMenuItem>
+                        {campaign.status === "canceled" ? (
+                          <DropdownMenuItem onClick={() => restoreMutation.mutate(campaign.id)}>
+                            <RotateCcw className="mr-2 h-4 w-4" />Restore
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem className="text-destructive" onClick={() => {
+                            if (confirm("Move this campaign to trash?")) deleteMutation.mutate(campaign.id);
+                          }}>
+                            <Trash2 className="mr-2 h-4 w-4" />Delete
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>

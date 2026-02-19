@@ -3,16 +3,17 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { OfferForm } from "@/components/admin/OfferForm";
-import { Plus, Tag, MoreHorizontal, Trash2 } from "lucide-react";
+import { Plus, Tag, MoreHorizontal, Trash2, Archive, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 
 export default function AdminOffersPage() {
   const [formOpen, setFormOpen] = useState(false);
+  const [showTrash, setShowTrash] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: regionsData } = useQuery({
@@ -31,6 +32,16 @@ export default function AdminOffersPage() {
       if (!res.ok) throw new Error("Failed to fetch");
       return res.json();
     },
+  });
+
+  const { data: allData } = useQuery({
+    queryKey: ["admin", "offers", "all"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/offers?include_deleted=true");
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
+    enabled: showTrash,
   });
 
   const createMutation = useMutation({
@@ -61,13 +72,35 @@ export default function AdminOffersPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "offers"] });
-      toast.success("Deleted");
+      toast.success("Moved to trash");
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const restoreMutation = useMutation({
+    mutationFn: async (payload: { type: string; id: string }) => {
+      const table = payload.type === "offer" ? "offer" : "merchant";
+      const res = await fetch("/api/admin/offers", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: table, id: payload.id, is_active: true }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "offers"] });
+      toast.success("Restored");
     },
     onError: (err) => toast.error(err.message),
   });
 
   const merchants = data?.merchants || [];
   const regions = regionsData?.regions || [];
+
+  // Deleted merchants
+  const allMerchants = allData?.merchants || [];
+  const deletedMerchants = allMerchants.filter((m: Record<string, unknown>) => !m.is_active);
 
   return (
     <div className="space-y-6">
@@ -78,11 +111,54 @@ export default function AdminOffersPage() {
             {merchants.length} merchant{merchants.length !== 1 ? "s" : ""} with offers
           </p>
         </div>
-        <Button onClick={() => setFormOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Merchant & Offer
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant={showTrash ? "default" : "outline"}
+            size="sm"
+            onClick={() => setShowTrash(!showTrash)}
+          >
+            <Archive className="mr-2 h-4 w-4" />
+            Trash
+          </Button>
+          <Button onClick={() => setFormOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Merchant & Offer
+          </Button>
+        </div>
       </div>
+
+      {/* Trash section */}
+      {showTrash && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Trash2 className="h-4 w-4" /> Deleted Merchants
+            </CardTitle>
+            <CardDescription>
+              {deletedMerchants.length} deleted merchant{deletedMerchants.length !== 1 ? "s" : ""}
+            </CardDescription>
+          </CardHeader>
+          {deletedMerchants.length > 0 && (
+            <div className="px-6 pb-6">
+              <Table>
+                <TableBody>
+                  {deletedMerchants.map((merchant: Record<string, unknown>) => (
+                    <TableRow key={merchant.id as string} className="opacity-70">
+                      <TableCell className="font-medium">{merchant.name as string}</TableCell>
+                      <TableCell><Badge variant="outline">{(merchant.category as string).replace(/_/g, " ")}</Badge></TableCell>
+                      <TableCell>
+                        <Button size="sm" variant="outline" onClick={() => restoreMutation.mutate({ type: "merchant", id: merchant.id as string })}>
+                          <RotateCcw className="mr-1.5 h-3.5 w-3.5" /> Restore
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </Card>
+      )}
 
       {!isLoading && merchants.length === 0 ? (
         <Card>
@@ -127,7 +203,7 @@ export default function AdminOffersPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem className="text-destructive" onClick={() => {
-                              if (confirm("Delete this merchant?")) deleteMutation.mutate({ type: "merchant", id: merchant.id as string });
+                              if (confirm("Move this merchant to trash?")) deleteMutation.mutate({ type: "merchant", id: merchant.id as string });
                             }}>
                               <Trash2 className="mr-2 h-4 w-4" />Delete Merchant
                             </DropdownMenuItem>
@@ -152,7 +228,7 @@ export default function AdminOffersPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem className="text-destructive" onClick={() => {
-                            if (confirm("Delete this offer?")) deleteMutation.mutate({ type: "offer", id: offer.id as string });
+                            if (confirm("Move this offer to trash?")) deleteMutation.mutate({ type: "offer", id: offer.id as string });
                           }}>
                             <Trash2 className="mr-2 h-4 w-4" />Delete Offer
                           </DropdownMenuItem>

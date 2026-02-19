@@ -104,6 +104,8 @@ interface TemplateDesignerProps {
   brokerages?: BrokerageOption[];
   /** "admin" (default) = full template editor; "agent" = bottom-left panel only */
   mode?: "admin" | "agent";
+  /** Which tab to open on — "front" or "back" (offer panel). Only applies to monthly templates. */
+  initialTab?: "front" | "back";
   initialData?: {
     id?: string;
     name?: string;
@@ -145,6 +147,39 @@ function fileToBase64(file: File): Promise<string> {
   });
 }
 
+/** Resize image client-side and return a data URL. SVGs pass through as-is. */
+function imageToDataUrl(file: File, maxDim = 2000): Promise<string> {
+  return new Promise((resolve, reject) => {
+    // SVGs: read as text and make a data URI
+    if (file.type === "image/svg+xml") {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+      return;
+    }
+    const img = new window.Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let { naturalWidth: w, naturalHeight: h } = img;
+      if (w > maxDim || h > maxDim) {
+        const ratio = Math.min(maxDim / w, maxDim / h);
+        w = Math.round(w * ratio);
+        h = Math.round(h * ratio);
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL("image/jpeg", 0.82));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Could not read image")); };
+    img.src = url;
+  });
+}
+
 /** Re-encode an SVG data URI with a different fill/stroke color */
 export function recolorSvgDataUri(dataUri: string, color: string): string {
   if (!dataUri.startsWith("data:image/svg+xml,")) return dataUri;
@@ -161,7 +196,7 @@ export function recolorSvgDataUri(dataUri: string, color: string): string {
 
 /* ── Component ── */
 
-export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "admin", initialData }: TemplateDesignerProps) {
+export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "admin", initialTab, initialData }: TemplateDesignerProps) {
   const isAgent = mode === "agent";
   const canvasRef = useRef<HTMLDivElement>(null);
   const [saving, setSaving] = useState(false);
@@ -240,7 +275,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
     setSeason(initialData?.season || "any");
     setTemplateType(initialData?.type || "brokerage");
     setBrokerageId(initialData?.brokerage_id || "none");
-    setActiveTab(initialData?.type === "monthly" ? "front" : "back");
+    setActiveTab(initialTab ?? (initialData?.type === "monthly" ? "front" : "back"));
     // Back design
     setBgColor(initialData?.design?.background.color || "#1B3A5C");
     setBgImage(initialData?.design?.background.imageUrl || "");
@@ -259,7 +294,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
     setFrontColorEnabled(fd.background.colorEnabled !== false);
     setFrontElements(fd.elements || []);
     setSelectedId(null);
-  }, [initialData]);
+  }, [initialData, initialTab]);
 
   /* ── Canvas helpers ── */
 
@@ -340,50 +375,35 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
   }
 
   async function addImage() {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/*";
-    input.onchange = async (ev) => {
-      const file = (ev.target as HTMLInputElement).files?.[0];
-      if (!file) return;
-      try {
-        const b64 = await fileToBase64(file);
-        const ext = file.name.split(".").pop() || "png";
-        const res = await fetch(uploadEndpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ base64: b64, ext, contentType: file.type }),
-        });
-        if (!res.ok) throw new Error("Upload failed");
-        const { url } = await res.json();
-        // Auto-fit height from image ratio
-        const img = new window.Image();
-        img.onload = () => {
-          const canvasW = canvasRef.current?.offsetWidth || 675;
-          const canvasH = canvasRef.current?.offsetHeight || 450;
-          const elPxW = (30 / 100) * canvasW;
-          const fittedPxH = elPxW * (img.naturalHeight / img.naturalWidth);
-          const fittedPct = +((fittedPxH / canvasH) * 100).toFixed(1);
-          const el: DesignElement = {
-            id: genId(), type: "image", x: 10, y: 10, width: 30, height: Math.max(2, Math.min(80, fittedPct)), src: url, objectFit: "contain",
-          };
-          setCurElements((p) => [...p, el]);
-          setSelectedId(el.id);
+    const file = await pickFile("image/*");
+    if (!file) return;
+    try {
+      const url = await uploadFile(file);
+      const img = new window.Image();
+      img.onload = () => {
+        const canvasW = canvasRef.current?.offsetWidth || 675;
+        const canvasH = canvasRef.current?.offsetHeight || 450;
+        const elPxW = (30 / 100) * canvasW;
+        const fittedPxH = elPxW * (img.naturalHeight / img.naturalWidth);
+        const fittedPct = +((fittedPxH / canvasH) * 100).toFixed(1);
+        const el: DesignElement = {
+          id: genId(), type: "image", x: 10, y: 10, width: 30, height: Math.max(2, Math.min(80, fittedPct)), src: url, objectFit: "contain",
         };
-        img.onerror = () => {
-          const el: DesignElement = {
-            id: genId(), type: "image", x: 10, y: 10, width: 30, height: 20, src: url, objectFit: "contain",
-          };
-          setCurElements((p) => [...p, el]);
-          setSelectedId(el.id);
+        setCurElements((p) => [...p, el]);
+        setSelectedId(el.id);
+      };
+      img.onerror = () => {
+        const el: DesignElement = {
+          id: genId(), type: "image", x: 10, y: 10, width: 30, height: 20, src: url, objectFit: "contain",
         };
-        img.src = url;
-        toast.success("Image added");
-      } catch {
-        toast.error("Failed to upload image");
-      }
-    };
-    input.click();
+        setCurElements((p) => [...p, el]);
+        setSelectedId(el.id);
+      };
+      img.src = url;
+      toast.success("Image added");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to upload image");
+    }
   }
 
   function deleteEl(id: string) {
@@ -419,24 +439,10 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
     setSelectedId(clone.id);
   }
 
-  /* ── Upload helper ── */
-
-  const uploadEndpoint = isAgent ? "/api/profile/design-upload" : "/api/admin/templates/upload";
+  /* ── Upload helper — converts image to data URL (no server round-trip needed) ── */
 
   async function uploadFile(file: File): Promise<string> {
-    const b64 = await fileToBase64(file);
-    const ext = file.name.split(".").pop() || "png";
-    const res = await fetch(uploadEndpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ base64: b64, ext, contentType: file.type }),
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: "Upload failed" }));
-      throw new Error(err.error || "Upload failed");
-    }
-    const { url } = await res.json();
-    return url;
+    return imageToDataUrl(file);
   }
 
   function pickFile(accept: string): Promise<File | null> {
@@ -596,8 +602,8 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
         });
       }
       onClose();
-    } catch {
-      toast.error("Failed to save");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save");
     } finally {
       setSaving(false);
     }
@@ -608,48 +614,73 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col">
       {/* ── Top bar ── */}
-      <div className="flex items-center gap-3 border-b px-4 py-2.5 shrink-0 bg-white">
-        <Button variant="ghost" size="sm" onClick={onClose}>
-          <ArrowLeft className="mr-1.5 h-4 w-4" /> Back
-        </Button>
-        <div className="h-5 w-px bg-border" />
-        {isAgent ? (
-          <>
-            <span className="text-sm font-medium">Customize Your Panel</span>
-            <span className="text-xs text-muted-foreground whitespace-nowrap">Bottom-left · 4.5&quot; × 3&quot;</span>
-          </>
-        ) : (
-          <>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Template name..."
-              className="max-w-[200px] h-8 text-sm"
-            />
-            <Input
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Description"
-              className="max-w-[180px] h-8 text-sm"
-            />
-            <Select value={templateType} onValueChange={(v) => setTemplateType(v as "brokerage" | "monthly")}>
-              <SelectTrigger className="w-28 h-8 text-sm"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="brokerage">Brokerage</SelectItem>
-                <SelectItem value="monthly">Monthly</SelectItem>
-              </SelectContent>
-            </Select>
-            {templateType === "brokerage" && brokerages && brokerages.length > 0 && (
-              <Select value={brokerageId} onValueChange={setBrokerageId}>
-                <SelectTrigger className="w-44 h-8 text-sm"><SelectValue placeholder="Link to brokerage..." /></SelectTrigger>
+      <div className="shrink-0 border-b bg-white">
+        {/* Row 1: Back, name, metadata, save */}
+        <div className="flex items-center gap-3 px-4 py-2">
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            <ArrowLeft className="mr-1.5 h-4 w-4" /> Back
+          </Button>
+          <div className="h-5 w-px bg-border" />
+          {isAgent ? (
+            <>
+              <span className="text-sm font-medium">Customize Your Panel</span>
+              <span className="text-xs text-muted-foreground whitespace-nowrap">Bottom-left · 4.5&quot; × 3&quot;</span>
+            </>
+          ) : (
+            <>
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Template name..."
+                className="max-w-[220px] h-8 text-sm"
+              />
+              <Input
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Description"
+                className="max-w-[180px] h-8 text-sm"
+              />
+              <Select value={templateType} onValueChange={(v) => setTemplateType(v as "brokerage" | "monthly")}>
+                <SelectTrigger className="w-28 h-8 text-sm"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">No specific brokerage</SelectItem>
-                  {brokerages.map((b) => (
-                    <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
-                  ))}
+                  <SelectItem value="brokerage">Brokerage</SelectItem>
+                  <SelectItem value="monthly">Monthly</SelectItem>
                 </SelectContent>
               </Select>
-            )}
+              {templateType === "brokerage" && brokerages && brokerages.length > 0 && (
+                <Select value={brokerageId} onValueChange={setBrokerageId}>
+                  <SelectTrigger className="w-44 h-8 text-sm"><SelectValue placeholder="Link to brokerage..." /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No specific brokerage</SelectItem>
+                    {brokerages.map((b) => (
+                      <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              <Select value={season} onValueChange={setSeason}>
+                <SelectTrigger className="w-24 h-8 text-sm"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="any">Any</SelectItem>
+                  <SelectItem value="spring">Spring</SelectItem>
+                  <SelectItem value="summer">Summer</SelectItem>
+                  <SelectItem value="fall">Fall</SelectItem>
+                  <SelectItem value="winter">Winter</SelectItem>
+                  <SelectItem value="holiday">Holiday</SelectItem>
+                </SelectContent>
+              </Select>
+            </>
+          )}
+          <div className="ml-auto">
+            <Button size="sm" onClick={handleSave} disabled={saving}>
+              {saving ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Save className="mr-1.5 h-4 w-4" />}
+              Save
+            </Button>
+          </div>
+        </div>
+        {/* Row 2: Tools (admin only) */}
+        {!isAgent && (
+          <div className="flex items-center gap-3 px-4 pb-2">
             {isMonthly && (
               <div className="flex rounded-md border overflow-hidden">
                 <button
@@ -662,43 +693,26 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
                   className={`px-3 py-1 text-xs font-medium transition-colors border-l ${activeTab === "back" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
                   onClick={() => { setActiveTab("back"); setSelectedId(null); setEditingId(null); }}
                 >
-                  Back
+                  Offer Panel
                 </button>
               </div>
             )}
             <span className="text-xs text-muted-foreground whitespace-nowrap">
               {isMonthly
-                ? (isFront ? "Front face · 6\" × 9\"" : "Back panel · 4.5\" × 3\"")
-                : "Top-right panel · 4.5\" × 3\""}
+                ? (isFront ? "Front · 6\" × 9\"" : "Back top-left · 4.5\" × 3\"")
+                : "Panel · 4.5\" × 3\""}
             </span>
-            <Select value={season} onValueChange={setSeason}>
-              <SelectTrigger className="w-24 h-8 text-sm"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="any">Any</SelectItem>
-                <SelectItem value="spring">Spring</SelectItem>
-                <SelectItem value="summer">Summer</SelectItem>
-                <SelectItem value="fall">Fall</SelectItem>
-                <SelectItem value="winter">Winter</SelectItem>
-                <SelectItem value="holiday">Holiday</SelectItem>
-              </SelectContent>
-            </Select>
-            <div className="h-5 w-px bg-border" />
-            <Button variant="outline" size="sm" onClick={addBrokerageLogo} disabled={uploadingLogo}>
-              {uploadingLogo ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Building2 className="mr-1.5 h-4 w-4" />}
+            <div className="h-4 w-px bg-border" />
+            <Button variant="outline" size="sm" className="h-7 text-xs" onClick={addBrokerageLogo} disabled={uploadingLogo}>
+              {uploadingLogo ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : <Building2 className="mr-1 h-3.5 w-3.5" />}
               Team Logo
             </Button>
-            <Button variant="outline" size="sm" onClick={addBackgroundBanner} disabled={uploadingBanner}>
-              {uploadingBanner ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <ImageIcon className="mr-1.5 h-4 w-4" />}
-              Background Banner
+            <Button variant="outline" size="sm" className="h-7 text-xs" onClick={addBackgroundBanner} disabled={uploadingBanner}>
+              {uploadingBanner ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : <ImageIcon className="mr-1 h-3.5 w-3.5" />}
+              Background
             </Button>
-          </>
+          </div>
         )}
-        <div className="ml-auto">
-          <Button size="sm" onClick={handleSave} disabled={saving}>
-            {saving ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Save className="mr-1.5 h-4 w-4" />}
-            Save
-          </Button>
-        </div>
       </div>
 
       {/* ── Body ── */}
@@ -706,7 +720,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
         {/* Canvas area — live preview */}
         <div className="flex-1 min-w-0 flex flex-col items-center justify-center p-6 bg-muted/30 overflow-auto">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-            {isMonthly ? (isFront ? "Front — Live Preview" : "Back Panel — Live Preview") : "Live Preview"}
+            {isMonthly ? (isFront ? "Front — Live Preview" : "Offer Panel (Back Top-Left) — Live Preview") : "Live Preview"}
           </p>
           <div
             ref={canvasRef}
@@ -813,8 +827,8 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
 
             {/* Disclaimer (admin only) */}
             {!isAgent && disclaimer && (
-              <div className="absolute bottom-0 left-0 right-0 px-[15%] py-2 pointer-events-none">
-                <p className="leading-tight text-center" style={{
+              <div className="absolute bottom-0 left-0 right-0 px-[4%] py-1.5 pointer-events-none">
+                <p className="leading-snug text-center line-clamp-2" style={{
                   fontSize: `${disclaimerFontSize * scale}px`,
                   color: disclaimerColor,
                   fontFamily: FONT_MAP[disclaimerFont],
@@ -989,6 +1003,35 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
                       <span className="text-[10px] text-muted-foreground">Double-click to edit on canvas</span>
                     </div>
                     <Textarea value={selected.text || ""} onChange={(e) => updateEl(selected.id, { text: e.target.value })} rows={3} className="text-xs" />
+                    {/* Merge variable quick-insert */}
+                    <div className="mt-1.5">
+                      <p className="text-[10px] text-muted-foreground mb-1">Insert variable:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {[
+                          { label: "Offer Title", var: "{{offer_title}}" },
+                          { label: "Discount", var: "{{discount_text}}" },
+                          { label: "Business", var: "{{merchant_name}}" },
+                          { label: "Business Addr", var: "{{merchant_address}}" },
+                          { label: "Fine Print", var: "{{fine_print}}" },
+                          { label: "Code", var: "{{redemption_code}}" },
+                          { label: "Agent Name", var: "{{agent_name}}" },
+                          { label: "Agent Phone", var: "{{agent_phone}}" },
+                          { label: "Agent Email", var: "{{agent_email}}" },
+                          { label: "Company", var: "{{agent_company}}" },
+                          { label: "Tagline", var: "{{agent_tagline}}" },
+                          { label: "Recipient", var: "{{recipient_name}}" },
+                        ].map((v) => (
+                          <button
+                            key={v.var}
+                            className="px-1.5 py-0.5 text-[9px] rounded border bg-muted/50 hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                            onClick={() => updateEl(selected.id, { text: (selected.text || "") + v.var })}
+                            title={v.var}
+                          >
+                            {v.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
 
                   {/* Font family */}

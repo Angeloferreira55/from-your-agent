@@ -102,6 +102,31 @@ export function useDeleteContacts() {
   });
 }
 
+export function useRestoreContacts() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      // Restore by setting status back to "active"
+      const results = await Promise.all(
+        ids.map((id) =>
+          fetch("/api/contacts", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id, status: "active" }),
+          })
+        )
+      );
+      const failed = results.filter((r) => !r.ok);
+      if (failed.length > 0) throw new Error("Failed to restore some contacts");
+      return { restored: ids.length };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
+    },
+  });
+}
+
 export function useUploadContacts() {
   const queryClient = useQueryClient();
 
