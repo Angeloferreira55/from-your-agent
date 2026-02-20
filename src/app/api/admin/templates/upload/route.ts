@@ -15,13 +15,11 @@ async function requireAdmin(admin: ReturnType<typeof createAdminClient>, userId:
 const BUCKET = "template-assets";
 
 async function ensureBucket(admin: ReturnType<typeof createAdminClient>) {
-  // Check if bucket exists
   const { data: buckets } = await admin.storage.listBuckets();
   const exists = buckets?.some((b) => b.name === BUCKET);
   if (!exists) {
     await admin.storage.createBucket(BUCKET, { public: true, fileSizeLimit: 10 * 1024 * 1024 });
   } else {
-    // Ensure it's public
     await admin.storage.updateBucket(BUCKET, { public: true });
   }
 }
@@ -34,28 +32,43 @@ export async function POST(request: NextRequest) {
   const adminProfile = await requireAdmin(admin, userId);
   if (!adminProfile) return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
 
-  let body: { base64?: string; ext?: string; contentType?: string };
+  let buffer: Buffer;
+  let ext = "jpg";
+  let contentType = "image/jpeg";
+
+  const reqType = request.headers.get("content-type") || "";
+
   try {
-    body = await request.json();
-  } catch {
+    if (reqType.includes("multipart/form-data")) {
+      // FormData upload (preferred)
+      const formData = await request.formData();
+      const file = formData.get("file") as File | null;
+      if (!file) return NextResponse.json({ error: "No file provided" }, { status: 400 });
+      buffer = Buffer.from(await file.arrayBuffer());
+      ext = file.name?.split(".").pop() || "jpg";
+      contentType = file.type || "image/jpeg";
+    } else {
+      // JSON base64 upload (legacy fallback)
+      const body = await request.json();
+      if (!body.base64) return NextResponse.json({ error: "No image provided" }, { status: 400 });
+      buffer = Buffer.from(body.base64, "base64");
+      ext = body.ext || "png";
+      contentType = body.contentType || "image/png";
+    }
+  } catch (err) {
+    console.error("Parse error:", err);
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
-  const { base64, ext, contentType } = body;
-  if (!base64) {
-    return NextResponse.json({ error: "No image provided" }, { status: 400 });
-  }
-
-  const filename = `${Date.now()}.${ext || "png"}`;
+  const filename = `${Date.now()}.${ext}`;
   const filePath = `templates/${filename}`;
-  const buffer = Buffer.from(base64, "base64");
 
   try {
     await ensureBucket(admin);
 
     const { error } = await admin.storage
       .from(BUCKET)
-      .upload(filePath, buffer, { upsert: true, contentType: contentType || "image/png" });
+      .upload(filePath, buffer, { upsert: true, contentType });
 
     if (error) {
       console.error("Template upload failed:", error.message);

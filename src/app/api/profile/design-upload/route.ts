@@ -18,29 +18,42 @@ export async function POST(req: NextRequest) {
   const userId = getUserId(req);
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  let body: { base64?: string; ext?: string; contentType?: string };
+  let buffer: Buffer;
+  let ext = "jpg";
+  let contentType = "image/jpeg";
+
+  const reqType = req.headers.get("content-type") || "";
+
   try {
-    body = await req.json();
-  } catch {
+    if (reqType.includes("multipart/form-data")) {
+      const formData = await req.formData();
+      const file = formData.get("file") as File | null;
+      if (!file) return NextResponse.json({ error: "No file provided" }, { status: 400 });
+      buffer = Buffer.from(await file.arrayBuffer());
+      ext = file.name?.split(".").pop() || "jpg";
+      contentType = file.type || "image/jpeg";
+    } else {
+      const body = await req.json();
+      if (!body.base64) return NextResponse.json({ error: "No image provided" }, { status: 400 });
+      buffer = Buffer.from(body.base64, "base64");
+      ext = body.ext || "png";
+      contentType = body.contentType || "image/png";
+    }
+  } catch (err) {
+    console.error("Parse error:", err);
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
-  const { base64, ext, contentType } = body;
-  if (!base64) {
-    return NextResponse.json({ error: "No image provided" }, { status: 400 });
-  }
-
   const admin = createAdminClient();
-  const filename = `${Date.now()}.${ext || "png"}`;
+  const filename = `${Date.now()}.${ext}`;
   const filePath = `${userId}/card-design/${filename}`;
-  const buffer = Buffer.from(base64, "base64");
 
   try {
     await ensureBucket(admin);
 
     const { error } = await admin.storage
       .from(BUCKET)
-      .upload(filePath, buffer, { upsert: true, contentType: contentType || "image/png" });
+      .upload(filePath, buffer, { upsert: true, contentType });
 
     if (error) {
       console.error("Design upload failed:", error.message);

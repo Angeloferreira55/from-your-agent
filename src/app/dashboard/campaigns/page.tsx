@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ import { PostcardBack } from "@/components/postcard/PostcardBack";
 import { OfferMatchPreview } from "@/components/campaigns/OfferMatchPreview";
 import { useAgentProfile } from "@/hooks/use-agent-profile";
 import { useAgentCampaigns, useOptInCampaign, useOptOutCampaign } from "@/hooks/use-campaigns";
-import { Send, Eye, Check, X, Loader2, Calendar, Users, Mail } from "lucide-react";
+import { Send, Eye, Check, X, Loader2, Calendar, Users, Mail, TestTube, Rocket, Info } from "lucide-react";
 import { toast } from "sonner";
 import type { Campaign } from "@/types/database";
 import type { DesignConfig } from "@/components/admin/TemplateDesigner";
@@ -28,6 +28,7 @@ type EnrichedCampaign = Campaign & {
 export default function CampaignsPage() {
   const { data: profile } = useAgentProfile();
   const { data: campaigns, isLoading } = useAgentCampaigns();
+  const queryClient = useQueryClient();
   const optIn = useOptInCampaign();
   const optOut = useOptOutCampaign();
 
@@ -54,8 +55,10 @@ export default function CampaignsPage() {
   const [previewCampaign, setPreviewCampaign] = useState<EnrichedCampaign | null>(null);
   const [optInCampaign, setOptInCampaign] = useState<EnrichedCampaign | null>(null);
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
+  const [showTestDialog, setShowTestDialog] = useState(false);
+  const [testContactIds, setTestContactIds] = useState<string[]>([]);
 
-  // Fetch agent contacts for opt-in selection
+  // Fetch agent contacts for opt-in selection and test
   const { data: contactsData } = useQuery({
     queryKey: ["contacts-for-optin"],
     queryFn: async () => {
@@ -63,10 +66,45 @@ export default function CampaignsPage() {
       if (!res.ok) throw new Error("Failed to fetch");
       return res.json();
     },
-    enabled: !!optInCampaign,
+    enabled: !!optInCampaign || showTestDialog,
   });
 
   const contacts = contactsData?.contacts || [];
+
+  // Send test postcards mutation (supports multiple contacts)
+  const sendTest = useMutation({
+    mutationFn: async (contactIds: string[]) => {
+      const res = await fetch("/api/postcards/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contact_ids: contactIds }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to send test postcards");
+      }
+      return res.json();
+    },
+    onSuccess: (data) => {
+      if (data.mailed > 0) {
+        toast.success(`${data.mailed} test postcard${data.mailed > 1 ? "s" : ""} sent!`, {
+          description: data.results
+            ?.filter((r: { success: boolean }) => r.success)
+            .map((r: { contact: string }) => r.contact)
+            .join(", "),
+        });
+      }
+      if (data.failed > 0) {
+        toast.error(`${data.failed} postcard${data.failed > 1 ? "s" : ""} failed`);
+      }
+      setShowTestDialog(false);
+      setTestContactIds([]);
+      queryClient.invalidateQueries({ queryKey: ["agent-campaigns"] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
 
   const handleOptIn = async () => {
     if (!optInCampaign) return;
@@ -108,12 +146,44 @@ export default function CampaignsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Campaigns</h1>
-        <p className="text-muted-foreground">
-          View upcoming campaigns, preview your postcards, and opt in
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Campaigns</h1>
+          <p className="text-muted-foreground">
+            Your postcards are sent automatically every month to all your active contacts.
+          </p>
+        </div>
+        <Button
+          onClick={() => setShowTestDialog(true)}
+          className="bg-orange-600 hover:bg-orange-700"
+        >
+          <TestTube className="mr-2 h-4 w-4" />
+          Send Test Postcards
+        </Button>
       </div>
+
+      {/* Auto-campaign info card */}
+      <Card className="border-orange-200 bg-orange-50/50">
+        <CardContent className="flex items-start gap-4 pt-6">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-orange-100">
+            <Rocket className="h-5 w-5 text-orange-600" />
+          </div>
+          <div className="space-y-1">
+            <p className="font-semibold text-sm">Automatic Monthly Campaigns</p>
+            <p className="text-sm text-muted-foreground">
+              Postcards are automatically mailed on the 25th of each month so they arrive by the first week.
+              Just keep your contacts list and personalization up to date — we handle the rest.
+              Use the &quot;Send Test Postcards&quot; button above to do a trial run before your first campaign.
+            </p>
+            <div className="flex items-center gap-4 pt-2 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <Info className="h-3 w-3" />
+                To stop mailings, set your subscription to inactive in Settings
+              </span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
@@ -125,9 +195,10 @@ export default function CampaignsPage() {
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
               <Send className="h-8 w-8 text-muted-foreground" />
             </div>
-            <CardTitle>No campaigns available</CardTitle>
+            <CardTitle>No campaigns yet</CardTitle>
             <CardDescription>
-              Campaigns will appear here once they are created by the admin. You&apos;ll be able to preview postcards and opt in.
+              Your first automatic campaign will be created on the 1st of next month.
+              Use &quot;Send Test Postcards&quot; above to verify everything is set up correctly.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -217,6 +288,7 @@ export default function CampaignsPage() {
                 month={MONTHS[previewCampaign?.month || 0]}
                 year={previewCampaign?.year}
                 agentName={profile ? `${profile.first_name} ${profile.last_name}` : undefined}
+                companyName={profile?.company_name}
                 brokerageLogoUrl={profile?.brokerage_logo_url}
                 brandColor={profile?.brand_color}
               />
@@ -329,6 +401,92 @@ export default function CampaignsPage() {
                 <Check className="mr-2 h-4 w-4" />
               )}
               Opt In ({selectedContacts.length} contacts)
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Send Test Postcards Dialog */}
+      <Dialog open={showTestDialog} onOpenChange={(open) => { setShowTestDialog(open); if (!open) setTestContactIds([]); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Send Test Postcards</DialogTitle>
+            <DialogDescription>
+              Select contacts to send real postcards to. Each selected contact will receive one physical postcard via Lob.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium">
+                {testContactIds.length} contact{testContactIds.length !== 1 ? "s" : ""} selected
+              </p>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  if (testContactIds.length === contacts.length) {
+                    setTestContactIds([]);
+                  } else {
+                    setTestContactIds(contacts.map((c: { id: string }) => c.id));
+                  }
+                }}
+              >
+                {testContactIds.length === contacts.length ? "Deselect All" : "Select All"}
+              </Button>
+            </div>
+            <div className="max-h-64 overflow-y-auto rounded-md border">
+              {contacts.length === 0 ? (
+                <p className="p-4 text-center text-sm text-muted-foreground">
+                  No active contacts found. Upload contacts first.
+                </p>
+              ) : (
+                contacts.map((contact: { id: string; first_name: string; last_name: string; city: string; state: string; address_line1: string }) => (
+                  <label
+                    key={contact.id}
+                    className={`flex items-center gap-3 px-3 py-2 cursor-pointer border-b last:border-b-0 ${
+                      testContactIds.includes(contact.id) ? "bg-orange-50" : "hover:bg-muted/50"
+                    }`}
+                  >
+                    <Checkbox
+                      checked={testContactIds.includes(contact.id)}
+                      onCheckedChange={(checked) => {
+                        setTestContactIds((prev) =>
+                          checked
+                            ? [...prev, contact.id]
+                            : prev.filter((id) => id !== contact.id)
+                        );
+                      }}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium truncate">
+                        {contact.first_name} {contact.last_name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {contact.address_line1}, {contact.city}, {contact.state}
+                      </p>
+                    </div>
+                  </label>
+                ))
+              )}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowTestDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-orange-600 hover:bg-orange-700"
+              disabled={testContactIds.length === 0 || sendTest.isPending}
+              onClick={() => sendTest.mutate(testContactIds)}
+            >
+              {sendTest.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="mr-2 h-4 w-4" />
+              )}
+              Send {testContactIds.length > 0 ? `${testContactIds.length} Test${testContactIds.length > 1 ? "s" : ""}` : "Test"}
             </Button>
           </DialogFooter>
         </DialogContent>

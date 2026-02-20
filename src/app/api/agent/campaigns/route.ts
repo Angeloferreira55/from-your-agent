@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
     .select(`
       *,
       postcard_templates ( name, size ),
-      agent_campaigns!left ( id, agent_id, opted_in, contact_count, total_cost )
+      agent_campaigns!left ( id, agent_id, status, contact_count, estimated_cost )
     `)
     .in("status", ["draft", "scheduled", "generating", "ready_to_mail", "mailing", "mailed", "completed"])
     .order("year", { ascending: false })
@@ -43,9 +43,9 @@ export async function GET(req: NextRequest) {
       my_participation: myParticipation
         ? {
             id: myParticipation.id,
-            opted_in: myParticipation.opted_in,
+            opted_in: myParticipation.status === "opted_in",
             contact_count: myParticipation.contact_count,
-            total_cost: myParticipation.total_cost,
+            total_cost: myParticipation.estimated_cost,
           }
         : null,
     };
@@ -106,9 +106,9 @@ export async function POST(req: NextRequest) {
       {
         agent_id: profile.id,
         campaign_id,
-        opted_in: true,
+        status: "opted_in",
         contact_count: contactCount,
-        selected_contact_ids: contact_ids || [],
+        contact_filter: contact_ids?.length ? { selected_ids: contact_ids } : null,
       },
       { onConflict: "agent_id,campaign_id" }
     )
@@ -140,7 +140,7 @@ export async function DELETE(req: NextRequest) {
 
   const { error } = await admin
     .from("agent_campaigns")
-    .update({ opted_in: false })
+    .update({ status: "canceled" })
     .eq("agent_id", profile.id)
     .eq("campaign_id", campaign_id);
 

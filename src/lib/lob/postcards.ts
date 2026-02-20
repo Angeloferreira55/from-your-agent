@@ -1,6 +1,6 @@
 import { lobPostcards } from "./client";
 import { renderTemplate, buildMergeVariables } from "./templates";
-import { resolveHtml, LOB_DIMENSIONS } from "./render-design";
+import { resolveHtml, LOB_DIMENSIONS, injectFrontOverlay, renderFullBackHtml } from "./render-design";
 import type { PostcardSize } from "@lob/lob-typescript-sdk";
 
 interface CreatePostcardParams {
@@ -19,6 +19,10 @@ interface CreatePostcardParams {
     city?: string | null;
     state?: string | null;
     zip?: string | null;
+    license_number?: string | null;
+    team_logo_url?: string | null;
+    seasonal_footer?: string | null;
+    agent_card_design?: Record<string, unknown> | null;
   };
   contact: {
     first_name: string;
@@ -33,6 +37,8 @@ interface CreatePostcardParams {
     front_html: string;
     back_html: string;
     size: string;
+    type: "monthly" | "brokerage";
+    brokerageBackHtml?: string | null;
   };
   offer?: {
     title?: string;
@@ -44,6 +50,7 @@ interface CreatePostcardParams {
   } | null;
   campaignId: string;
   postcardDbId: string;
+  campaignMonth?: number;
 }
 
 /**
@@ -57,14 +64,33 @@ export async function createPostcard({
   offer,
   campaignId,
   postcardDbId,
+  campaignMonth,
 }: CreatePostcardParams) {
   const mergeVars = buildMergeVariables(agent, contact, offer);
   const sizeKey = (template.size || "6x9") as keyof typeof LOB_DIMENSIONS;
   const dims = LOB_DIMENSIONS[sizeKey] || LOB_DIMENSIONS["6x9"];
 
   // Resolve JSON DesignConfig → print HTML, then apply merge variables
-  const frontHtml = renderTemplate(resolveHtml(template.front_html, dims.front), mergeVars);
-  const backHtml = renderTemplate(resolveHtml(template.back_html, dims.back), mergeVars);
+  // Front was designed at 900px basis in the TemplateDesigner
+  const agentName = `${agent.first_name} ${agent.last_name}`.trim();
+  const frontHtml = injectFrontOverlay(
+    renderTemplate(resolveHtml(template.front_html, dims.front, 900), mergeVars),
+    agentName,
+    agent.company_name
+  );
+
+  // Compose full back with all 4 quadrants (brokerage + agent + offer + mailing)
+  const rawBackHtml = renderFullBackHtml({
+    templateBackHtml: template.back_html,
+    templateType: template.type,
+    brokerageBackHtml: template.brokerageBackHtml,
+    agentCardDesign: agent.agent_card_design,
+    agent,
+    offer,
+    campaignMonth,
+    size: template.size,
+  });
+  const backHtml = renderTemplate(rawBackHtml, mergeVars);
 
   // Map our sizes to Lob sizes
   const sizeMap: Record<string, PostcardSize> = {

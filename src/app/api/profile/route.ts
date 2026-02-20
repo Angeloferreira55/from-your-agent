@@ -75,7 +75,7 @@ export async function PATCH(req: NextRequest) {
     "address_line1", "address_line2", "city", "state", "zip",
     "brokerage_phone", "brokerage_address_line1", "brokerage_address_line2",
     "brokerage_city", "brokerage_state", "brokerage_zip",
-    "website", "postcard_visible_fields", "brokerage_id", "agent_card_design",
+    "website", "postcard_visible_fields", "brokerage_id", "agent_card_design", "seasonal_footer",
   ];
 
   const updates: Record<string, unknown> = {};
@@ -89,6 +89,8 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
   }
 
+  updates.updated_at = new Date().toISOString();
+
   const { data: profile, error } = await admin
     .from("agent_profiles")
     .update(updates)
@@ -96,6 +98,25 @@ export async function PATCH(req: NextRequest) {
     .select()
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    // If seasonal_footer column doesn't exist yet, retry without it
+    if (error.message?.includes("seasonal_footer") || error.message?.includes("schema cache")) {
+      console.warn("[PATCH /api/profile] seasonal_footer column missing, retrying without it");
+      delete updates.seasonal_footer;
+      const { data: retryProfile, error: retryError } = await admin
+        .from("agent_profiles")
+        .update(updates)
+        .eq("user_id", userId)
+        .select()
+        .single();
+      if (retryError) {
+        console.error("[PATCH /api/profile] Retry error:", retryError.message, retryError.details);
+        return NextResponse.json({ error: retryError.message }, { status: 500 });
+      }
+      return NextResponse.json({ profile: retryProfile });
+    }
+    console.error("[PATCH /api/profile] Supabase error:", error.message, error.details);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
   return NextResponse.json({ profile });
 }

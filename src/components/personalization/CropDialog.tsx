@@ -24,7 +24,8 @@ interface CropDialogProps {
 
 async function getCroppedBlob(
   imageSrc: string,
-  crop: Area
+  crop: Area,
+  mimeType: string = "image/jpeg"
 ): Promise<Blob> {
   const image = await new Promise<HTMLImageElement>((resolve, reject) => {
     const img = new Image();
@@ -38,6 +39,12 @@ async function getCroppedBlob(
   canvas.width = crop.width;
   canvas.height = crop.height;
   const ctx = canvas.getContext("2d")!;
+
+  // For PNG transparency, don't fill background
+  if (mimeType !== "image/png") {
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillRect(0, 0, crop.width, crop.height);
+  }
 
   ctx.drawImage(
     image,
@@ -57,8 +64,8 @@ async function getCroppedBlob(
         if (blob) resolve(blob);
         else reject(new Error("Canvas toBlob failed"));
       },
-      "image/jpeg",
-      0.92
+      mimeType,
+      mimeType === "image/jpeg" ? 0.92 : undefined
     );
   });
 }
@@ -97,9 +104,13 @@ export function CropDialog({
     if (!croppedAreaPixels || !file || !imageUrl) return;
     setProcessing(true);
     try {
-      const blob = await getCroppedBlob(imageUrl, croppedAreaPixels);
-      const croppedFile = new File([blob], `cropped.jpg`, {
-        type: "image/jpeg",
+      // Preserve PNG for transparency support
+      const isPng = file.type === "image/png";
+      const mimeType = isPng ? "image/png" : "image/jpeg";
+      const ext = isPng ? "png" : "jpg";
+      const blob = await getCroppedBlob(imageUrl, croppedAreaPixels, mimeType);
+      const croppedFile = new File([blob], `cropped.${ext}`, {
+        type: mimeType,
       });
       onCropped(croppedFile);
     } catch (err) {

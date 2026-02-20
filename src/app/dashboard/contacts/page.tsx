@@ -16,7 +16,7 @@ import type { Contact } from "@/types/database";
 
 export default function ContactsPage() {
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("active");
   const [page, setPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [formOpen, setFormOpen] = useState(false);
@@ -82,7 +82,7 @@ export default function ContactsPage() {
   }
 
   // Empty state
-  if (!isLoading && total === 0 && !search && statusFilter === "all") {
+  if (!isLoading && total === 0 && !search && (statusFilter === "all" || statusFilter === "active")) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">

@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
     .from("agent_campaigns")
     .select("*, agent_profiles (*)")
     .eq("campaign_id", campaign_id)
-    .eq("opted_in", true);
+    .eq("status", "opted_in");
 
   if (!agentCampaigns || agentCampaigns.length === 0) {
     await admin.from("campaigns").update({ status: "scheduled" }).eq("id", campaign_id);
@@ -101,8 +101,9 @@ export async function POST(req: NextRequest) {
     const agent = ac.agent_profiles;
     if (!agent) continue;
 
-    // Get contacts for this agent campaign
-    const selectedIds = ac.selected_contact_ids || [];
+    // Get contacts for this agent campaign — check contact_filter for selected IDs
+    const contactFilter = ac.contact_filter as { selected_ids?: string[] } | null;
+    const selectedIds = contactFilter?.selected_ids || [];
     let contacts;
 
     if (selectedIds.length > 0) {
@@ -162,6 +163,9 @@ export async function POST(req: NextRequest) {
     .update({ total_postcards: insertedPostcards.length })
     .eq("id", campaign_id);
 
+  // Pre-fetch brokerage templates (cache by brokerage_id)
+  const brokerageBackHtmlCache: Record<string, string | null> = {};
+
   // Now build Lob params for each postcard record
   for (const pc of insertedPostcards) {
     // Get the agent campaign + agent data
@@ -181,6 +185,25 @@ export async function POST(req: NextRequest) {
 
     const offer = pc.offer_id ? offersMap[pc.offer_id] : null;
 
+    // Fetch brokerage template if monthly and agent has a brokerage
+    let brokerageBackHtml: string | null = null;
+    if (template.type === "monthly" && agent.brokerage_id) {
+      if (!(agent.brokerage_id in brokerageBackHtmlCache)) {
+        const { data: brokerageTemplate } = await admin
+          .from("postcard_templates")
+          .select("back_html")
+          .eq("type", "brokerage")
+          .eq("brokerage_id", agent.brokerage_id)
+          .eq("is_active", true)
+          .order("is_default", { ascending: false })
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        brokerageBackHtmlCache[agent.brokerage_id] = brokerageTemplate?.back_html || null;
+      }
+      brokerageBackHtml = brokerageBackHtmlCache[agent.brokerage_id];
+    }
+
     postcardParams.push({
       agent: {
         first_name: agent.first_name,
@@ -197,6 +220,10 @@ export async function POST(req: NextRequest) {
         city: agent.city,
         state: agent.state,
         zip: agent.zip,
+        license_number: agent.license_number,
+        team_logo_url: agent.team_logo_url,
+        seasonal_footer: agent.seasonal_footer,
+        agent_card_design: agent.agent_card_design,
       },
       contact: {
         first_name: contact.first_name,
@@ -211,10 +238,13 @@ export async function POST(req: NextRequest) {
         front_html: template.front_html,
         back_html: template.back_html,
         size: template.size,
+        type: template.type,
+        brokerageBackHtml,
       },
       offer: offer as CreatePostcardParams["offer"],
       campaignId: campaign_id,
       postcardDbId: pc.id,
+      campaignMonth: campaign.month,
     });
   }
 

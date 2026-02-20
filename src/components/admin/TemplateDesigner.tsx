@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Type, ImagePlus, Trash2, Save, ArrowLeft, X, Building2, Image as ImageIcon, Copy } from "lucide-react";
+import { Loader2, Type, ImagePlus, Trash2, Save, ArrowLeft, X, Building2, Image as ImageIcon, Copy, Users, QrCode, Minus, Square, Circle, AlignStartVertical, AlignCenterVertical, AlignEndVertical, AlignStartHorizontal, AlignCenterHorizontal, AlignEndHorizontal, Check } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 /* ── Types ── */
 
@@ -50,11 +51,11 @@ const FONT_MAP: Record<FontFamilyOption, string> = {
 
 export interface DesignElement {
   id: string;
-  type: "text" | "image";
+  type: "text" | "image" | "shape";
   x: number; // % from left
   y: number; // % from top
   width: number; // % of canvas
-  height: number; // % of canvas (images only; text auto-heights)
+  height: number; // % of canvas (images & shapes; text auto-heights)
   // text
   text?: string;
   fontSize?: number; // design-px at 675px canvas width
@@ -72,6 +73,14 @@ export interface DesignElement {
   objectFit?: "contain" | "cover";
   tintColor?: string; // recolor SVG icons/logos
   placeholder?: "team_logo"; // agent's uploaded logo replaces this at render time
+  // shape
+  shapeType?: "line" | "rectangle" | "circle";
+  shapeColor?: string;
+  shapeBorderWidth?: number;
+  shapeFilled?: boolean;
+  shapeRotation?: number; // degrees for line rotation
+  // markers
+  _personalMessage?: boolean; // identifies the personal message element
 }
 
 export interface DisclaimerStyle {
@@ -115,6 +124,7 @@ interface TemplateDesignerProps {
     brokerage_id?: string | null;
     design?: DesignConfig;
     frontDesign?: DesignConfig;
+    customMessage?: string;
   };
 }
 
@@ -138,22 +148,14 @@ function genId() {
   return `el_${Date.now()}_${_nextId++}`;
 }
 
-function fileToBase64(file: File): Promise<string> {
+/** Resize image client-side and return a Blob + data URL for fallback. SVGs pass through as-is. */
+function processImage(file: File, maxDim = 1500): Promise<{ blob: Blob; dataUrl: string; ext: string }> {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve((reader.result as string).split(",")[1]);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
-/** Resize image client-side and return a data URL. SVGs pass through as-is. */
-function imageToDataUrl(file: File, maxDim = 2000): Promise<string> {
-  return new Promise((resolve, reject) => {
-    // SVGs: read as text and make a data URI
     if (file.type === "image/svg+xml") {
       const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
+      reader.onload = () => {
+        resolve({ blob: file, dataUrl: reader.result as string, ext: "svg" });
+      };
       reader.onerror = reject;
       reader.readAsDataURL(file);
       return;
@@ -173,7 +175,15 @@ function imageToDataUrl(file: File, maxDim = 2000): Promise<string> {
       canvas.height = h;
       const ctx = canvas.getContext("2d")!;
       ctx.drawImage(img, 0, 0, w, h);
-      resolve(canvas.toDataURL("image/jpeg", 0.82));
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) { reject(new Error("Failed to process image")); return; }
+          const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
+          resolve({ blob, dataUrl, ext: "jpg" });
+        },
+        "image/jpeg",
+        0.8,
+      );
     };
     img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Could not read image")); };
     img.src = url;
@@ -194,6 +204,10 @@ export function recolorSvgDataUri(dataUri: string, color: string): string {
   }
 }
 
+/* ── Seasonal Footer data (imported from PostcardBack) ── */
+
+import { SEASONAL_FOOTERS, MONTH_KEYS, resolveSeasonalKey } from "@/components/postcard/PostcardBack";
+
 /* ── Component ── */
 
 export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "admin", initialTab, initialData }: TemplateDesignerProps) {
@@ -202,6 +216,9 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingBanner, setUploadingBanner] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [seasonalFooter, setSeasonalFooter] = useState("auto");
+  const [customMessage, setCustomMessage] = useState(initialData?.customMessage || "");
 
   // Metadata
   const [name, setName] = useState(initialData?.name || "");
@@ -251,12 +268,41 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
 
   // Interaction
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [dragging, setDragging] = useState<{ id: string; offsetX: number; offsetY: number } | null>(null);
   const [resizing, setResizing] = useState<{ id: string; startX: number; startY: number; startW: number; startH: number; corner: string } | null>(null);
   const [scale, setScale] = useState(1);
 
   const selected = curElements.find((el) => el.id === selectedId) || null;
+
+  // Helper: select an element, with optional multi-select via Shift
+  const selectEl = useCallback((id: string, shiftKey = false) => {
+    if (shiftKey) {
+      setSelectedIds(prev => {
+        const next = new Set(prev);
+        if (next.has(id)) {
+          next.delete(id);
+          if (selectedId === id) setSelectedId(next.size > 0 ? [...next][0] : null);
+        } else {
+          next.add(id);
+          // Also add current selectedId to the set if not already there
+          if (selectedId && !next.has(selectedId)) next.add(selectedId);
+          setSelectedId(id);
+        }
+        return next;
+      });
+    } else {
+      setSelectedId(id);
+      setSelectedIds(new Set([id]));
+    }
+  }, [selectedId]);
+
+  const clearSelection = useCallback(() => {
+    setSelectedId(null);
+    setSelectedIds(new Set());
+    setEditingId(null);
+  }, []);
 
   // Keep scale in sync with canvas width
   useEffect(() => {
@@ -281,7 +327,15 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
     setBgImage(initialData?.design?.background.imageUrl || "");
     setOverlayColor(initialData?.design?.background.overlayColor || "rgba(0,0,0,0.3)");
     setColorEnabled(initialData?.design?.background.colorEnabled !== false);
-    setElements(initialData?.design?.elements || []);
+    const initElements = initialData?.design?.elements || [];
+    setElements(initElements);
+    // Sync customMessage from the personal message element if it exists
+    const pmEl = initElements.find((el: DesignElement) => el._personalMessage);
+    if (pmEl?.text) {
+      setCustomMessage(pmEl.text);
+    } else {
+      setCustomMessage(initialData?.customMessage || "");
+    }
     setDisclaimer(initialData?.design?.disclaimer || "Each office is independently owned and operated.");
     setDisclaimerFontSize(initialData?.design?.disclaimerStyle?.fontSize || 8);
     setDisclaimerColor(initialData?.design?.disclaimerStyle?.color || "rgba(255,255,255,0.55)");
@@ -294,7 +348,77 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
     setFrontColorEnabled(fd.background.colorEnabled !== false);
     setFrontElements(fd.elements || []);
     setSelectedId(null);
+    setSelectedIds(new Set());
   }, [initialData, initialTab]);
+
+  // Fetch seasonal footer from profile when agent designer opens
+  useEffect(() => {
+    if (!open || !isAgent) return;
+    fetch("/api/profile").then(r => r.json()).then(d => {
+      // Check DB column first, then fall back to embedded value in agent_card_design
+      if (d.profile?.seasonal_footer) {
+        setSeasonalFooter(d.profile.seasonal_footer);
+      } else if (d.profile?.agent_card_design?._seasonal_footer) {
+        setSeasonalFooter(d.profile.agent_card_design._seasonal_footer);
+      }
+    }).catch(() => {});
+  }, [open, isAgent]);
+
+  // Undo history
+  const undoStackRef = useRef<DesignElement[][]>([]);
+  const pushUndo = useCallback(() => {
+    undoStackRef.current.push(JSON.parse(JSON.stringify(curElements)));
+    if (undoStackRef.current.length > 50) undoStackRef.current.shift();
+  }, [curElements]);
+  const popUndo = useCallback(() => {
+    const prev = undoStackRef.current.pop();
+    if (prev) setCurElements(prev);
+  }, [setCurElements]);
+
+  // Keyboard: Delete/Backspace to delete, Ctrl+Z to undo
+  useEffect(() => {
+    if (!open) return;
+    function handleKeyDown(e: KeyboardEvent) {
+      const tag = (e.target as HTMLElement)?.tagName;
+      const isInput = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
+
+      // Ctrl/Cmd + Z = undo
+      if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
+        if (isInput) return;
+        e.preventDefault();
+        popUndo();
+        return;
+      }
+
+      // Delete/Backspace = delete selected
+      if (e.key === "Delete" || e.key === "Backspace") {
+        if (isInput) return;
+        if (selectedId || selectedIds.size > 0) {
+          e.preventDefault();
+          pushUndo();
+          deleteSelected();
+        }
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open, selectedId, selectedIds, pushUndo, popUndo]);
+
+  /* ── Alignment helpers ── */
+
+  function alignSelected(alignment: "left" | "center-x" | "right" | "top" | "center-y" | "bottom") {
+    if (!selectedId) return;
+    const el = curElements.find(e => e.id === selectedId);
+    if (!el) return;
+    switch (alignment) {
+      case "left": updateEl(selectedId, { x: 0 }); break;
+      case "center-x": updateEl(selectedId, { x: +(50 - el.width / 2).toFixed(1) }); break;
+      case "right": updateEl(selectedId, { x: +(100 - el.width).toFixed(1) }); break;
+      case "top": updateEl(selectedId, { y: 0 }); break;
+      case "center-y": updateEl(selectedId, { y: +(50 - (el.height || 5) / 2).toFixed(1) }); break;
+      case "bottom": updateEl(selectedId, { y: +(100 - (el.height || 5)).toFixed(1) }); break;
+    }
+  }
 
   /* ── Canvas helpers ── */
 
@@ -315,9 +439,10 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
     const pos = canvasPos(e);
     const el = curElements.find((x) => x.id === id);
     if (!el) return;
+    pushUndo();
     setDragging({ id, offsetX: pos.x - el.x, offsetY: pos.y - el.y });
-    setSelectedId(id);
-  }, [curElements, canvasPos]);
+    selectEl(id, e.shiftKey);
+  }, [curElements, canvasPos, selectEl, pushUndo]);
 
   const onResizeDown = useCallback((e: React.MouseEvent, id: string, corner: string) => {
     e.stopPropagation();
@@ -347,18 +472,28 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
     }
     if (!dragging) return;
     const pos = canvasPos(e);
-    setCurElements((prev) =>
-      prev.map((el) =>
-        el.id === dragging.id
+    setCurElements((prev) => {
+      const dragEl = prev.find(el => el.id === dragging.id);
+      if (!dragEl) return prev;
+      const newX = Math.max(0, Math.min(100 - dragEl.width, pos.x - dragging.offsetX));
+      const newY = Math.max(0, Math.min(95, pos.y - dragging.offsetY));
+      const dx = newX - dragEl.x;
+      const dy = newY - dragEl.y;
+      // Move all selected elements together
+      const idsToMove = selectedIds.has(dragging.id) && selectedIds.size > 1
+        ? selectedIds
+        : new Set([dragging.id]);
+      return prev.map((el) =>
+        idsToMove.has(el.id)
           ? {
               ...el,
-              x: Math.max(0, Math.min(100 - el.width, pos.x - dragging.offsetX)),
-              y: Math.max(0, Math.min(95, pos.y - dragging.offsetY)),
+              x: +(Math.max(0, Math.min(100 - el.width, el.x + dx))).toFixed(1),
+              y: +(Math.max(0, Math.min(95, el.y + dy))).toFixed(1),
             }
           : el
-      )
-    );
-  }, [dragging, resizing, canvasPos]);
+      );
+    });
+  }, [dragging, resizing, canvasPos, selectedIds]);
 
   const onCanvasUp = useCallback(() => { setDragging(null); setResizing(null); }, []);
 
@@ -377,6 +512,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
   async function addImage() {
     const file = await pickFile("image/*");
     if (!file) return;
+    setUploadingImage(true);
     try {
       const url = await uploadFile(file);
       const img = new window.Image();
@@ -391,6 +527,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
         };
         setCurElements((p) => [...p, el]);
         setSelectedId(el.id);
+        setUploadingImage(false);
       };
       img.onerror = () => {
         const el: DesignElement = {
@@ -398,21 +535,66 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
         };
         setCurElements((p) => [...p, el]);
         setSelectedId(el.id);
+        setUploadingImage(false);
       };
       img.src = url;
-      toast.success("Image added");
+      toast.success("Image uploaded");
     } catch (err) {
+      setUploadingImage(false);
       toast.error(err instanceof Error ? err.message : "Failed to upload image");
     }
   }
 
+  function addShape(shapeType: "line" | "rectangle" | "circle") {
+    const el: DesignElement = {
+      id: genId(), type: "shape",
+      x: 10, y: 40,
+      width: shapeType === "line" ? 30 : 15,
+      height: shapeType === "line" ? 1 : 15,
+      shapeType,
+      shapeColor: "#000000",
+      shapeBorderWidth: 2,
+      shapeFilled: shapeType !== "circle",
+      shapeRotation: 0,
+    };
+    setCurElements((p) => [...p, el]);
+    setSelectedId(el.id);
+  }
+
   function deleteEl(id: string) {
-    setCurElements((p) => p.filter((x) => x.id !== id));
+    setCurElements((p) => {
+      const el = p.find((x) => x.id === id);
+      if (el?._personalMessage) setCustomMessage("");
+      return p.filter((x) => x.id !== id);
+    });
     if (selectedId === id) setSelectedId(null);
+    setSelectedIds(prev => { const next = new Set(prev); next.delete(id); return next; });
+  }
+
+  function deleteSelected() {
+    if (selectedIds.size > 1) {
+      setCurElements((p) => {
+        const deleting = p.filter((x) => selectedIds.has(x.id));
+        if (deleting.some((x) => x._personalMessage)) setCustomMessage("");
+        return p.filter((x) => !selectedIds.has(x.id));
+      });
+      setSelectedId(null);
+      setSelectedIds(new Set());
+    } else if (selectedId) {
+      deleteEl(selectedId);
+    }
   }
 
   function updateEl(id: string, u: Partial<DesignElement>) {
-    setCurElements((p) => p.map((el) => (el.id === id ? { ...el, ...u } : el)));
+    setCurElements((p) => p.map((el) => {
+      if (el.id !== id) return el;
+      const updated = { ...el, ...u };
+      // Keep customMessage in sync when inline-editing the personal message element
+      if (el._personalMessage && u.text !== undefined) {
+        setCustomMessage(u.text);
+      }
+      return updated;
+    }));
   }
 
   function fitImageHeight(id: string) {
@@ -439,10 +621,31 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
     setSelectedId(clone.id);
   }
 
-  /* ── Upload helper — converts image to data URL (no server round-trip needed) ── */
+  /* ── Upload helper — uploads to Supabase storage via FormData, falls back to data URL ── */
 
   async function uploadFile(file: File): Promise<string> {
-    return imageToDataUrl(file);
+    const { blob, dataUrl, ext } = await processImage(file);
+
+    // Try server upload via FormData (avoids huge data URLs in saved JSON)
+    try {
+      const formData = new FormData();
+      formData.append("file", blob, `upload.${ext}`);
+
+      const endpoint = isAgent ? "/api/profile/design-upload" : "/api/admin/templates/upload";
+      const res = await fetch(endpoint, { method: "POST", body: formData });
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json.url) return json.url;
+      }
+      const errText = await res.text().catch(() => "");
+      console.warn("Server upload failed:", res.status, errText);
+    } catch (err) {
+      console.warn("Server upload error, using data URL fallback:", err);
+    }
+
+    // Fallback: use inline data URL
+    return dataUrl;
   }
 
   function pickFile(accept: string): Promise<File | null> {
@@ -450,7 +653,16 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
       const input = document.createElement("input");
       input.type = "file";
       input.accept = accept;
-      input.onchange = () => resolve(input.files?.[0] || null);
+      input.style.display = "none";
+      document.body.appendChild(input);
+      input.onchange = () => {
+        resolve(input.files?.[0] || null);
+        document.body.removeChild(input);
+      };
+      input.addEventListener("cancel", () => {
+        resolve(null);
+        document.body.removeChild(input);
+      });
       input.click();
     });
   }
@@ -491,6 +703,51 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
       toast.error(err instanceof Error ? err.message : "Failed to upload logo");
     } finally {
       setUploadingLogo(false);
+    }
+  }
+
+  /* ── Agent: Insert team logo from profile ── */
+
+  async function insertTeamLogo() {
+    try {
+      const res = await fetch("/api/profile");
+      if (!res.ok) throw new Error("Failed to fetch profile");
+      const { profile } = await res.json();
+      if (!profile?.team_logo_url) {
+        toast.error("Upload a team logo on the Personalization page first");
+        return;
+      }
+      const el: DesignElement = {
+        id: genId(), type: "image", x: 68, y: 5, width: 28, height: 35,
+        src: profile.team_logo_url, objectFit: "contain",
+      };
+      setCurElements((p) => [...p, el]);
+      setSelectedId(el.id);
+      toast.success("Team logo added — drag to position");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to load team logo");
+    }
+  }
+
+  /* ── Agent: Upload QR code ── */
+
+  async function addQRCode() {
+    const file = await pickFile("image/png,image/jpeg,image/webp,image/svg+xml");
+    if (!file) return;
+    setUploadingImage(true);
+    try {
+      const url = await uploadFile(file);
+      const el: DesignElement = {
+        id: genId(), type: "image", x: 75, y: 65, width: 20, height: 28,
+        src: url, objectFit: "contain",
+      };
+      setCurElements((p) => [...p, el]);
+      setSelectedId(el.id);
+      toast.success("QR code added — drag to position");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to upload QR code");
+    } finally {
+      setUploadingImage(false);
     }
   }
 
@@ -587,7 +844,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
         disclaimer: "",
       };
       if (isAgent) {
-        await onSubmit({ design: backDesign });
+        await onSubmit({ design: backDesign, seasonal_footer: seasonalFooter, custom_message: customMessage });
       } else {
         await onSubmit({
           ...(initialData?.id ? { id: initialData.id } : {}),
@@ -678,20 +935,65 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
             </Button>
           </div>
         </div>
-        {/* Row 2: Tools (admin only) */}
+        {/* Row 2: Tools */}
+        {isAgent && (
+          <div className="flex items-center gap-3 px-4 pb-2">
+            <Button variant="outline" size="sm" className="h-7 text-xs" onClick={insertTeamLogo}>
+              <Users className="mr-1 h-3.5 w-3.5" />
+              Team Logo
+            </Button>
+            <Button variant="outline" size="sm" className="h-7 text-xs" onClick={addQRCode} disabled={uploadingImage}>
+              {uploadingImage ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : <QrCode className="mr-1 h-3.5 w-3.5" />}
+              QR Code
+            </Button>
+            <Button variant="outline" size="sm" className="h-7 text-xs" onClick={addBackgroundBanner} disabled={uploadingBanner}>
+              {uploadingBanner ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : <ImageIcon className="mr-1 h-3.5 w-3.5" />}
+              Background
+            </Button>
+            {selectedId && (
+              <>
+                <div className="h-4 w-px bg-border" />
+                {selectedIds.size > 1 && (
+                  <span className="text-[10px] text-blue-600 font-medium">{selectedIds.size} selected</span>
+                )}
+                <span className="text-[10px] text-muted-foreground font-medium">Align:</span>
+                <div className="flex gap-0.5">
+                  <Button variant="outline" size="icon" className="h-7 w-7" title="Align Left" onClick={() => alignSelected("left")}>
+                    <AlignStartVertical className="h-3 w-3" />
+                  </Button>
+                  <Button variant="outline" size="icon" className="h-7 w-7" title="Center Horizontal" onClick={() => alignSelected("center-x")}>
+                    <AlignCenterVertical className="h-3 w-3" />
+                  </Button>
+                  <Button variant="outline" size="icon" className="h-7 w-7" title="Align Right" onClick={() => alignSelected("right")}>
+                    <AlignEndVertical className="h-3 w-3" />
+                  </Button>
+                  <Button variant="outline" size="icon" className="h-7 w-7" title="Align Top" onClick={() => alignSelected("top")}>
+                    <AlignStartHorizontal className="h-3 w-3" />
+                  </Button>
+                  <Button variant="outline" size="icon" className="h-7 w-7" title="Center Vertical" onClick={() => alignSelected("center-y")}>
+                    <AlignCenterHorizontal className="h-3 w-3" />
+                  </Button>
+                  <Button variant="outline" size="icon" className="h-7 w-7" title="Align Bottom" onClick={() => alignSelected("bottom")}>
+                    <AlignEndHorizontal className="h-3 w-3" />
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
         {!isAgent && (
           <div className="flex items-center gap-3 px-4 pb-2">
             {isMonthly && (
               <div className="flex rounded-md border overflow-hidden">
                 <button
                   className={`px-3 py-1 text-xs font-medium transition-colors ${activeTab === "front" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
-                  onClick={() => { setActiveTab("front"); setSelectedId(null); setEditingId(null); }}
+                  onClick={() => { setActiveTab("front"); clearSelection(); }}
                 >
                   Front
                 </button>
                 <button
                   className={`px-3 py-1 text-xs font-medium transition-colors border-l ${activeTab === "back" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
-                  onClick={() => { setActiveTab("back"); setSelectedId(null); setEditingId(null); }}
+                  onClick={() => { setActiveTab("back"); clearSelection(); }}
                 >
                   Offer Panel
                 </button>
@@ -729,7 +1031,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
             onMouseMove={onCanvasMove}
             onMouseUp={onCanvasUp}
             onMouseLeave={onCanvasUp}
-            onClick={() => { setSelectedId(null); setEditingId(null); }}
+            onClick={() => clearSelection()}
           >
             {/* Bg image */}
             {curBgImage && (
@@ -762,13 +1064,15 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
                     isEditing ? "ring-2 ring-green-500" :
                     selectedId === el.id
                       ? "ring-2 ring-blue-500 ring-offset-1 ring-offset-transparent cursor-move"
+                      : selectedIds.has(el.id)
+                      ? "ring-2 ring-blue-400 ring-offset-1 ring-offset-transparent cursor-move"
                       : el.placeholder ? "ring-1 ring-dashed ring-emerald-400 hover:ring-emerald-500 cursor-move" : "hover:ring-1 hover:ring-blue-300 cursor-move"
                   }`}
                   style={{
                     left: `${el.x}%`,
                     top: `${el.y}%`,
                     width: `${el.width}%`,
-                    height: el.type === "image" ? `${el.height}%` : "auto",
+                    height: (el.type === "image" || el.type === "shape") ? `${el.height}%` : "auto",
                     opacity: el.opacity ?? 1,
                   }}
                   onMouseDown={(e) => { if (!isEditing) onElDown(e, el.id); }}
@@ -808,6 +1112,25 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
                       style={{ objectFit: el.objectFit || "contain" }}
                     />
                   )}
+                  {el.type === "shape" && (
+                    <div className="w-full h-full pointer-events-none" style={{ transform: el.shapeRotation ? `rotate(${el.shapeRotation}deg)` : undefined }}>
+                      {el.shapeType === "line" && (
+                        <div className="w-full absolute top-1/2 -translate-y-1/2" style={{ height: `${el.shapeBorderWidth || 2}px`, backgroundColor: el.shapeColor || "#000" }} />
+                      )}
+                      {el.shapeType === "rectangle" && (
+                        <div className="w-full h-full" style={{
+                          backgroundColor: el.shapeFilled ? (el.shapeColor || "#000") : "transparent",
+                          border: el.shapeFilled ? "none" : `${el.shapeBorderWidth || 2}px solid ${el.shapeColor || "#000"}`,
+                        }} />
+                      )}
+                      {el.shapeType === "circle" && (
+                        <div className="w-full h-full rounded-full" style={{
+                          backgroundColor: el.shapeFilled ? (el.shapeColor || "#000") : "transparent",
+                          border: el.shapeFilled ? "none" : `${el.shapeBorderWidth || 2}px solid ${el.shapeColor || "#000"}`,
+                        }} />
+                      )}
+                    </div>
+                  )}
                   {/* Placeholder badge */}
                   {el.placeholder === "team_logo" && (
                     <div className="absolute -top-3 left-0 bg-emerald-500 text-white text-[7px] font-bold px-1 py-0.5 rounded-sm leading-none pointer-events-none whitespace-nowrap">
@@ -824,6 +1147,24 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
                 </div>
               );
             })}
+
+            {/* Seasonal footer preview (agent mode) */}
+            {isAgent && (() => {
+              const resolvedKey = resolveSeasonalKey(seasonalFooter);
+              const theme = SEASONAL_FOOTERS[resolvedKey];
+              if (!theme || resolvedKey === "none") return null;
+              return (
+                <div
+                  className="absolute bottom-0 left-0 right-0 z-20 overflow-hidden pointer-events-none"
+                  style={{ height: "12%", background: theme.gradient }}
+                >
+                  <div
+                    className="absolute inset-0"
+                    dangerouslySetInnerHTML={{ __html: theme.shapes }}
+                  />
+                </div>
+              );
+            })()}
 
             {/* Disclaimer (admin only) */}
             {!isAgent && disclaimer && (
@@ -849,14 +1190,51 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
               <Button variant="outline" size="sm" className="flex-1" onClick={addText}>
                 <Type className="mr-1.5 h-3.5 w-3.5" /> Text
               </Button>
-              <Button variant="outline" size="sm" className="flex-1" onClick={addImage}>
-                <ImagePlus className="mr-1.5 h-3.5 w-3.5" /> Image
+              <Button variant="outline" size="sm" className="flex-1" onClick={addImage} disabled={uploadingImage}>
+                {uploadingImage ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <ImagePlus className="mr-1.5 h-3.5 w-3.5" />} Image
+              </Button>
+            </div>
+            <div className="flex gap-2 mt-2">
+              <Button variant="outline" size="sm" className="flex-1" onClick={() => addShape("line")}>
+                <Minus className="mr-1.5 h-3.5 w-3.5" /> Line
+              </Button>
+              <Button variant="outline" size="sm" className="flex-1" onClick={() => addShape("rectangle")}>
+                <Square className="mr-1.5 h-3.5 w-3.5" /> Rect
+              </Button>
+              <Button variant="outline" size="sm" className="flex-1" onClick={() => addShape("circle")}>
+                <Circle className="mr-1.5 h-3.5 w-3.5" /> Circle
               </Button>
             </div>
           </div>
 
-          {/* Social media icons (admin only) */}
-          {!isAgent && (
+          {/* Align selected element */}
+          {selected && (
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Align</p>
+              <div className="grid grid-cols-6 gap-1">
+                <Button variant="outline" size="icon" className="h-7 w-full" title="Align Left" onClick={() => alignSelected("left")}>
+                  <AlignStartVertical className="h-3.5 w-3.5" />
+                </Button>
+                <Button variant="outline" size="icon" className="h-7 w-full" title="Center Horizontal" onClick={() => alignSelected("center-x")}>
+                  <AlignCenterVertical className="h-3.5 w-3.5" />
+                </Button>
+                <Button variant="outline" size="icon" className="h-7 w-full" title="Align Right" onClick={() => alignSelected("right")}>
+                  <AlignEndVertical className="h-3.5 w-3.5" />
+                </Button>
+                <Button variant="outline" size="icon" className="h-7 w-full" title="Align Top" onClick={() => alignSelected("top")}>
+                  <AlignStartHorizontal className="h-3.5 w-3.5" />
+                </Button>
+                <Button variant="outline" size="icon" className="h-7 w-full" title="Center Vertical" onClick={() => alignSelected("center-y")}>
+                  <AlignCenterHorizontal className="h-3.5 w-3.5" />
+                </Button>
+                <Button variant="outline" size="icon" className="h-7 w-full" title="Align Bottom" onClick={() => alignSelected("bottom")}>
+                  <AlignEndHorizontal className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Social media icons */}
           <div>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Social Icons</p>
             <div className="flex flex-wrap gap-1.5">
@@ -873,7 +1251,6 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
               ))}
             </div>
           </div>
-          )}
 
           {/* Real estate logos (admin only) */}
           {!isAgent && (
@@ -934,6 +1311,102 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
             )}
           </div>
 
+          {/* Personal Message (agent mode) */}
+          {isAgent && (
+            <div className="space-y-1.5">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Personal Message</p>
+              <textarea
+                value={customMessage}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setCustomMessage(val);
+                  // Sync with a draggable text element on the canvas
+                  setCurElements((prev) => {
+                    const idx = prev.findIndex((el) => el._personalMessage);
+                    if (val.trim()) {
+                      if (idx >= 0) {
+                        // Update existing element text
+                        return prev.map((el) => el._personalMessage ? { ...el, text: val } : el);
+                      }
+                      // Create new personal message element
+                      return [...prev, {
+                        id: genId(), type: "text" as const, _personalMessage: true,
+                        x: 3, y: 82, width: 94, height: 10,
+                        text: val, fontSize: 10, fontColor: "#6B7280",
+                        fontFamily: "sans-serif" as FontFamilyOption, textAlign: "left" as const,
+                      }];
+                    }
+                    // Remove if empty
+                    if (idx >= 0) return prev.filter((el) => !el._personalMessage);
+                    return prev;
+                  });
+                }}
+                placeholder="Hi! I hope you enjoy these exclusive local deals..."
+                rows={3}
+                maxLength={200}
+                className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              />
+              <p className="text-[10px] text-muted-foreground">{customMessage.length}/200</p>
+            </div>
+          )}
+
+          {/* Seasonal Footer (agent mode) */}
+          {isAgent && (
+            <div className="space-y-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Seasonal Footer</p>
+              <p className="text-[10px] text-muted-foreground -mt-2">Decorative strip at the bottom of your panel</p>
+              <div className="grid grid-cols-4 gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setSeasonalFooter("auto")}
+                  className={cn(
+                    "relative rounded border-2 p-1 text-center transition-colors",
+                    seasonalFooter === "auto" ? "border-blue-500 bg-blue-50" : "border-muted hover:border-muted-foreground/40"
+                  )}
+                >
+                  <div className="h-3 rounded-sm overflow-hidden" style={{
+                    background: SEASONAL_FOOTERS[MONTH_KEYS[new Date().getMonth()]]?.gradient || "#ccc",
+                  }} />
+                  <p className="text-[8px] mt-0.5 font-medium">Auto</p>
+                  {seasonalFooter === "auto" && <Check className="absolute top-0 right-0 h-2.5 w-2.5 text-blue-500" />}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSeasonalFooter("none")}
+                  className={cn(
+                    "relative rounded border-2 p-1 text-center transition-colors",
+                    seasonalFooter === "none" ? "border-blue-500 bg-blue-50" : "border-muted hover:border-muted-foreground/40"
+                  )}
+                >
+                  <div className="h-3 rounded-sm bg-gray-100 flex items-center justify-center">
+                    <span className="text-[6px] text-gray-400">None</span>
+                  </div>
+                  <p className="text-[8px] mt-0.5 font-medium">None</p>
+                  {seasonalFooter === "none" && <Check className="absolute top-0 right-0 h-2.5 w-2.5 text-blue-500" />}
+                </button>
+                {[...MONTH_KEYS, "social", "consultation", "referral"].map((key) => {
+                  const theme = SEASONAL_FOOTERS[key];
+                  if (!theme) return null;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setSeasonalFooter(key)}
+                      className={cn(
+                        "relative rounded border-2 p-1 text-center transition-colors",
+                        seasonalFooter === key ? "border-blue-500 bg-blue-50" : "border-muted hover:border-muted-foreground/40"
+                      )}
+                    >
+                      <div className="h-3 rounded-sm overflow-hidden" style={{ background: theme.gradient }} />
+                      <p className="text-[8px] mt-0.5 font-medium">{theme.label}</p>
+                      {seasonalFooter === key && <Check className="absolute top-0 right-0 h-2.5 w-2.5 text-blue-500" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Selected element properties */}
           {selected && (
             <div className="space-y-3 rounded-lg border p-3 bg-blue-50/50">
@@ -945,7 +1418,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
                   <Button variant="ghost" size="icon" className="h-6 w-6" title="Duplicate" onClick={() => duplicateEl(selected.id)}>
                     <Copy className="h-3.5 w-3.5" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => deleteEl(selected.id)}>
+                  <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => { pushUndo(); deleteSelected(); }}>
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </div>
@@ -965,10 +1438,10 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
                   <Label className="text-[10px]">Width %</Label>
                   <Input type="number" step={0.5} value={selected.width} onChange={(e) => updateEl(selected.id, { width: +e.target.value })} className="text-xs h-7" min={2} max={100} />
                 </div>
-                {selected.type === "image" && (
+                {(selected.type === "image" || selected.type === "shape") && (
                   <div>
                     <Label className="text-[10px]">Height %</Label>
-                    <Input type="number" step={0.5} value={selected.height} onChange={(e) => updateEl(selected.id, { height: +e.target.value })} className="text-xs h-7" min={2} max={100} />
+                    <Input type="number" step={0.5} value={selected.height} onChange={(e) => updateEl(selected.id, { height: +e.target.value })} className="text-xs h-7" min={1} max={100} />
                   </div>
                 )}
               </div>
@@ -1219,6 +1692,50 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
                   )}
                 </>
               )}
+
+              {/* Shape props */}
+              {selected.type === "shape" && (
+                <>
+                  <div>
+                    <Label className="text-[10px]">Color</Label>
+                    <div className="flex gap-1">
+                      <input type="color" value={selected.shapeColor || "#000000"} onChange={(e) => updateEl(selected.id, { shapeColor: e.target.value })} className="h-7 w-7 rounded border cursor-pointer" />
+                      <Input value={selected.shapeColor || "#000000"} onChange={(e) => updateEl(selected.id, { shapeColor: e.target.value })} className="flex-1 text-xs h-7" />
+                    </div>
+                  </div>
+                  {selected.shapeType !== "line" && (
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selected.shapeFilled ?? true}
+                        onChange={(e) => updateEl(selected.id, { shapeFilled: e.target.checked })}
+                        className="rounded"
+                      />
+                      <span className="text-xs">Filled</span>
+                    </label>
+                  )}
+                  {(selected.shapeType === "line" || !selected.shapeFilled) && (
+                    <div>
+                      <Label className="text-[10px]">Border Width</Label>
+                      <Input type="number" value={selected.shapeBorderWidth || 2} onChange={(e) => updateEl(selected.id, { shapeBorderWidth: +e.target.value })} className="text-xs h-7" min={1} max={20} />
+                    </div>
+                  )}
+                  {selected.shapeType === "line" && (
+                    <div>
+                      <Label className="text-[10px]">Rotation</Label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="range" min={0} max={360} step={1}
+                          value={selected.shapeRotation || 0}
+                          onChange={(e) => updateEl(selected.id, { shapeRotation: +e.target.value })}
+                          className="flex-1 h-1.5 accent-blue-500"
+                        />
+                        <span className="text-[10px] w-8 text-right text-muted-foreground">{selected.shapeRotation || 0}°</span>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           )}
 
@@ -1292,13 +1809,13 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
               <div
                 key={el.id}
                 className={`flex items-center gap-2 rounded px-2 py-1.5 text-xs cursor-pointer transition-colors ${
-                  selectedId === el.id ? "bg-blue-100 border border-blue-300" : "hover:bg-muted"
+                  selectedId === el.id ? "bg-blue-100 border border-blue-300" : selectedIds.has(el.id) ? "bg-blue-50 border border-blue-200" : "hover:bg-muted"
                 }`}
-                onClick={() => setSelectedId(el.id)}
+                onClick={(e) => selectEl(el.id, e.shiftKey)}
               >
-                {el.type === "text" ? <Type className="h-3 w-3 shrink-0" /> : <ImagePlus className="h-3 w-3 shrink-0" />}
+                {el.type === "text" ? <Type className="h-3 w-3 shrink-0" /> : el.type === "shape" ? (el.shapeType === "circle" ? <Circle className="h-3 w-3 shrink-0" /> : el.shapeType === "line" ? <Minus className="h-3 w-3 shrink-0" /> : <Square className="h-3 w-3 shrink-0" />) : <ImagePlus className="h-3 w-3 shrink-0" />}
                 <span className="truncate flex-1">
-                  {el.type === "text" ? (el.text || "Text").substring(0, 25) : el.placeholder === "team_logo" ? "Team Logo Spot" : "Image"}
+                  {el.type === "text" ? (el.text || "Text").substring(0, 25) : el.type === "shape" ? (el.shapeType === "line" ? "Line" : el.shapeType === "circle" ? "Circle" : "Rectangle") : el.placeholder === "team_logo" ? "Team Logo Spot" : "Image"}
                 </span>
                 {el.placeholder === "team_logo" && (
                   <span className="text-[9px] bg-emerald-100 text-emerald-700 px-1 rounded shrink-0">TL</span>

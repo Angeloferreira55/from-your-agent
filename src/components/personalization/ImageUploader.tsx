@@ -13,6 +13,7 @@ interface ImageUploaderProps {
   maxSizeMb?: number;
   className?: string;
   shape?: "square" | "circle";
+  size?: "default" | "large";
 }
 
 export function ImageUploader({
@@ -23,6 +24,7 @@ export function ImageUploader({
   maxSizeMb = 2,
   className,
   shape = "square",
+  size = "default",
 }: ImageUploaderProps) {
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -87,7 +89,7 @@ export function ImageUploader({
       <div
         className={cn(
           "relative flex items-center justify-center border-2 border-dashed transition-colors cursor-pointer overflow-hidden",
-          shape === "circle" ? "h-28 w-28 rounded-full" : "h-28 rounded-lg",
+          shape === "circle" ? "h-28 w-28 rounded-full" : size === "large" ? "h-48 rounded-lg" : "h-28 rounded-lg",
           dragOver ? "border-[#E8733A] bg-[#FFF5EE]" : "border-muted-foreground/25 hover:border-[#E8733A]/50",
           uploading && "pointer-events-none opacity-60"
         )}
@@ -102,7 +104,8 @@ export function ImageUploader({
               src={currentUrl}
               alt={label}
               className={cn(
-                "h-full w-full object-cover",
+                "h-full w-full",
+                size === "large" ? "object-contain p-2" : "object-cover",
                 shape === "circle" ? "rounded-full" : "rounded-lg"
               )}
             />

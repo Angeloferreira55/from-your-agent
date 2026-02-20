@@ -35,8 +35,8 @@ const FIELD_PATTERNS: Record<string, RegExp[]> = {
   address_line1: [/address.?(1|line.?1)?$/i, /street/i, /^address$/i, /mailing.?address/i],
   address_line2: [/address.?(2|line.?2)/i, /apt/i, /suite/i, /unit/i],
   city: [/^city$/i, /^town$/i],
-  state: [/^state$/i, /^st$/i, /province/i],
-  zip: [/^zip$/i, /zip.?code/i, /postal/i, /^zp$/i],
+  state: [/^state$/i, /^st$/i, /province/i, /state.?province/i, /^region$/i],
+  zip: [/^zip$/i, /zip.?code/i, /postal/i, /^zp$/i, /postal.?code/i],
   email: [/e.?mail/i, /^email$/i],
   phone: [/phone/i, /mobile/i, /cell/i, /tel/i],
 };

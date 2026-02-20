@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,18 +37,37 @@ const US_STATES = [
 export function ContactForm({ open, onOpenChange, contact, onSubmit }: ContactFormProps) {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
-    first_name: contact?.first_name || "",
-    last_name: contact?.last_name || "",
-    email: contact?.email || "",
-    phone: contact?.phone || "",
-    address_line1: contact?.address_line1 || "",
-    address_line2: contact?.address_line2 || "",
-    city: contact?.city || "",
-    state: contact?.state || "",
-    zip: contact?.zip || "",
-    relationship_type: contact?.relationship_type || "sphere",
-    notes: contact?.notes || "",
+    first_name: "",
+    last_name: "",
+    email: "",
+    phone: "",
+    address_line1: "",
+    address_line2: "",
+    city: "",
+    state: "",
+    zip: "",
+    relationship_type: "sphere",
+    notes: "",
   });
+
+  // Sync form state when contact changes (edit vs add) or dialog opens
+  React.useEffect(() => {
+    if (open) {
+      setForm({
+        first_name: contact?.first_name || "",
+        last_name: contact?.last_name || "",
+        email: contact?.email || "",
+        phone: contact?.phone || "",
+        address_line1: contact?.address_line1 || "",
+        address_line2: contact?.address_line2 || "",
+        city: contact?.city || "",
+        state: contact?.state || "",
+        zip: contact?.zip || "",
+        relationship_type: contact?.relationship_type || "sphere",
+        notes: contact?.notes || "",
+      });
+    }
+  }, [open, contact]);
 
   function updateField(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -58,13 +77,13 @@ export function ContactForm({ open, onOpenChange, contact, onSubmit }: ContactFo
     e.preventDefault();
     setLoading(true);
     try {
-      const payload: Partial<Contact> = {
+      const payload = {
         ...form,
         email: form.email || null,
         phone: form.phone || null,
         address_line2: form.address_line2 || null,
         notes: form.notes || null,
-      };
+      } as Partial<Contact>;
       if (contact) {
         (payload as Contact & { id: string }).id = contact.id;
       }

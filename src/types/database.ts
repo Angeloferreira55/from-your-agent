@@ -45,6 +45,7 @@ export interface AgentProfile {
   subscription_status: SubscriptionStatus;
   brokerage_id: string | null;
   agent_card_design: Record<string, unknown> | null;
+  seasonal_footer: string | null;
   role: AgentRole;
   onboarding_completed: boolean;
   created_at: string;

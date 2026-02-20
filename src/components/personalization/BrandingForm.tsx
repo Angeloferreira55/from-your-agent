@@ -8,10 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import { ImageUploader } from "./ImageUploader";
 import { useAgentProfile, useUpdateProfile, useUploadImage } from "@/hooks/use-agent-profile";
 import { toast } from "sonner";
-import { Loader2, Lock, Building2 } from "lucide-react";
+import { Loader2, Lock, Building2, X } from "lucide-react";
 import type { PostcardVisibleFields } from "@/types/database";
 
 interface BrokerageOption {
@@ -68,6 +69,7 @@ export function BrandingForm() {
   const [brokerageState, setBrokerageState] = useState("");
   const [brokerageZip, setBrokerageZip] = useState("");
   const [visibleFields, setVisibleFields] = useState<PostcardVisibleFields>(DEFAULT_VISIBLE);
+  const [seasonalFooter, setSeasonalFooter] = useState("auto");
 
   useEffect(() => {
     if (profile) {
@@ -86,6 +88,7 @@ export function BrandingForm() {
       setBrokerageState(profile.brokerage_state || "");
       setBrokerageZip(profile.brokerage_zip || "");
       setVisibleFields(profile.postcard_visible_fields || DEFAULT_VISIBLE);
+      setSeasonalFooter(profile.seasonal_footer || "auto");
     }
   }, [profile]);
 
@@ -133,11 +136,36 @@ export function BrandingForm() {
         brokerage_zip: brokerageZip || null,
         postcard_visible_fields: visibleFields,
         brokerage_id: brokerageId || null,
+        seasonal_footer: seasonalFooter,
       } as Record<string, unknown>);
       toast.success("Branding saved successfully");
     } catch {
       toast.error("Failed to save changes");
     }
+  };
+
+  const checkImageResolution = (file: File, minWidth = 300, minHeight = 300): Promise<{ width: number; height: number }> => {
+    return new Promise((resolve, reject) => {
+      if (file.type === "image/svg+xml") {
+        resolve({ width: 1000, height: 1000 }); // SVGs scale infinitely
+        return;
+      }
+      const img = new window.Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        if (img.naturalWidth < minWidth || img.naturalHeight < minHeight) {
+          reject(new Error(`Image resolution is too low (${img.naturalWidth}x${img.naturalHeight}px). For best print quality, use an image at least ${minWidth}x${minHeight}px.`));
+        } else {
+          resolve({ width: img.naturalWidth, height: img.naturalHeight });
+        }
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(new Error("Could not read image"));
+      };
+      img.src = url;
+    });
   };
 
   const handleUpload = async (file: File, type: "photo" | "team_logo") => {
@@ -146,11 +174,23 @@ export function BrandingForm() {
       team_logo: "Team logo",
     };
     try {
+      if (type === "team_logo") {
+        await checkImageResolution(file, 300, 300);
+      }
       await uploadImage.mutateAsync({ file, type });
       toast.success(`${labels[type]} uploaded`);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
       toast.error(`Failed to upload ${labels[type].toLowerCase()}: ${message}`);
+    }
+  };
+
+  const handleRemoveTeamLogo = async () => {
+    try {
+      await updateProfile.mutateAsync({ team_logo_url: null } as Record<string, unknown>);
+      toast.success("Team logo removed");
+    } catch {
+      toast.error("Failed to remove team logo");
     }
   };
 
@@ -250,7 +290,20 @@ export function BrandingForm() {
 
         {/* Team Logo only (brokerage logo is admin-managed) */}
         <div>
-          <p className="text-sm font-medium mb-3">Team Logo</p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm font-medium">Team Logo</p>
+            {profile?.team_logo_url && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs text-destructive hover:text-destructive"
+                onClick={handleRemoveTeamLogo}
+              >
+                <X className="mr-1 h-3 w-3" />
+                Remove
+              </Button>
+            )}
+          </div>
           <ImageUploader
             label="Team Logo (optional)"
             currentUrl={profile?.team_logo_url ?? null}
@@ -258,7 +311,11 @@ export function BrandingForm() {
             accept="image/png,image/jpeg,image/webp,image/svg+xml"
             maxSizeMb={10}
             shape="square"
+            size="large"
           />
+          <p className="text-xs text-muted-foreground mt-1">
+            Min 300x300px recommended for print quality. Appears under your brokerage logo on postcards.
+          </p>
         </div>
 
         {/* Brand Color — locked if brokerage selected */}
