@@ -72,7 +72,7 @@ export interface DesignElement {
   src?: string;
   objectFit?: "contain" | "cover";
   tintColor?: string; // recolor SVG icons/logos
-  placeholder?: "team_logo"; // agent's uploaded logo replaces this at render time
+  placeholder?: "team_logo" | "agent_name" | "brokerage_name" | "brokerage_logo" | "agent_phone"; // replaced with real data at render time
   // shape
   shapeType?: "line" | "rectangle" | "circle";
   shapeColor?: string;
@@ -95,6 +95,7 @@ export interface DesignConfig {
     imageUrl: string;
     overlayColor: string;
     colorEnabled?: boolean; // false = no color/overlay, full image
+    imageFit?: "cover" | "contain" | "fill"; // how the background image fits the canvas
   };
   elements: DesignElement[];
   disclaimer: string;
@@ -236,6 +237,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
   const [bgImage, setBgImage] = useState(initialData?.design?.background.imageUrl || "");
   const [overlayColor, setOverlayColor] = useState(initialData?.design?.background.overlayColor || "rgba(0,0,0,0.3)");
   const [colorEnabled, setColorEnabled] = useState(initialData?.design?.background.colorEnabled !== false);
+  const [imageFit, setImageFit] = useState<"cover" | "contain" | "fill">(initialData?.design?.background.imageFit || "cover");
   const [elements, setElements] = useState<DesignElement[]>(initialData?.design?.elements || []);
   const [disclaimer, setDisclaimer] = useState(initialData?.design?.disclaimer || "Each office is independently owned and operated.");
   const [disclaimerFontSize, setDisclaimerFontSize] = useState(initialData?.design?.disclaimerStyle?.fontSize || 8);
@@ -248,6 +250,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
   const [frontBgImage, setFrontBgImage] = useState(initFront.background.imageUrl);
   const [frontOverlayColor, setFrontOverlayColor] = useState(initFront.background.overlayColor);
   const [frontColorEnabled, setFrontColorEnabled] = useState(initFront.background.colorEnabled !== false);
+  const [frontImageFit, setFrontImageFit] = useState<"cover" | "contain" | "fill">(initFront.background.imageFit || "cover");
   const [frontElements, setFrontElements] = useState<DesignElement[]>(initFront.elements || []);
 
   // Active design: route to front or back state based on activeTab
@@ -260,6 +263,8 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
   const setCurOverlayColor = isFront ? setFrontOverlayColor : setOverlayColor;
   const curColorEnabled = isFront ? frontColorEnabled : colorEnabled;
   const setCurColorEnabled = isFront ? setFrontColorEnabled : setColorEnabled;
+  const curImageFit = isFront ? frontImageFit : imageFit;
+  const setCurImageFit = isFront ? setFrontImageFit : setImageFit;
   const curElements = isFront ? frontElements : elements;
   const setCurElements = isFront ? setFrontElements : setElements;
 
@@ -327,6 +332,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
     setBgImage(initialData?.design?.background.imageUrl || "");
     setOverlayColor(initialData?.design?.background.overlayColor || "rgba(0,0,0,0.3)");
     setColorEnabled(initialData?.design?.background.colorEnabled !== false);
+    setImageFit(initialData?.design?.background.imageFit || "cover");
     const initElements = initialData?.design?.elements || [];
     setElements(initElements);
     // Sync customMessage from the personal message element if it exists
@@ -346,12 +352,13 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
     setFrontBgImage(fd.background.imageUrl);
     setFrontOverlayColor(fd.background.overlayColor);
     setFrontColorEnabled(fd.background.colorEnabled !== false);
+    setFrontImageFit(fd.background.imageFit || "cover");
     setFrontElements(fd.elements || []);
     setSelectedId(null);
     setSelectedIds(new Set());
   }, [initialData, initialTab]);
 
-  // Fetch seasonal footer from profile when agent designer opens
+  // Fetch seasonal footer + team logo from profile when agent designer opens
   useEffect(() => {
     if (!open || !isAgent) return;
     fetch("/api/profile").then(r => r.json()).then(d => {
@@ -360,6 +367,15 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
         setSeasonalFooter(d.profile.seasonal_footer);
       } else if (d.profile?.agent_card_design?._seasonal_footer) {
         setSeasonalFooter(d.profile.agent_card_design._seasonal_footer);
+      }
+      // Substitute team_logo placeholders with the agent's actual team logo URL
+      const teamLogoUrl = d.profile?.team_logo_url;
+      if (teamLogoUrl) {
+        setElements(prev => prev.map(el =>
+          el.placeholder === "team_logo" && !el.src
+            ? { ...el, src: teamLogoUrl }
+            : el
+        ));
       }
     }).catch(() => {});
   }, [open, isAgent]);
@@ -463,7 +479,6 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
         prev.map((el) => {
           if (el.id !== resizing.id) return el;
           const newW = Math.max(2, Math.min(100, resizing.startW + dx));
-          if (el.type === "text") return { ...el, width: +newW.toFixed(1) };
           const newH = Math.max(2, Math.min(100, resizing.startH + dy));
           return { ...el, width: +newW.toFixed(1), height: +newH.toFixed(1) };
         })
@@ -833,13 +848,13 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
     setSaving(true);
     try {
       const backDesign: DesignConfig = {
-        background: { color: bgColor, imageUrl: bgImage, overlayColor, colorEnabled },
+        background: { color: bgColor, imageUrl: bgImage, overlayColor, colorEnabled, imageFit },
         elements,
         disclaimer,
         disclaimerStyle: { fontSize: disclaimerFontSize, color: disclaimerColor, fontFamily: disclaimerFont },
       };
       const frontDesign: DesignConfig = {
-        background: { color: frontBgColor, imageUrl: frontBgImage, overlayColor: frontOverlayColor, colorEnabled: frontColorEnabled },
+        background: { color: frontBgColor, imageUrl: frontBgImage, overlayColor: frontOverlayColor, colorEnabled: frontColorEnabled, imageFit: frontImageFit },
         elements: frontElements,
         disclaimer: "",
       };
@@ -1027,7 +1042,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
           <div
             ref={canvasRef}
             className="relative rounded-lg shadow-xl overflow-hidden select-none border"
-            style={{ aspectRatio: "3/2", width: isFront ? "clamp(400px, 65vw, 900px)" : "clamp(400px, 60vw, 675px)", backgroundColor: curColorEnabled ? curBgColor : "#f0f0f0" }}
+            style={{ aspectRatio: "9.25/6.25", width: isFront ? "clamp(400px, 65vw, 900px)" : "clamp(400px, 60vw, 675px)", backgroundColor: curColorEnabled ? curBgColor : "#f0f0f0" }}
             onMouseMove={onCanvasMove}
             onMouseUp={onCanvasUp}
             onMouseLeave={onCanvasUp}
@@ -1035,7 +1050,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
           >
             {/* Bg image */}
             {curBgImage && (
-              <img src={curBgImage} alt="" className="absolute inset-0 h-full w-full object-cover pointer-events-none" style={{ opacity: curColorEnabled ? 0.3 : 1 }} />
+              <img src={curBgImage} alt="" className="absolute inset-0 h-full w-full pointer-events-none" style={{ objectFit: curImageFit, opacity: curColorEnabled ? 0.3 : 1 }} />
             )}
             {/* Overlay (only when color enabled) */}
             {curColorEnabled && (
@@ -1072,7 +1087,8 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
                     left: `${el.x}%`,
                     top: `${el.y}%`,
                     width: `${el.width}%`,
-                    height: (el.type === "image" || el.type === "shape") ? `${el.height}%` : "auto",
+                    height: `${el.height}%`,
+                    overflow: el.type === "text" && !isEditing ? "hidden" : undefined,
                     opacity: el.opacity ?? 1,
                   }}
                   onMouseDown={(e) => { if (!isEditing) onElDown(e, el.id); }}
@@ -1132,9 +1148,12 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
                     </div>
                   )}
                   {/* Placeholder badge */}
-                  {el.placeholder === "team_logo" && (
-                    <div className="absolute -top-3 left-0 bg-emerald-500 text-white text-[7px] font-bold px-1 py-0.5 rounded-sm leading-none pointer-events-none whitespace-nowrap">
-                      TEAM LOGO
+                  {el.placeholder && (
+                    <div className={cn(
+                      "absolute -top-3 left-0 text-white text-[7px] font-bold px-1 py-0.5 rounded-sm leading-none pointer-events-none whitespace-nowrap",
+                      el.placeholder === "team_logo" ? "bg-emerald-500" : "bg-violet-500"
+                    )}>
+                      {el.placeholder === "team_logo" ? "TEAM LOGO" : el.placeholder === "agent_name" ? "AGENT NAME" : el.placeholder === "brokerage_name" ? "BROKERAGE" : el.placeholder === "brokerage_logo" ? "BROKERAGE LOGO" : "PHONE"}
                     </div>
                   )}
                   {/* Resize handle */}
@@ -1152,16 +1171,26 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
             {isAgent && (() => {
               const resolvedKey = resolveSeasonalKey(seasonalFooter);
               const theme = SEASONAL_FOOTERS[resolvedKey];
-              if (!theme || resolvedKey === "none") return null;
+              if (!theme || resolvedKey === "none" || !theme.gradient) return null;
               return (
                 <div
-                  className="absolute bottom-0 left-0 right-0 z-20 overflow-hidden pointer-events-none"
+                  className="absolute bottom-0 left-0 right-0 z-20 overflow-hidden pointer-events-none flex items-center justify-center"
                   style={{ height: "12%", background: theme.gradient }}
                 >
-                  <div
-                    className="absolute inset-0"
-                    dangerouslySetInnerHTML={{ __html: theme.shapes }}
-                  />
+                  {theme.text && (
+                    <p
+                      className="text-center font-semibold leading-none"
+                      style={{
+                        fontSize: `${24 * scale}px`,
+                        color: theme.textColor,
+                        fontFamily: "Georgia, serif",
+                        letterSpacing: "0.5px",
+                        margin: 0,
+                      }}
+                    >
+                      {theme.text}
+                    </p>
+                  )}
                 </div>
               );
             })()}
@@ -1206,6 +1235,79 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
               </Button>
             </div>
           </div>
+
+          {/* Placeholder elements (admin front tab only) */}
+          {isFront && !isAgent && (
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Placeholders</p>
+              <p className="text-[10px] text-muted-foreground mb-2">Auto-filled with each agent&apos;s info at print time</p>
+              <div className="grid grid-cols-2 gap-1.5">
+                <Button
+                  variant="outline" size="sm" className="text-xs h-7"
+                  disabled={curElements.some((el) => el.placeholder === "agent_name")}
+                  onClick={() => {
+                    const el: DesignElement = {
+                      id: genId(), type: "text", x: 5, y: 75, width: 50, height: 12,
+                      text: "Agent Name", fontSize: 28, fontColor: "#FFFFFF",
+                      fontWeight: "bold", fontStyle: "normal", textAlign: "left", fontFamily: "sans-serif",
+                      placeholder: "agent_name",
+                    };
+                    setCurElements((p) => [...p, el]);
+                    setSelectedId(el.id);
+                  }}
+                >
+                  <Users className="mr-1 h-3 w-3" /> Name
+                </Button>
+                <Button
+                  variant="outline" size="sm" className="text-xs h-7"
+                  disabled={curElements.some((el) => el.placeholder === "brokerage_name")}
+                  onClick={() => {
+                    const el: DesignElement = {
+                      id: genId(), type: "text", x: 5, y: 87, width: 50, height: 8,
+                      text: "Brokerage Name", fontSize: 18, fontColor: "#FFFFFF",
+                      fontWeight: "normal", fontStyle: "normal", textAlign: "left", fontFamily: "sans-serif",
+                      placeholder: "brokerage_name",
+                    };
+                    setCurElements((p) => [...p, el]);
+                    setSelectedId(el.id);
+                  }}
+                >
+                  <Building2 className="mr-1 h-3 w-3" /> Brokerage
+                </Button>
+                <Button
+                  variant="outline" size="sm" className="text-xs h-7"
+                  disabled={curElements.some((el) => el.placeholder === "brokerage_logo")}
+                  onClick={() => {
+                    const el: DesignElement = {
+                      id: genId(), type: "image", x: 5, y: 85, width: 20, height: 12,
+                      src: "", objectFit: "contain",
+                      placeholder: "brokerage_logo",
+                    };
+                    setCurElements((p) => [...p, el]);
+                    setSelectedId(el.id);
+                  }}
+                >
+                  <ImageIcon className="mr-1 h-3 w-3" /> Logo
+                </Button>
+                <Button
+                  variant="outline" size="sm" className="text-xs h-7"
+                  disabled={curElements.some((el) => el.placeholder === "agent_phone")}
+                  onClick={() => {
+                    const el: DesignElement = {
+                      id: genId(), type: "text", x: 55, y: 87, width: 40, height: 8,
+                      text: "(555) 123-4567", fontSize: 16, fontColor: "#FFFFFF",
+                      fontWeight: "normal", fontStyle: "normal", textAlign: "right", fontFamily: "sans-serif",
+                      placeholder: "agent_phone",
+                    };
+                    setCurElements((p) => [...p, el]);
+                    setSelectedId(el.id);
+                  }}
+                >
+                  <Type className="mr-1 h-3 w-3" /> Phone
+                </Button>
+              </div>
+            </div>
+          )}
 
           {/* Align selected element */}
           {selected && (
@@ -1295,12 +1397,30 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
                 {curBgImage ? "Replace" : "Upload"}
               </Button>
               {curBgImage && (
-                <div className="relative">
-                  <img src={curBgImage} alt="" className="h-14 w-full object-cover rounded border" />
-                  <Button variant="destructive" size="icon" className="absolute top-0.5 right-0.5 h-5 w-5" onClick={() => setCurBgImage("")}>
-                    <X className="h-3 w-3" />
-                  </Button>
-                </div>
+                <>
+                  <div className="relative">
+                    <img src={curBgImage} alt="" className="h-14 w-full rounded border" style={{ objectFit: curImageFit }} />
+                    <Button variant="destructive" size="icon" className="absolute top-0.5 right-0.5 h-5 w-5" onClick={() => setCurBgImage("")}>
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                  <div className="flex gap-1">
+                    {(["cover", "contain", "fill"] as const).map((fit) => (
+                      <button
+                        key={fit}
+                        onClick={() => setCurImageFit(fit)}
+                        className={cn(
+                          "flex-1 text-[10px] py-1 rounded border transition-colors capitalize",
+                          curImageFit === fit
+                            ? "bg-blue-50 border-blue-400 text-blue-700 font-semibold"
+                            : "border-gray-200 text-gray-500 hover:border-gray-300"
+                        )}
+                      >
+                        {fit}
+                      </button>
+                    ))}
+                  </div>
+                </>
               )}
             </div>
             {curColorEnabled && (
@@ -1664,32 +1784,6 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
                       </div>
                     </div>
                   )}
-                  {/* Team logo placeholder toggle (admin only) */}
-                  {!isAgent && (
-                  <label className="flex items-center gap-2 cursor-pointer rounded border p-2 hover:bg-muted/50 transition-colors">
-                    <input
-                      type="checkbox"
-                      checked={selected.placeholder === "team_logo"}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          // Clear any existing team_logo placeholder first
-                          setCurElements((prev) => prev.map((el) =>
-                            el.id === selected.id
-                              ? { ...el, placeholder: "team_logo" as const }
-                              : el.placeholder === "team_logo" ? { ...el, placeholder: undefined } : el
-                          ));
-                        } else {
-                          updateEl(selected.id, { placeholder: undefined });
-                        }
-                      }}
-                      className="rounded"
-                    />
-                    <div>
-                      <span className="text-xs font-medium">Team Logo Spot</span>
-                      <p className="text-[10px] text-muted-foreground">Agent&apos;s uploaded logo replaces this</p>
-                    </div>
-                  </label>
-                  )}
                 </>
               )}
 
@@ -1735,6 +1829,46 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
                     </div>
                   )}
                 </>
+              )}
+
+              {/* Placeholder assignment (admin only, text & image elements) */}
+              {!isAgent && (selected.type === "text" || selected.type === "image") && (
+                <div className="space-y-1">
+                  <Label className="text-xs">Placeholder</Label>
+                  <Select
+                    value={selected.placeholder || "none"}
+                    onValueChange={(val) => {
+                      const newPlaceholder = val === "none" ? undefined : val as DesignElement["placeholder"];
+                      setCurElements((prev) => prev.map((el) =>
+                        el.id === selected.id
+                          ? { ...el, placeholder: newPlaceholder }
+                          : (newPlaceholder && el.placeholder === newPlaceholder) ? { ...el, placeholder: undefined } : el
+                      ));
+                    }}
+                  >
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      {selected.type === "image" ? (
+                        <>
+                          <SelectItem value="team_logo">Team Logo</SelectItem>
+                          <SelectItem value="brokerage_logo">Brokerage Logo</SelectItem>
+                        </>
+                      ) : (
+                        <>
+                          <SelectItem value="agent_name">Agent Name</SelectItem>
+                          <SelectItem value="brokerage_name">Brokerage Name</SelectItem>
+                          <SelectItem value="agent_phone">Agent Phone</SelectItem>
+                        </>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  {selected.placeholder && (
+                    <p className="text-[10px] text-muted-foreground">Replaced with real data at print time</p>
+                  )}
+                </div>
               )}
             </div>
           )}
@@ -1815,10 +1949,12 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
               >
                 {el.type === "text" ? <Type className="h-3 w-3 shrink-0" /> : el.type === "shape" ? (el.shapeType === "circle" ? <Circle className="h-3 w-3 shrink-0" /> : el.shapeType === "line" ? <Minus className="h-3 w-3 shrink-0" /> : <Square className="h-3 w-3 shrink-0" />) : <ImagePlus className="h-3 w-3 shrink-0" />}
                 <span className="truncate flex-1">
-                  {el.type === "text" ? (el.text || "Text").substring(0, 25) : el.type === "shape" ? (el.shapeType === "line" ? "Line" : el.shapeType === "circle" ? "Circle" : "Rectangle") : el.placeholder === "team_logo" ? "Team Logo Spot" : "Image"}
+                  {el.placeholder === "agent_name" ? "Agent Name" : el.placeholder === "brokerage_name" ? "Brokerage Name" : el.placeholder === "brokerage_logo" ? "Brokerage Logo" : el.placeholder === "agent_phone" ? "Agent Phone" : el.placeholder === "team_logo" ? "Team Logo Spot" : el.type === "text" ? (el.text || "Text").substring(0, 25) : el.type === "shape" ? (el.shapeType === "line" ? "Line" : el.shapeType === "circle" ? "Circle" : "Rectangle") : "Image"}
                 </span>
-                {el.placeholder === "team_logo" && (
-                  <span className="text-[9px] bg-emerald-100 text-emerald-700 px-1 rounded shrink-0">TL</span>
+                {el.placeholder && (
+                  <span className={cn("text-[9px] px-1 rounded shrink-0", el.placeholder === "team_logo" ? "bg-emerald-100 text-emerald-700" : "bg-violet-100 text-violet-700")}>
+                    {el.placeholder === "team_logo" ? "TL" : el.placeholder === "agent_name" ? "AN" : el.placeholder === "brokerage_name" ? "BN" : el.placeholder === "brokerage_logo" ? "BL" : "PH"}
+                  </span>
                 )}
                 <Button
                   variant="ghost"

@@ -7,6 +7,8 @@ import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/ca
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { TemplateDesigner, recolorSvgDataUri, type DesignConfig, type BrokerageOption } from "@/components/admin/TemplateDesigner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { DEAL_PANEL_LAYOUTS } from "@/lib/deal-panel-templates";
 
 const FONT_MAP: Record<string, string> = {
   "sans-serif": "Arial, Helvetica, sans-serif",
@@ -121,6 +123,7 @@ export default function AdminTemplatesPage() {
   const [editingTemplate, setEditingTemplate] = useState<PostcardTemplate | null>(null);
   const [designerInitialTab, setDesignerInitialTab] = useState<"front" | "back">("front");
   const [showTrash, setShowTrash] = useState(false);
+  const [layoutPickerOpen, setLayoutPickerOpen] = useState(false);
   const queryClient = useQueryClient();
 
   // Active templates
@@ -244,8 +247,40 @@ export default function AdminTemplatesPage() {
   const offerPanelTemplates = templates.filter((t) => t.back_html && parseDesign(t.back_html));
 
   function handleCreate(tab: "front" | "back") {
+    if (tab === "back") {
+      setLayoutPickerOpen(true);
+      return;
+    }
     setEditingTemplate(null);
     setDesignerInitialTab(tab);
+    setDesignerOpen(true);
+  }
+
+  function handleLayoutPick(layout: typeof DEAL_PANEL_LAYOUTS[number] | null) {
+    setLayoutPickerOpen(false);
+    setEditingTemplate(null);
+    setDesignerInitialTab("back");
+    if (layout) {
+      // Open designer pre-populated with the selected layout
+      setEditingTemplate({
+        id: "",
+        name: "",
+        description: null,
+        size: "6x9",
+        type: "monthly",
+        brokerage_id: null,
+        front_html: "",
+        back_html: JSON.stringify(layout.build()),
+        front_preview_url: null,
+        back_preview_url: null,
+        merge_variables: [],
+        is_default: false,
+        is_active: true,
+        season: null,
+        created_at: "",
+        updated_at: "",
+      });
+    }
     setDesignerOpen(true);
   }
 
@@ -476,6 +511,39 @@ export default function AdminTemplatesPage() {
           )}
         </div>
       </div>
+
+      {/* Layout Picker Dialog */}
+      <Dialog open={layoutPickerOpen} onOpenChange={setLayoutPickerOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Choose a Starting Layout</DialogTitle>
+            <DialogDescription>
+              Pick a layout to start with, or start from scratch
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-3 py-4">
+            {DEAL_PANEL_LAYOUTS.map((layout) => {
+              const preview = layout.build();
+              return (
+                <button
+                  key={layout.key}
+                  onClick={() => handleLayoutPick(layout)}
+                  className="group rounded-lg border-2 border-gray-200 p-2 transition-all hover:border-orange-400 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-1 text-left"
+                >
+                  <TemplatePreviewCard design={preview} aspectRatio="3/2" />
+                  <p className="mt-1.5 text-xs font-medium text-gray-700 group-hover:text-orange-600">
+                    {layout.label}
+                  </p>
+                  <p className="text-[10px] text-gray-400">{layout.description}</p>
+                </button>
+              );
+            })}
+          </div>
+          <Button variant="outline" className="w-full" onClick={() => handleLayoutPick(null)}>
+            Start from Scratch
+          </Button>
+        </DialogContent>
+      </Dialog>
 
       <TemplateDesigner
         open={designerOpen}

@@ -31,7 +31,7 @@ export function PostcardFront({
         "relative overflow-hidden rounded-lg border bg-white shadow-sm",
         className
       )}
-      style={{ aspectRatio: "9/6" }}
+      style={{ aspectRatio: "9.25/6.25" }}
     >
       {/* Full-page deal image */}
       <img
@@ -42,15 +42,21 @@ export function PostcardFront({
 
       {/* Bottom overlay bar with agent & brokerage info */}
       <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between px-[4%] pb-[3%]">
-        {/* Brokerage name — bottom left */}
-        {companyName && (
+        {/* Brokerage logo or name — bottom left */}
+        {brokerageLogoUrl ? (
+          <img
+            src={brokerageLogoUrl}
+            alt={companyName || "Brokerage"}
+            className="h-[clamp(1rem,6%,2.5rem)] w-auto object-contain drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]"
+          />
+        ) : companyName ? (
           <span
             className="text-[clamp(0.5rem,1.6vw,0.85rem)] font-semibold drop-shadow-[0_1px_3px_rgba(0,0,0,0.7)]"
             style={{ color: "#fff" }}
           >
             {companyName}
           </span>
-        )}
+        ) : <span />}
 
         {/* "as a gift from [agent name]" — bottom right */}
         {agentName && (

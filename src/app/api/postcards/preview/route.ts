@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserId } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { renderTemplate, buildMergeVariables } from "@/lib/lob/templates";
-import { resolveHtml, LOB_DIMENSIONS, injectFrontOverlay, renderFullBackHtml } from "@/lib/lob/render-design";
+import { resolveHtml, LOB_DIMENSIONS, injectFrontOverlay, renderFullBackHtml, designHasFrontPlaceholders } from "@/lib/lob/render-design";
+import type { AgentPlaceholderData } from "@/lib/lob/render-design";
 
 // POST — Generate a preview of rendered HTML (no Lob call)
 export async function POST(req: NextRequest) {
@@ -94,11 +95,23 @@ export async function POST(req: NextRequest) {
 
   const mergeVars = buildMergeVariables(agent, contact, offer);
   const agentName = `${agent.first_name} ${agent.last_name}`.trim();
-  const frontHtml = injectFrontOverlay(
-    renderTemplate(resolveHtml(template.front_html, dims.front, 900), mergeVars),
-    agentName,
-    agent.company_name
+  const hasPlaceholders = designHasFrontPlaceholders(template.front_html);
+
+  const agentData: AgentPlaceholderData = {
+    agent_name: agentName,
+    brokerage_name: agent.company_name || undefined,
+    brokerage_logo_url: agent.brokerage_logo_url || agent.logo_url || undefined,
+    agent_phone: agent.phone || undefined,
+  };
+
+  const resolvedFront = renderTemplate(
+    resolveHtml(template.front_html, dims.front, 900, hasPlaceholders ? agentData : undefined),
+    mergeVars
   );
+
+  const frontHtml = hasPlaceholders
+    ? resolvedFront
+    : injectFrontOverlay(resolvedFront, agentName, agent.company_name, dims.front.width, agent.brokerage_logo_url || agent.logo_url);
 
   const now = new Date();
   const rawBackHtml = renderFullBackHtml({

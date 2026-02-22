@@ -215,6 +215,7 @@ export async function POST(req: NextRequest) {
         custom_message: agent.custom_message,
         photo_url: agent.photo_url,
         logo_url: agent.logo_url,
+        brokerage_logo_url: agent.brokerage_logo_url,
         brand_color: agent.brand_color,
         address_line1: agent.address_line1,
         city: agent.city,

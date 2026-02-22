@@ -9,14 +9,12 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PostcardFront } from "@/components/postcard/PostcardFront";
-import { PostcardBack } from "@/components/postcard/PostcardBack";
 import { OfferMatchPreview } from "@/components/campaigns/OfferMatchPreview";
 import { useAgentProfile } from "@/hooks/use-agent-profile";
 import { useAgentCampaigns, useOptInCampaign, useOptOutCampaign } from "@/hooks/use-campaigns";
 import { Send, Eye, Check, X, Loader2, Calendar, Users, Mail, TestTube, Rocket, Info } from "lucide-react";
 import { toast } from "sonner";
 import type { Campaign } from "@/types/database";
-import type { DesignConfig } from "@/components/admin/TemplateDesigner";
 
 const MONTHS = ["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
@@ -31,26 +29,6 @@ export default function CampaignsPage() {
   const queryClient = useQueryClient();
   const optIn = useOptInCampaign();
   const optOut = useOptOutCampaign();
-
-  const { data: templateData } = useQuery({
-    queryKey: ["brokerage-template", profile?.brokerage_id],
-    queryFn: async () => {
-      const url = profile?.brokerage_id
-        ? `/api/templates?brokerage_id=${profile.brokerage_id}`
-        : "/api/templates";
-      const res = await fetch(url);
-      if (!res.ok) throw new Error("Failed to fetch");
-      return res.json();
-    },
-    enabled: !!profile,
-  });
-  let campaignTemplateDesign: DesignConfig | null = null;
-  if (templateData?.template?.back_html) {
-    try {
-      const parsed = JSON.parse(templateData.template.back_html);
-      if (parsed.elements) campaignTemplateDesign = parsed;
-    } catch { /* not JSON */ }
-  }
 
   const [previewCampaign, setPreviewCampaign] = useState<EnrichedCampaign | null>(null);
   const [optInCampaign, setOptInCampaign] = useState<EnrichedCampaign | null>(null);
@@ -294,33 +272,15 @@ export default function CampaignsPage() {
               />
             </TabsContent>
             <TabsContent value="back" className="mt-4">
-              <PostcardBack
-                agentName={profile ? `${profile.first_name} ${profile.last_name}` : undefined}
-                companyName={profile?.company_name}
-                tagline={profile?.tagline}
-                customMessage={profile?.custom_message}
-                phone={profile?.phone}
-                email={profile?.email}
-                website={profile?.website}
-                licenseNumber={profile?.license_number}
-                teamLogoUrl={profile?.team_logo_url}
-                brokerageLogoUrl={profile?.brokerage_logo_url}
-                photoUrl={profile?.photo_url}
-                brandColor={profile?.brand_color}
-                brokeragePhone={profile?.brokerage_phone}
-                brokerageAddress={
-                  profile?.brokerage_address_line1
-                    ? [
-                        profile.brokerage_address_line1,
-                        profile.brokerage_address_line2,
-                        [profile.brokerage_city, profile.brokerage_state, profile.brokerage_zip].filter(Boolean).join(", "),
-                      ].filter(Boolean).join(", ")
-                    : null
-                }
-                visibleFields={profile?.postcard_visible_fields}
-                templateDesign={campaignTemplateDesign}
-                agentCardDesign={profile?.agent_card_design ? (profile.agent_card_design as unknown as import("@/components/admin/TemplateDesigner").DesignConfig) : null}
-              />
+              {/* Iframe renders the EXACT same HTML that Lob prints */}
+              <div className="relative w-full" style={{ aspectRatio: "2775 / 1875" }}>
+                <iframe
+                  src="/api/postcards/preview-back"
+                  className="absolute inset-0 w-full h-full border rounded-md"
+                  title="Postcard back preview"
+                  sandbox="allow-same-origin allow-scripts"
+                />
+              </div>
             </TabsContent>
           </Tabs>
           {previewCampaign && (

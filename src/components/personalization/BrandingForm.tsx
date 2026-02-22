@@ -38,7 +38,27 @@ const DEFAULT_VISIBLE: PostcardVisibleFields = {
   brokerage_info: true,
 };
 
-export function BrandingForm() {
+const FOOTER_OPTIONS = [
+  { value: "auto", label: "Auto (by month)", gradient: "linear-gradient(90deg, #6366f1, #a855f7)" },
+  { value: "none", label: "None", gradient: "" },
+  { value: "january", label: "New Year", gradient: "linear-gradient(90deg, #1e3a5f 0%, #c9a84c 50%, #1e3a5f 100%)" },
+  { value: "february", label: "Valentine's", gradient: "linear-gradient(90deg, #f9a8c9 0%, #e8314f 50%, #f9a8c9 100%)" },
+  { value: "march", label: "St. Patrick's", gradient: "linear-gradient(90deg, #2d8f4e 0%, #4fc978 50%, #2d8f4e 100%)" },
+  { value: "april", label: "Spring", gradient: "linear-gradient(90deg, #a8d8a8 0%, #f5e663 50%, #a8d8a8 100%)" },
+  { value: "may", label: "Mother's Day", gradient: "linear-gradient(90deg, #f4a6d7 0%, #d8b4fe 50%, #f4a6d7 100%)" },
+  { value: "june", label: "Summer", gradient: "linear-gradient(90deg, #87ceeb 0%, #ffd700 50%, #87ceeb 100%)" },
+  { value: "july", label: "4th of July", gradient: "linear-gradient(90deg, #bf0a30 0%, #002868 50%, #bf0a30 100%)" },
+  { value: "august", label: "Late Summer", gradient: "linear-gradient(90deg, #f97316 0%, #0d9488 50%, #f97316 100%)" },
+  { value: "september", label: "Fall", gradient: "linear-gradient(90deg, #d97706 0%, #92400e 50%, #d97706 100%)" },
+  { value: "october", label: "Halloween", gradient: "linear-gradient(90deg, #f97316 0%, #1c1917 50%, #f97316 100%)" },
+  { value: "november", label: "Thanksgiving", gradient: "linear-gradient(90deg, #92400e 0%, #ca8a04 50%, #92400e 100%)" },
+  { value: "december", label: "Holidays", gradient: "linear-gradient(90deg, #dc2626 0%, #16a34a 50%, #dc2626 100%)" },
+  { value: "social", label: "Social Media", gradient: "linear-gradient(90deg, #1a1a2e 0%, #0f3460 50%, #1a1a2e 100%)" },
+  { value: "consultation", label: "Free Consult", gradient: "linear-gradient(90deg, #0a0a0a 0%, #2a2a2a 50%, #0a0a0a 100%)" },
+  { value: "referral", label: "Referrals", gradient: "linear-gradient(90deg, #1a3a2a 0%, #40916c 50%, #1a3a2a 100%)" },
+];
+
+export function BrandingForm({ onSaved }: { onSaved?: () => void } = {}) {
   const { data: profile, isLoading } = useAgentProfile();
   const updateProfile = useUpdateProfile();
   const uploadImage = useUploadImage();
@@ -139,6 +159,7 @@ export function BrandingForm() {
         seasonal_footer: seasonalFooter,
       } as Record<string, unknown>);
       toast.success("Branding saved successfully");
+      onSaved?.();
     } catch {
       toast.error("Failed to save changes");
     }
@@ -495,6 +516,37 @@ export function BrandingForm() {
             maxLength={200}
           />
           <p className="text-xs text-muted-foreground">{customMessage.length}/200 characters</p>
+        </div>
+
+        {/* Seasonal Footer */}
+        <div className="space-y-3 rounded-lg border p-4 bg-muted/30">
+          <div>
+            <p className="text-sm font-medium">Seasonal Footer</p>
+            <p className="text-xs text-muted-foreground">A themed banner at the bottom of your agent panel</p>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {FOOTER_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setSeasonalFooter(opt.value)}
+                className={cn(
+                  "relative rounded-md border-2 overflow-hidden text-left transition-all",
+                  seasonalFooter === opt.value
+                    ? "border-[#E8733A] ring-1 ring-[#E8733A]"
+                    : "border-transparent hover:border-muted-foreground/30"
+                )}
+              >
+                <div
+                  className="h-6 w-full"
+                  style={{
+                    background: opt.gradient || "#e5e7eb",
+                  }}
+                />
+                <p className="text-[10px] font-medium px-1.5 py-1 truncate">{opt.label}</p>
+              </button>
+            ))}
+          </div>
         </div>
 
         <Button

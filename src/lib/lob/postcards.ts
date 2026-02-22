@@ -1,7 +1,40 @@
 import { lobPostcards } from "./client";
 import { renderTemplate, buildMergeVariables } from "./templates";
-import { resolveHtml, LOB_DIMENSIONS, injectFrontOverlay, renderFullBackHtml } from "./render-design";
+import { resolveHtml, LOB_DIMENSIONS, injectFrontOverlay, renderFullBackHtml, designHasFrontPlaceholders } from "./render-design";
+import type { AgentPlaceholderData } from "./render-design";
 import type { PostcardSize } from "@lob/lob-typescript-sdk";
+import { createAdminClient } from "@/lib/supabase/admin";
+
+const HTML_BUCKET = "postcard-html";
+
+/**
+ * Uploads HTML to Supabase Storage and returns a public URL.
+ * This bypasses Lob's 10,000 character inline HTML limit.
+ */
+async function uploadHtmlForLob(html: string, postcardId: string, side: "front" | "back"): Promise<string> {
+  const admin = createAdminClient();
+
+  // Ensure bucket exists (public, auto-create if missing)
+  const { data: buckets } = await admin.storage.listBuckets();
+  if (!buckets?.some((b) => b.name === HTML_BUCKET)) {
+    await admin.storage.createBucket(HTML_BUCKET, { public: true });
+  }
+
+  const filePath = `${postcardId}/${side}.html`;
+  const buffer = Buffer.from(html, "utf-8");
+
+  const { error } = await admin.storage
+    .from(HTML_BUCKET)
+    .upload(filePath, buffer, { upsert: true, contentType: "text/html" });
+
+  if (error) throw new Error(`Failed to upload ${side} HTML: ${error.message}`);
+
+  const { data: { publicUrl } } = admin.storage
+    .from(HTML_BUCKET)
+    .getPublicUrl(filePath);
+
+  return publicUrl;
+}
 
 interface CreatePostcardParams {
   agent: {
@@ -14,6 +47,7 @@ interface CreatePostcardParams {
     custom_message?: string | null;
     photo_url?: string | null;
     logo_url?: string | null;
+    brokerage_logo_url?: string | null;
     brand_color?: string;
     address_line1?: string | null;
     city?: string | null;
@@ -73,11 +107,25 @@ export async function createPostcard({
   // Resolve JSON DesignConfig → print HTML, then apply merge variables
   // Front was designed at 900px basis in the TemplateDesigner
   const agentName = `${agent.first_name} ${agent.last_name}`.trim();
-  const frontHtml = injectFrontOverlay(
-    renderTemplate(resolveHtml(template.front_html, dims.front, 900), mergeVars),
-    agentName,
-    agent.company_name
+  const hasPlaceholders = designHasFrontPlaceholders(template.front_html);
+
+  // Build agent placeholder data for front-side substitution
+  const agentData: AgentPlaceholderData = {
+    agent_name: agentName,
+    brokerage_name: agent.company_name || undefined,
+    brokerage_logo_url: agent.brokerage_logo_url || agent.logo_url || undefined,
+    agent_phone: agent.phone || undefined,
+  };
+
+  const resolvedFront = renderTemplate(
+    resolveHtml(template.front_html, dims.front, 900, hasPlaceholders ? agentData : undefined),
+    mergeVars
   );
+
+  // Skip hardcoded overlay when placeholders handle agent info positioning
+  const frontHtml = hasPlaceholders
+    ? resolvedFront
+    : injectFrontOverlay(resolvedFront, agentName, agent.company_name, dims.front.width, agent.brokerage_logo_url || agent.logo_url);
 
   // Compose full back with all 4 quadrants (brokerage + agent + offer + mailing)
   const rawBackHtml = renderFullBackHtml({
@@ -92,6 +140,16 @@ export async function createPostcard({
   });
   const backHtml = renderTemplate(rawBackHtml, mergeVars);
 
+  // Upload back HTML to Supabase Storage as a remote URL to bypass Lob's 10K inline limit.
+  // This lets us use the full SVG social icons (matching the preview exactly).
+  let lobBack: string = backHtml; // fallback to inline
+  try {
+    const backUrl = await uploadHtmlForLob(backHtml, postcardDbId, "back");
+    lobBack = backUrl;
+  } catch {
+    // Fall back to inline HTML — will work if under 10K
+  }
+
   // Map our sizes to Lob sizes
   const sizeMap: Record<string, PostcardSize> = {
     "4x6": "4x6" as PostcardSize,
@@ -100,35 +158,42 @@ export async function createPostcard({
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const lobPostcard = await lobPostcards.create({
-    to: {
-      name: `${contact.first_name} ${contact.last_name}`,
-      address_line1: contact.address_line1,
-      address_line2: contact.address_line2 || undefined,
-      address_city: contact.city,
-      address_state: contact.state,
-      address_zip: contact.zip,
-      address_country: "US",
-    },
-    from: agent.address_line1
-      ? {
-          name: `${agent.first_name} ${agent.last_name}`,
-          address_line1: agent.address_line1,
-          address_city: agent.city || "",
-          address_state: agent.state || "",
-          address_zip: agent.zip || "",
-          address_country: "US",
-        }
-      : undefined,
-    front: frontHtml,
-    back: backHtml,
-    size: sizeMap[template.size] || ("6x9" as PostcardSize),
-    use_type: "operational",
-    metadata: {
-      campaign_id: campaignId,
-      postcard_db_id: postcardDbId,
-    },
-  } as any);
+  let lobPostcard: any;
+  try {
+    lobPostcard = await lobPostcards.create({
+      to: {
+        name: `${contact.first_name} ${contact.last_name}`,
+        address_line1: contact.address_line1,
+        address_line2: contact.address_line2 || undefined,
+        address_city: contact.city,
+        address_state: contact.state,
+        address_zip: contact.zip,
+        address_country: "US",
+      },
+      from: agent.address_line1
+        ? {
+            name: `${agent.first_name} ${agent.last_name}`,
+            address_line1: agent.address_line1,
+            address_city: agent.city || "",
+            address_state: agent.state || "",
+            address_zip: agent.zip || "",
+            address_country: "US",
+          }
+        : undefined,
+      front: frontHtml,
+      back: lobBack,
+      size: sizeMap[template.size] || ("6x9" as PostcardSize),
+      use_type: "operational",
+      metadata: {
+        campaign_id: campaignId,
+        postcard_db_id: postcardDbId,
+      },
+    } as any);
+  } catch (lobErr: unknown) {
+    // Log to console for server-side debugging
+    console.error("[Lob API error]", lobErr instanceof Error ? lobErr.message : lobErr);
+    throw lobErr;
+  }
 
   return lobPostcard;
 }
