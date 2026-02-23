@@ -118,7 +118,21 @@ function TemplatePreviewCard({
             </p>
           )}
           {el.type === "image" && el.src && (
-            <img src={el.tintColor && el.src.startsWith("data:image/svg+xml,") ? recolorSvgDataUri(el.src, el.tintColor) : el.src} alt="" className="w-full h-full" style={{ objectFit: el.objectFit || "contain" }} />
+            el.tintColor ? (
+              <div className="w-full h-full relative">
+                <svg style={{ position: "absolute", width: 0, height: 0 }}>
+                  <defs>
+                    <filter id={`prev-tint-${el.id}`}>
+                      <feFlood floodColor={el.tintColor} />
+                      <feComposite in2="SourceAlpha" operator="in" />
+                    </filter>
+                  </defs>
+                </svg>
+                <img src={el.src} alt="" className="w-full h-full" style={{ objectFit: el.objectFit || "contain", filter: `url(#prev-tint-${el.id})` }} />
+              </div>
+            ) : (
+              <img src={el.src} alt="" className="w-full h-full" style={{ objectFit: el.objectFit || "contain" }} />
+            )
           )}
           {el.type === "shape" && (
             <>

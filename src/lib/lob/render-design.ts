@@ -167,9 +167,6 @@ function renderElement(el: DesignElement, pxWidth: number, pxHeight: number, des
 
   if (el.type === "image" && el.src) {
     const height = `${el.height}%`;
-    const src = el.tintColor && el.src.startsWith("data:image/svg+xml,")
-      ? recolorSvg(el.src, el.tintColor)
-      : el.src;
 
     const style = [
       `position:absolute`,
@@ -180,8 +177,15 @@ function renderElement(el: DesignElement, pxWidth: number, pxHeight: number, des
       `opacity:${el.opacity ?? 1}`,
     ].join(";");
 
+    if (el.tintColor) {
+      const filterId = `tint-${el.id}`;
+      const svgFilter = `<svg style="position:absolute;width:0;height:0"><defs><filter id="${filterId}"><feFlood flood-color="${el.tintColor}"/><feComposite in2="SourceAlpha" operator="in"/></filter></defs></svg>`;
+      const imgStyle = `width:100%;height:100%;object-fit:${el.objectFit || "contain"};filter:url(#${filterId})`;
+      return `<div style="${style}">${svgFilter}<img src="${el.src}" style="${imgStyle}" /></div>`;
+    }
+
     const imgStyle = `width:100%;height:100%;object-fit:${el.objectFit || "contain"}`;
-    return `<div style="${style}"><img src="${src}" style="${imgStyle}" /></div>`;
+    return `<div style="${style}"><img src="${el.src}" style="${imgStyle}" /></div>`;
   }
 
   if (el.type === "shape") {
@@ -510,10 +514,14 @@ function renderFlatPanel(
       ].filter(Boolean).join(";");
       parts.push(`<div style="${containerStyle}"><p style="${pStyle}">${escapeHtml(processedEl.text || "")}</p></div>`);
     } else if (processedEl.type === "image" && processedEl.src) {
-      const src = processedEl.tintColor && processedEl.src.startsWith("data:image/svg+xml,")
-        ? recolorSvg(processedEl.src, processedEl.tintColor)
-        : processedEl.src;
-      parts.push(`<div style="position:absolute;left:${processedEl.x}%;top:${processedEl.y}%;width:${processedEl.width}%;height:${processedEl.height || 10}%;opacity:${processedEl.opacity ?? 1}"><img src="${src}" style="width:100%;height:100%;object-fit:${processedEl.objectFit || "contain"}" /></div>`);
+      const wrapStyle = `position:absolute;left:${processedEl.x}%;top:${processedEl.y}%;width:${processedEl.width}%;height:${processedEl.height || 10}%;opacity:${processedEl.opacity ?? 1}`;
+      if (processedEl.tintColor) {
+        const filterId = `tint-${processedEl.id}`;
+        const svgFilter = `<svg style="position:absolute;width:0;height:0"><defs><filter id="${filterId}"><feFlood flood-color="${processedEl.tintColor}"/><feComposite in2="SourceAlpha" operator="in"/></filter></defs></svg>`;
+        parts.push(`<div style="${wrapStyle}">${svgFilter}<img src="${processedEl.src}" style="width:100%;height:100%;object-fit:${processedEl.objectFit || "contain"};filter:url(#${filterId})" /></div>`);
+      } else {
+        parts.push(`<div style="${wrapStyle}"><img src="${processedEl.src}" style="width:100%;height:100%;object-fit:${processedEl.objectFit || "contain"}" /></div>`);
+      }
     } else if (processedEl.type === "shape") {
       const borderWidthPx = (processedEl.shapeBorderWidth || 2) * fontScale;
       const shapeColor = processedEl.shapeColor || "#000";

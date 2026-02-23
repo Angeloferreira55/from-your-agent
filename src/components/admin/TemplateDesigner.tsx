@@ -1131,12 +1131,31 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
                     />
                   )}
                   {el.type === "image" && el.src && (
-                    <img
-                      src={el.tintColor && el.src.startsWith("data:image/svg+xml,") ? recolorSvgDataUri(el.src, el.tintColor) : el.src}
-                      alt=""
-                      className="w-full h-full pointer-events-none"
-                      style={{ objectFit: el.objectFit || "contain" }}
-                    />
+                    el.tintColor ? (
+                      <div className="w-full h-full pointer-events-none relative">
+                        <svg style={{ position: "absolute", width: 0, height: 0 }}>
+                          <defs>
+                            <filter id={`tint-${el.id}`}>
+                              <feFlood floodColor={el.tintColor} />
+                              <feComposite in2="SourceAlpha" operator="in" />
+                            </filter>
+                          </defs>
+                        </svg>
+                        <img
+                          src={el.src}
+                          alt=""
+                          className="w-full h-full"
+                          style={{ objectFit: el.objectFit || "contain", filter: `url(#tint-${el.id})` }}
+                        />
+                      </div>
+                    ) : (
+                      <img
+                        src={el.src}
+                        alt=""
+                        className="w-full h-full pointer-events-none"
+                        style={{ objectFit: el.objectFit || "contain" }}
+                      />
+                    )
                   )}
                   {el.type === "shape" && (
                     <div className="w-full h-full pointer-events-none" style={{ transform: el.shapeRotation ? `rotate(${el.shapeRotation}deg)` : undefined }}>
@@ -1752,21 +1771,19 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
                       Cover
                     </Button>
                   </div>
-                  {/* Tint color for SVG icons/logos */}
-                  {selected.src?.startsWith("data:image/svg+xml,") && (
-                    <div>
-                      <Label className="text-[10px]">Icon Color</Label>
-                      <div className="flex gap-1">
-                        <input type="color" value={selected.tintColor || "#FFFFFF"} onChange={(e) => updateEl(selected.id, { tintColor: e.target.value })} className="h-7 w-7 rounded border cursor-pointer" />
-                        <Input value={selected.tintColor || "#FFFFFF"} onChange={(e) => updateEl(selected.id, { tintColor: e.target.value })} className="flex-1 text-xs h-7" />
-                        {selected.tintColor && (
-                          <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" title="Reset to white" onClick={() => updateEl(selected.id, { tintColor: undefined })}>
-                            <X className="h-3 w-3" />
-                          </Button>
-                        )}
-                      </div>
+                  {/* Tint color — recolors logos/icons to a single color */}
+                  <div>
+                    <Label className="text-[10px]">Logo Color</Label>
+                    <div className="flex gap-1">
+                      <input type="color" value={selected.tintColor || "#FFFFFF"} onChange={(e) => updateEl(selected.id, { tintColor: e.target.value })} className="h-7 w-7 rounded border cursor-pointer" />
+                      <Input value={selected.tintColor || "#FFFFFF"} onChange={(e) => updateEl(selected.id, { tintColor: e.target.value })} className="flex-1 text-xs h-7" />
+                      {selected.tintColor && (
+                        <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" title="Remove tint" onClick={() => updateEl(selected.id, { tintColor: undefined })}>
+                          <X className="h-3 w-3" />
+                        </Button>
+                      )}
                     </div>
-                  )}
+                  </div>
                 </>
               )}
 
