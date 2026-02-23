@@ -54,14 +54,28 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Get the default template
-  const { data: template } = await admin
+  // Pick the best front template for the current season
+  const currentMonth = new Date().getMonth() + 1;
+  const seasonForMonth = (m: number) =>
+    m >= 3 && m <= 5 ? "spring" : m >= 6 && m <= 8 ? "summer" : m >= 9 && m <= 11 ? "fall" : "winter";
+  const currentSeason = seasonForMonth(currentMonth);
+
+  const { data: candidates } = await admin
     .from("postcard_templates")
     .select("*")
+    .eq("type", "monthly")
+    .eq("is_active", true)
+    .not("front_html", "is", null)
     .order("is_default", { ascending: false })
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .order("created_at", { ascending: false });
+
+  const all = candidates || [];
+  // Priority: default with matching/any season > matching season > any season > first available
+  const template =
+    all.find((t) => t.is_default && (t.season === currentSeason || !t.season || t.season === "any")) ||
+    all.find((t) => t.season === currentSeason) ||
+    all.find((t) => !t.season || t.season === "any") ||
+    all[0] || null;
 
   if (!template) {
     return NextResponse.json(
