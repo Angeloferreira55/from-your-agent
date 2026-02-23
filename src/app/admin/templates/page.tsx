@@ -36,7 +36,7 @@ const FONT_MAP: Record<string, string> = {
   candara: "Candara, Calibri, sans-serif",
   franklin: "'Franklin Gothic Medium', 'Franklin Gothic', sans-serif",
 };
-import { Plus, FileImage, MoreHorizontal, Trash2, Pencil, Copy, LayoutTemplate, PanelsTopLeft, EyeOff, Eye } from "lucide-react";
+import { Plus, FileImage, MoreHorizontal, Trash2, Pencil, Copy, LayoutTemplate, PanelsTopLeft, EyeOff, Eye, Check, Printer } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import type { PostcardTemplate } from "@/types/database";
@@ -288,6 +288,34 @@ export default function AdminTemplatesPage() {
   const frontTemplates = templates.filter((t) => t.front_html && parseDesign(t.front_html));
   const offerPanelTemplates = templates.filter((t) => t.back_html && parseDesign(t.back_html));
 
+  const setDefaultMutation = useMutation({
+    mutationFn: async (id: string) => {
+      // Clear is_default from all other monthly front templates, then set the selected one
+      const otherDefaults = frontTemplates.filter((t) => t.is_default && t.id !== id);
+      await Promise.all(
+        otherDefaults.map((t) =>
+          fetch("/api/admin/templates", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: t.id, is_default: false }),
+          })
+        )
+      );
+      const res = await fetch("/api/admin/templates", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, is_default: true }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "templates"] });
+      toast.success("Template set for printing");
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
   function handleCreate(tab: "front" | "back") {
     if (tab === "back") {
       setLayoutPickerOpen(true);
@@ -398,14 +426,32 @@ export default function AdminTemplatesPage() {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            {isInactive && (
-              <Badge variant="outline" className="text-muted-foreground">Inactive</Badge>
-            )}
-            {template.is_default && (
-              <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-100">Default</Badge>
-            )}
-          </div>
+          {/* Status badges */}
+          {(isInactive || template.is_default) && (
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              {isInactive && (
+                <Badge variant="outline" className="text-muted-foreground">Inactive</Badge>
+              )}
+              {template.is_default && side === "front" && (
+                <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+                  <Printer className="mr-1 h-3 w-3" /> Selected for Print
+                </Badge>
+              )}
+            </div>
+          )}
+          {/* Use This Template button — only for active front templates */}
+          {side === "front" && !isInactive && !template.is_default && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="mt-2 w-full"
+              onClick={() => setDefaultMutation.mutate(template.id)}
+              disabled={setDefaultMutation.isPending}
+            >
+              <Printer className="mr-1.5 h-3.5 w-3.5" />
+              Use This Template
+            </Button>
+          )}
         </div>
       </Card>
     );
