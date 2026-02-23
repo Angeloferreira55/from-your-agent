@@ -1195,18 +1195,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
               );
             })()}
 
-            {/* Disclaimer (admin only) */}
-            {!isAgent && disclaimer && (
-              <div className="absolute bottom-0 left-0 right-0 px-[4%] py-1.5 pointer-events-none">
-                <p className="leading-snug text-center line-clamp-2" style={{
-                  fontSize: `${disclaimerFontSize * scale}px`,
-                  color: disclaimerColor,
-                  fontFamily: FONT_MAP[disclaimerFont],
-                }}>
-                  {disclaimer}
-                </p>
-              </div>
-            )}
+            {/* Disclaimer removed — no longer shown on postcards */}
           </div>
         </div>
 
@@ -1234,80 +1223,80 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
                 <Circle className="mr-1.5 h-3.5 w-3.5" /> Circle
               </Button>
             </div>
+            {/* Placeholder elements — visible on front tab (admin only) */}
+            {activeTab === "front" && !isAgent && (
+              <>
+                <div className="border-t my-3" />
+                <p className="text-xs font-semibold text-violet-600 uppercase tracking-wider mb-1">Agent Placeholders</p>
+                <p className="text-[10px] text-muted-foreground mb-2">Auto-filled with each agent&apos;s real info at print time</p>
+                <div className="grid grid-cols-2 gap-1.5">
+                  <Button
+                    variant="outline" size="sm" className="text-xs h-7 border-violet-200 hover:border-violet-400 hover:bg-violet-50"
+                    disabled={curElements.some((el) => el.placeholder === "agent_name")}
+                    onClick={() => {
+                      const el: DesignElement = {
+                        id: genId(), type: "text", x: 5, y: 75, width: 50, height: 12,
+                        text: "Agent Name", fontSize: 28, fontColor: "#FFFFFF",
+                        fontWeight: "bold", fontStyle: "normal", textAlign: "left", fontFamily: "sans-serif",
+                        placeholder: "agent_name",
+                      };
+                      setCurElements((p) => [...p, el]);
+                      setSelectedId(el.id);
+                    }}
+                  >
+                    <Users className="mr-1 h-3 w-3" /> Name
+                  </Button>
+                  <Button
+                    variant="outline" size="sm" className="text-xs h-7 border-violet-200 hover:border-violet-400 hover:bg-violet-50"
+                    disabled={curElements.some((el) => el.placeholder === "brokerage_name")}
+                    onClick={() => {
+                      const el: DesignElement = {
+                        id: genId(), type: "text", x: 5, y: 87, width: 50, height: 8,
+                        text: "Brokerage Name", fontSize: 18, fontColor: "#FFFFFF",
+                        fontWeight: "normal", fontStyle: "normal", textAlign: "left", fontFamily: "sans-serif",
+                        placeholder: "brokerage_name",
+                      };
+                      setCurElements((p) => [...p, el]);
+                      setSelectedId(el.id);
+                    }}
+                  >
+                    <Building2 className="mr-1 h-3 w-3" /> Brokerage
+                  </Button>
+                  <Button
+                    variant="outline" size="sm" className="text-xs h-7 border-violet-200 hover:border-violet-400 hover:bg-violet-50"
+                    disabled={curElements.some((el) => el.placeholder === "brokerage_logo")}
+                    onClick={() => {
+                      const el: DesignElement = {
+                        id: genId(), type: "image", x: 5, y: 85, width: 20, height: 12,
+                        src: "", objectFit: "contain",
+                        placeholder: "brokerage_logo",
+                      };
+                      setCurElements((p) => [...p, el]);
+                      setSelectedId(el.id);
+                    }}
+                  >
+                    <ImageIcon className="mr-1 h-3 w-3" /> Logo
+                  </Button>
+                  <Button
+                    variant="outline" size="sm" className="text-xs h-7 border-violet-200 hover:border-violet-400 hover:bg-violet-50"
+                    disabled={curElements.some((el) => el.placeholder === "agent_phone")}
+                    onClick={() => {
+                      const el: DesignElement = {
+                        id: genId(), type: "text", x: 55, y: 87, width: 40, height: 8,
+                        text: "(555) 123-4567", fontSize: 16, fontColor: "#FFFFFF",
+                        fontWeight: "normal", fontStyle: "normal", textAlign: "right", fontFamily: "sans-serif",
+                        placeholder: "agent_phone",
+                      };
+                      setCurElements((p) => [...p, el]);
+                      setSelectedId(el.id);
+                    }}
+                  >
+                    <Type className="mr-1 h-3 w-3" /> Phone
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
-
-          {/* Placeholder elements (admin front tab only) */}
-          {isFront && !isAgent && (
-            <div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Placeholders</p>
-              <p className="text-[10px] text-muted-foreground mb-2">Auto-filled with each agent&apos;s info at print time</p>
-              <div className="grid grid-cols-2 gap-1.5">
-                <Button
-                  variant="outline" size="sm" className="text-xs h-7"
-                  disabled={curElements.some((el) => el.placeholder === "agent_name")}
-                  onClick={() => {
-                    const el: DesignElement = {
-                      id: genId(), type: "text", x: 5, y: 75, width: 50, height: 12,
-                      text: "Agent Name", fontSize: 28, fontColor: "#FFFFFF",
-                      fontWeight: "bold", fontStyle: "normal", textAlign: "left", fontFamily: "sans-serif",
-                      placeholder: "agent_name",
-                    };
-                    setCurElements((p) => [...p, el]);
-                    setSelectedId(el.id);
-                  }}
-                >
-                  <Users className="mr-1 h-3 w-3" /> Name
-                </Button>
-                <Button
-                  variant="outline" size="sm" className="text-xs h-7"
-                  disabled={curElements.some((el) => el.placeholder === "brokerage_name")}
-                  onClick={() => {
-                    const el: DesignElement = {
-                      id: genId(), type: "text", x: 5, y: 87, width: 50, height: 8,
-                      text: "Brokerage Name", fontSize: 18, fontColor: "#FFFFFF",
-                      fontWeight: "normal", fontStyle: "normal", textAlign: "left", fontFamily: "sans-serif",
-                      placeholder: "brokerage_name",
-                    };
-                    setCurElements((p) => [...p, el]);
-                    setSelectedId(el.id);
-                  }}
-                >
-                  <Building2 className="mr-1 h-3 w-3" /> Brokerage
-                </Button>
-                <Button
-                  variant="outline" size="sm" className="text-xs h-7"
-                  disabled={curElements.some((el) => el.placeholder === "brokerage_logo")}
-                  onClick={() => {
-                    const el: DesignElement = {
-                      id: genId(), type: "image", x: 5, y: 85, width: 20, height: 12,
-                      src: "", objectFit: "contain",
-                      placeholder: "brokerage_logo",
-                    };
-                    setCurElements((p) => [...p, el]);
-                    setSelectedId(el.id);
-                  }}
-                >
-                  <ImageIcon className="mr-1 h-3 w-3" /> Logo
-                </Button>
-                <Button
-                  variant="outline" size="sm" className="text-xs h-7"
-                  disabled={curElements.some((el) => el.placeholder === "agent_phone")}
-                  onClick={() => {
-                    const el: DesignElement = {
-                      id: genId(), type: "text", x: 55, y: 87, width: 40, height: 8,
-                      text: "(555) 123-4567", fontSize: 16, fontColor: "#FFFFFF",
-                      fontWeight: "normal", fontStyle: "normal", textAlign: "right", fontFamily: "sans-serif",
-                      placeholder: "agent_phone",
-                    };
-                    setCurElements((p) => [...p, el]);
-                    setSelectedId(el.id);
-                  }}
-                >
-                  <Type className="mr-1 h-3 w-3" /> Phone
-                </Button>
-              </div>
-            </div>
-          )}
 
           {/* Align selected element */}
           {selected && (
@@ -1873,63 +1862,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
             </div>
           )}
 
-          {/* Disclaimer (admin only) */}
-          {!isAgent && (
-          <div className="space-y-2">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Disclaimer</p>
-            <Textarea
-              value={disclaimer}
-              onChange={(e) => setDisclaimer(e.target.value)}
-              rows={2}
-              className="text-xs"
-              placeholder="Each office is independently owned..."
-            />
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <Label className="text-[10px]">Size</Label>
-                <Input type="number" value={disclaimerFontSize} onChange={(e) => setDisclaimerFontSize(+e.target.value)} className="text-xs h-7" min={4} max={24} />
-              </div>
-              <div>
-                <Label className="text-[10px]">Color</Label>
-                <div className="flex gap-1">
-                  <input type="color" value={disclaimerColor.startsWith("#") ? disclaimerColor : "#ffffff"} onChange={(e) => setDisclaimerColor(e.target.value)} className="h-7 w-7 rounded border cursor-pointer" />
-                  <Input value={disclaimerColor} onChange={(e) => setDisclaimerColor(e.target.value)} className="flex-1 text-xs h-7" />
-                </div>
-              </div>
-            </div>
-            <div>
-              <Label className="text-[10px]">Font</Label>
-              <Select value={disclaimerFont} onValueChange={(v) => setDisclaimerFont(v as FontFamilyOption)}>
-                <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
-                <SelectContent className="max-h-[300px]">
-                  <SelectItem value="sans-serif">Arial</SelectItem>
-                  <SelectItem value="helvetica">Helvetica</SelectItem>
-                  <SelectItem value="verdana">Verdana</SelectItem>
-                  <SelectItem value="tahoma">Tahoma</SelectItem>
-                  <SelectItem value="trebuchet">Trebuchet MS</SelectItem>
-                  <SelectItem value="calibri">Calibri</SelectItem>
-                  <SelectItem value="segoe">Segoe UI</SelectItem>
-                  <SelectItem value="georgia">Georgia</SelectItem>
-                  <SelectItem value="times">Times New Roman</SelectItem>
-                  <SelectItem value="palatino">Palatino</SelectItem>
-                  <SelectItem value="garamond">Garamond</SelectItem>
-                  <SelectItem value="bookman">Bookman</SelectItem>
-                  <SelectItem value="cambria">Cambria</SelectItem>
-                  <SelectItem value="courier">Courier New</SelectItem>
-                  <SelectItem value="consolas">Consolas</SelectItem>
-                  <SelectItem value="monaco">Monaco</SelectItem>
-                  <SelectItem value="impact">Impact</SelectItem>
-                  <SelectItem value="century-gothic">Century Gothic</SelectItem>
-                  <SelectItem value="futura">Futura</SelectItem>
-                  <SelectItem value="gill-sans">Gill Sans</SelectItem>
-                  <SelectItem value="optima">Optima</SelectItem>
-                  <SelectItem value="candara">Candara</SelectItem>
-                  <SelectItem value="franklin">Franklin Gothic</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          )}
+          {/* Disclaimer editing removed — disclaimers no longer shown on postcards */}
 
           {/* Elements list */}
           <div className="space-y-1.5">

@@ -374,18 +374,7 @@ export function PostcardBack({
                   </p>
                 </div>
               )}
-              {/* Disclaimer */}
-              {templateDesign.disclaimer && (
-                <div className="absolute bottom-0 left-0 right-0 px-[15%] py-1 pointer-events-none">
-                  <p className="leading-tight text-center" style={{
-                    fontSize: `${(templateDesign.disclaimerStyle?.fontSize || 8) * panelScale}px`,
-                    color: templateDesign.disclaimerStyle?.color || "rgba(255,255,255,0.55)",
-                    fontFamily: FONT_MAP[templateDesign.disclaimerStyle?.fontFamily || "sans-serif"],
-                  }}>
-                    {templateDesign.disclaimer}
-                  </p>
-                </div>
-              )}
+              {/* Disclaimer removed — not shown on printed postcards */}
             </div>
           ) : (
             /* Fallback: hardcoded panel */
@@ -534,18 +523,7 @@ export function PostcardBack({
                 </div>
                 );
               })}
-              {/* Disclaimer */}
-              {agentCardDesign.disclaimer && (
-                <div className="absolute bottom-0 left-0 right-0 px-[15%] py-1 pointer-events-none">
-                  <p className="leading-tight text-center" style={{
-                    fontSize: `${(agentCardDesign.disclaimerStyle?.fontSize || 8) * panelScale}px`,
-                    color: agentCardDesign.disclaimerStyle?.color || "rgba(255,255,255,0.55)",
-                    fontFamily: FONT_MAP[agentCardDesign.disclaimerStyle?.fontFamily || "sans-serif"],
-                  }}>
-                    {agentCardDesign.disclaimer}
-                  </p>
-                </div>
-              )}
+              {/* Disclaimer removed — not shown on printed postcards */}
               {/* Seasonal Footer */}
               {seasonTheme && resolvedSeason !== "none" && seasonTheme.gradient && (
                 <div
@@ -703,12 +681,7 @@ export function PostcardBack({
               <div className="h-[0.5px] bg-gray-300 w-3/4 ml-auto" />
             </div>
 
-            {/* Footer disclaimer — only shown if brokerage provides one */}
-            {brokerageDisclaimer && (
-              <p className="text-[3px] md:text-[4.5px] text-gray-400 leading-tight mt-1">
-                {brokerageDisclaimer}
-              </p>
-            )}
+            {/* Disclaimer removed — not shown on printed postcards */}
           </div>
         </div>
       </div>

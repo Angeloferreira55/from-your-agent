@@ -257,16 +257,7 @@ function renderDesignContent(
     })
     .join("\n  ");
 
-  let disclaimerHtml = "";
-  if (design.disclaimer) {
-    const ds = design.disclaimerStyle;
-    const fontSizePx = ds ? ds.fontSize * (pxWidth / designBasis) : 8 * (pxWidth / designBasis);
-    const color = ds?.color || "rgba(255,255,255,0.55)";
-    const fontFamily = FONT_MAP[ds?.fontFamily || "sans-serif"] || "Arial, sans-serif";
-    disclaimerHtml = `<p style="position:absolute;bottom:2%;left:15%;right:15%;text-align:center;font-size:${toIn(fontSizePx)};color:${color};font-family:${fontFamily};line-height:1.3;margin:0">${escapeHtml(design.disclaimer)}</p>`;
-  }
-
-  return [bgColorHtml, bgImageHtml, overlayHtml, elementsHtml, disclaimerHtml].filter(Boolean).join("\n  ");
+  return [bgColorHtml, bgImageHtml, overlayHtml, elementsHtml].filter(Boolean).join("\n  ");
 }
 
 /**
@@ -541,14 +532,6 @@ function renderFlatPanel(
     }
   }
 
-  if (design.disclaimer) {
-    const ds = design.disclaimerStyle;
-    const fontSizePx = ds ? ds.fontSize * fontScale : 8 * fontScale;
-    const color = ds?.color || "rgba(255,255,255,0.55)";
-    const fontFamily = FONT_MAP[ds?.fontFamily || "sans-serif"] || "Arial, sans-serif";
-    parts.push(`<p style="position:absolute;bottom:0;left:0;width:100%;text-align:center;padding:0.0133in 15%;box-sizing:border-box;font-size:${toIn(fontSizePx)};color:${color};font-family:${fontFamily};line-height:1.25;margin:0">${escapeHtml(design.disclaimer)}</p>`);
-  }
-
   if (extraContent) parts.push(extraContent);
 
   // Wrap in a positioned container with overflow:hidden (matches PostcardBack div)
@@ -586,6 +569,7 @@ export function renderFullBackHtml(params: FullBackParams): string {
 
   // ── 2. Top-right: Brokerage display (designed per brokerage) ──
   const brokerageDesign = params.brokerageBackHtml ? parseDesign(params.brokerageBackHtml) : null;
+  if (brokerageDesign) brokerageDesign.disclaimer = "";
   let brokerageElements = "";
   if (brokerageDesign) {
     brokerageElements = renderFlatPanel(brokerageDesign, halfW, 0, halfW, halfH);
@@ -605,6 +589,7 @@ export function renderFullBackHtml(params: FullBackParams): string {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const seasonalFooterPref = (designData as any)?._seasonal_footer || params.agent.seasonal_footer;
   if (designData) delete (designData as any)._seasonal_footer;
+  if (designData) delete (designData as any).disclaimer;
 
   // Build seasonal footer HTML (rendered inside the agent panel container)
   const monthIdx = params.campaignMonth != null ? params.campaignMonth - 1 : undefined;
@@ -678,6 +663,7 @@ export function renderAgentPanelHtml(params: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const seasonalFooterPref = (designData as any)?._seasonal_footer || params.agent.seasonal_footer;
   if (designData) delete (designData as any)._seasonal_footer;
+  if (designData) delete (designData as any).disclaimer;
 
   const monthIdx = params.campaignMonth != null ? params.campaignMonth - 1 : undefined;
   const seasonalKey = resolveSeasonalKey(seasonalFooterPref, monthIdx);
