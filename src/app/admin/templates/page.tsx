@@ -74,7 +74,15 @@ function TemplatePreviewCard({
       }}
     >
       {design.background.imageUrl && (
-        <img src={design.background.imageUrl} alt="" className="absolute inset-0 h-full w-full object-cover" style={{ opacity: design.background.colorEnabled !== false ? 0.3 : 1 }} />
+        <img
+          src={design.background.imageUrl}
+          alt=""
+          className="absolute inset-0 h-full w-full"
+          style={{
+            objectFit: design.background.imageFit || "cover",
+            opacity: design.background.colorEnabled !== false ? 0.3 : 1,
+          }}
+        />
       )}
       {design.background.colorEnabled !== false && (
         <div className="absolute inset-0" style={{ backgroundColor: design.background.overlayColor }} />
@@ -87,7 +95,7 @@ function TemplatePreviewCard({
             left: `${el.x}%`,
             top: `${el.y}%`,
             width: `${el.width}%`,
-            height: el.type === "image" ? `${el.height}%` : "auto",
+            height: el.type === "text" ? "auto" : `${el.height}%`,
           }}
         >
           {el.type === "text" && (
@@ -111,6 +119,46 @@ function TemplatePreviewCard({
           )}
           {el.type === "image" && el.src && (
             <img src={el.tintColor && el.src.startsWith("data:image/svg+xml,") ? recolorSvgDataUri(el.src, el.tintColor) : el.src} alt="" className="w-full h-full" style={{ objectFit: el.objectFit || "contain" }} />
+          )}
+          {el.type === "shape" && (
+            <>
+              {el.shapeType === "rectangle" && (
+                <div
+                  className="w-full h-full"
+                  style={{
+                    backgroundColor: el.shapeFilled ? (el.shapeColor || "#ffffff") : "transparent",
+                    border: !el.shapeFilled ? `${(el.shapeBorderWidth || 2) * 0.35}px solid ${el.shapeColor || "#ffffff"}` : "none",
+                    borderRadius: 0,
+                    opacity: el.opacity ?? 1,
+                  }}
+                />
+              )}
+              {el.shapeType === "circle" && (
+                <div
+                  className="w-full h-full"
+                  style={{
+                    backgroundColor: el.shapeFilled ? (el.shapeColor || "#ffffff") : "transparent",
+                    border: !el.shapeFilled ? `${(el.shapeBorderWidth || 2) * 0.35}px solid ${el.shapeColor || "#ffffff"}` : "none",
+                    borderRadius: "50%",
+                    opacity: el.opacity ?? 1,
+                  }}
+                />
+              )}
+              {el.shapeType === "line" && (
+                <div
+                  className="w-full"
+                  style={{
+                    height: `${(el.shapeBorderWidth || 2) * 0.35}px`,
+                    backgroundColor: el.shapeColor || "#ffffff",
+                    transform: el.shapeRotation ? `rotate(${el.shapeRotation}deg)` : undefined,
+                    transformOrigin: "center center",
+                    position: "absolute",
+                    top: "50%",
+                    opacity: el.opacity ?? 1,
+                  }}
+                />
+              )}
+            </>
           )}
         </div>
       ))}

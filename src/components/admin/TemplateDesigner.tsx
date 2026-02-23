@@ -161,6 +161,8 @@ function processImage(file: File, maxDim = 1500): Promise<{ blob: Blob; dataUrl:
       reader.readAsDataURL(file);
       return;
     }
+    // Keep PNG format for images with transparency (logos, icons)
+    const isPng = file.type === "image/png";
     const img = new window.Image();
     const url = URL.createObjectURL(file);
     img.onload = () => {
@@ -175,15 +177,23 @@ function processImage(file: File, maxDim = 1500): Promise<{ blob: Blob; dataUrl:
       canvas.width = w;
       canvas.height = h;
       const ctx = canvas.getContext("2d")!;
+      if (!isPng) {
+        // Fill with white for JPEG (no transparency support)
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, w, h);
+      }
       ctx.drawImage(img, 0, 0, w, h);
+      const mimeType = isPng ? "image/png" : "image/jpeg";
+      const quality = isPng ? undefined : 0.8;
+      const ext = isPng ? "png" : "jpg";
       canvas.toBlob(
         (blob) => {
           if (!blob) { reject(new Error("Failed to process image")); return; }
-          const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
-          resolve({ blob, dataUrl, ext: "jpg" });
+          const dataUrl = canvas.toDataURL(mimeType, quality);
+          resolve({ blob, dataUrl, ext });
         },
-        "image/jpeg",
-        0.8,
+        mimeType,
+        quality,
       );
     };
     img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Could not read image")); };
