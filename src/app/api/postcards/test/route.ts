@@ -25,6 +25,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   // Support both single contact_id and array contact_ids
   const contactIds: string[] = body.contact_ids || (body.contact_id ? [body.contact_id] : []);
+  const templateId: string | undefined = body.template_id;
 
   // Fetch selected contacts (or first active if none specified)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -54,28 +55,31 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Pick the best front template for the current season
-  const currentMonth = new Date().getMonth() + 1;
-  const seasonForMonth = (m: number) =>
-    m >= 3 && m <= 5 ? "spring" : m >= 6 && m <= 8 ? "summer" : m >= 9 && m <= 11 ? "fall" : "winter";
-  const currentSeason = seasonForMonth(currentMonth);
+  // Use the explicitly selected template, or fall back to default / most recent
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let template: any = null;
 
-  const { data: candidates } = await admin
-    .from("postcard_templates")
-    .select("*")
-    .eq("type", "monthly")
-    .eq("is_active", true)
-    .not("front_html", "is", null)
-    .order("is_default", { ascending: false })
-    .order("created_at", { ascending: false });
+  if (templateId) {
+    const { data } = await admin
+      .from("postcard_templates")
+      .select("*")
+      .eq("id", templateId)
+      .single();
+    template = data;
+  }
 
-  const all = candidates || [];
-  // Priority: default with matching/any season > matching season > any season > first available
-  const template =
-    all.find((t) => t.is_default && (t.season === currentSeason || !t.season || t.season === "any")) ||
-    all.find((t) => t.season === currentSeason) ||
-    all.find((t) => !t.season || t.season === "any") ||
-    all[0] || null;
+  if (!template) {
+    const { data: candidates } = await admin
+      .from("postcard_templates")
+      .select("*")
+      .eq("type", "monthly")
+      .eq("is_active", true)
+      .not("front_html", "is", null)
+      .order("is_default", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(1);
+    template = candidates?.[0] || null;
+  }
 
   if (!template) {
     return NextResponse.json(

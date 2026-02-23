@@ -12,6 +12,7 @@ import { PostcardFront } from "@/components/postcard/PostcardFront";
 import { OfferMatchPreview } from "@/components/campaigns/OfferMatchPreview";
 import { useAgentProfile } from "@/hooks/use-agent-profile";
 import { useAgentCampaigns, useOptInCampaign, useOptOutCampaign } from "@/hooks/use-campaigns";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Send, Eye, Check, X, Loader2, Calendar, Users, Mail, TestTube, Rocket, Info } from "lucide-react";
 import { toast } from "sonner";
 import type { Campaign } from "@/types/database";
@@ -35,6 +36,7 @@ export default function CampaignsPage() {
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
   const [showTestDialog, setShowTestDialog] = useState(false);
   const [testContactIds, setTestContactIds] = useState<string[]>([]);
+  const [testTemplateId, setTestTemplateId] = useState<string>("");
 
   // Fetch agent contacts for opt-in selection and test
   const { data: contactsData } = useQuery({
@@ -47,15 +49,31 @@ export default function CampaignsPage() {
     enabled: !!optInCampaign || showTestDialog,
   });
 
+  // Fetch front templates for the template picker
+  const { data: templatesData } = useQuery({
+    queryKey: ["front-templates"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/templates");
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
+    enabled: showTestDialog,
+  });
+
+  const frontTemplates = (templatesData?.templates || []).filter(
+    (t: { type: string; is_active: boolean; front_html: string | null }) =>
+      t.type === "monthly" && t.is_active && t.front_html
+  );
+
   const contacts = contactsData?.contacts || [];
 
   // Send test postcards mutation (supports multiple contacts)
   const sendTest = useMutation({
-    mutationFn: async (contactIds: string[]) => {
+    mutationFn: async ({ contactIds, templateId }: { contactIds: string[]; templateId?: string }) => {
       const res = await fetch("/api/postcards/test", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contact_ids: contactIds }),
+        body: JSON.stringify({ contact_ids: contactIds, template_id: templateId || undefined }),
       });
       if (!res.ok) {
         const err = await res.json();
@@ -367,16 +385,31 @@ export default function CampaignsPage() {
       </Dialog>
 
       {/* Send Test Postcards Dialog */}
-      <Dialog open={showTestDialog} onOpenChange={(open) => { setShowTestDialog(open); if (!open) setTestContactIds([]); }}>
+      <Dialog open={showTestDialog} onOpenChange={(open) => { setShowTestDialog(open); if (!open) { setTestContactIds([]); setTestTemplateId(""); } }}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Send Test Postcards</DialogTitle>
             <DialogDescription>
-              Select contacts to send real postcards to. Each selected contact will receive one physical postcard via Lob.
+              Select a template and contacts to send real postcards to.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-3">
+            {/* Template picker */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Template</label>
+              <Select value={testTemplateId} onValueChange={setTestTemplateId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a template..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {frontTemplates.map((t: { id: string; name: string }) => (
+                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium">
                 {testContactIds.length} contact{testContactIds.length !== 1 ? "s" : ""} selected
@@ -438,8 +471,8 @@ export default function CampaignsPage() {
             </Button>
             <Button
               className="bg-orange-600 hover:bg-orange-700"
-              disabled={testContactIds.length === 0 || sendTest.isPending}
-              onClick={() => sendTest.mutate(testContactIds)}
+              disabled={testContactIds.length === 0 || !testTemplateId || sendTest.isPending}
+              onClick={() => sendTest.mutate({ contactIds: testContactIds, templateId: testTemplateId })}
             >
               {sendTest.isPending ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

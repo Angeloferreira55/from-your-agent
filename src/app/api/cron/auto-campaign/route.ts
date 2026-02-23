@@ -56,10 +56,6 @@ export async function POST(req: NextRequest) {
   let template = existing?.postcard_templates || null;
 
   if (!template) {
-    const seasonForMonth = (m: number) =>
-      m >= 3 && m <= 5 ? "spring" : m >= 6 && m <= 8 ? "summer" : m >= 9 && m <= 11 ? "fall" : "winter";
-    const targetSeason = seasonForMonth(month);
-
     const { data: candidates } = await admin
       .from("postcard_templates")
       .select("*")
@@ -67,14 +63,9 @@ export async function POST(req: NextRequest) {
       .eq("is_active", true)
       .not("front_html", "is", null)
       .order("is_default", { ascending: false })
-      .order("created_at", { ascending: false });
-
-    const all = candidates || [];
-    template =
-      all.find((t) => t.is_default && (t.season === targetSeason || !t.season || t.season === "any")) ||
-      all.find((t) => t.season === targetSeason) ||
-      all.find((t) => !t.season || t.season === "any") ||
-      all[0] || null;
+      .order("created_at", { ascending: false })
+      .limit(1);
+    template = candidates?.[0] || null;
   }
 
   if (!template) {
