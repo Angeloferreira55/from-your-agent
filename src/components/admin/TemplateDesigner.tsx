@@ -649,28 +649,22 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
   /* ── Upload helper — uploads to Supabase storage via FormData, falls back to data URL ── */
 
   async function uploadFile(file: File): Promise<string> {
-    const { blob, dataUrl, ext } = await processImage(file);
+    const { blob, ext } = await processImage(file);
 
-    // Try server upload via FormData (avoids huge data URLs in saved JSON)
-    try {
-      const formData = new FormData();
-      formData.append("file", blob, `upload.${ext}`);
+    const formData = new FormData();
+    formData.append("file", blob, `upload.${ext}`);
 
-      const endpoint = isAgent ? "/api/profile/design-upload" : "/api/admin/templates/upload";
-      const res = await fetch(endpoint, { method: "POST", body: formData });
+    const endpoint = isAgent ? "/api/profile/design-upload" : "/api/admin/templates/upload";
+    const res = await fetch(endpoint, { method: "POST", body: formData });
 
-      if (res.ok) {
-        const json = await res.json();
-        if (json.url) return json.url;
-      }
-      const errText = await res.text().catch(() => "");
-      console.warn("Server upload failed:", res.status, errText);
-    } catch (err) {
-      console.warn("Server upload error, using data URL fallback:", err);
+    if (!res.ok) {
+      const errText = await res.text().catch(() => "Upload failed");
+      throw new Error(`Image upload failed: ${errText}`);
     }
 
-    // Fallback: use inline data URL
-    return dataUrl;
+    const json = await res.json();
+    if (!json.url) throw new Error("Image upload returned no URL");
+    return json.url;
   }
 
   function pickFile(accept: string): Promise<File | null> {

@@ -36,7 +36,8 @@ const FONT_MAP: Record<string, string> = {
   candara: "Candara, Calibri, sans-serif",
   franklin: "'Franklin Gothic Medium', 'Franklin Gothic', sans-serif",
 };
-import { Plus, FileImage, MoreHorizontal, Trash2, Pencil, Copy, LayoutTemplate, PanelsTopLeft, RotateCcw, Archive } from "lucide-react";
+import { Plus, FileImage, MoreHorizontal, Trash2, Pencil, Copy, LayoutTemplate, PanelsTopLeft, EyeOff, Eye } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import type { PostcardTemplate } from "@/types/database";
 
@@ -187,30 +188,21 @@ export default function AdminTemplatesPage() {
   const [designerOpen, setDesignerOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<PostcardTemplate | null>(null);
   const [designerInitialTab, setDesignerInitialTab] = useState<"front" | "back">("front");
-  const [showTrash, setShowTrash] = useState(false);
   const [layoutPickerOpen, setLayoutPickerOpen] = useState(false);
   const queryClient = useQueryClient();
 
-  // Active templates
+  // All templates (including inactive)
   const { data, isLoading } = useQuery({
-    queryKey: ["admin", "templates"],
-    queryFn: async () => {
-      const res = await fetch("/api/admin/templates");
-      if (!res.ok) throw new Error("Failed to fetch");
-      return res.json();
-    },
-  });
-
-  // All templates (including deleted) — only fetched when trash is open
-  const { data: allData } = useQuery({
     queryKey: ["admin", "templates", "all"],
     queryFn: async () => {
       const res = await fetch("/api/admin/templates?include_deleted=true");
       if (!res.ok) throw new Error("Failed to fetch");
       return res.json();
     },
-    enabled: showTrash,
   });
+
+  // Alias for compatibility
+  const allData = data;
 
   const { data: brokeragesData } = useQuery({
     queryKey: ["brokerages"],
@@ -272,40 +264,25 @@ export default function AdminTemplatesPage() {
     onError: (err) => toast.error(err.message),
   });
 
-  const restoreMutation = useMutation({
-    mutationFn: async (id: string) => {
+  const toggleActiveMutation = useMutation({
+    mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
       const res = await fetch("/api/admin/templates", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, is_active: true }),
+        body: JSON.stringify({ id, is_active }),
       });
       if (!res.ok) throw new Error((await res.json()).error);
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (_, { is_active }) => {
       queryClient.invalidateQueries({ queryKey: ["admin", "templates"] });
-      toast.success("Template restored");
+      toast.success(is_active ? "Template activated" : "Template deactivated");
     },
     onError: (err) => toast.error(err.message),
   });
 
-  const permanentDeleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      // Permanently delete by restoring then deleting via raw delete
-      // For now, we'll just keep it as soft-deleted
-      toast.info("Template permanently removed from trash");
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin", "templates"] });
-    },
-  });
-
   const allTemplates: PostcardTemplate[] = data?.templates || [];
   const templates = allTemplates.filter((t) => t.type === "monthly");
-
-  // Deleted templates
-  const allIncludingDeleted: PostcardTemplate[] = allData?.templates || [];
-  const deletedTemplates = allIncludingDeleted.filter((t) => t.type === "monthly" && !t.is_active);
 
   // Split templates by which sides have content
   const frontTemplates = templates.filter((t) => t.front_html && parseDesign(t.front_html));
@@ -377,9 +354,10 @@ export default function AdminTemplatesPage() {
     const design = side === "front"
       ? (template.front_html ? parseDesign(template.front_html) : null)
       : parseDesign(template.back_html);
+    const isInactive = !template.is_active;
 
     return (
-      <Card className="overflow-hidden">
+      <Card className={cn("overflow-hidden", isInactive && "opacity-60")}>
         <TemplatePreviewCard design={design} aspectRatio="3/2" />
         <div className="p-4">
           <div className="flex items-start justify-between">
@@ -402,10 +380,17 @@ export default function AdminTemplatesPage() {
                 <DropdownMenuItem onClick={() => handleDuplicate(template)}>
                   <Copy className="mr-2 h-4 w-4" /> Duplicate
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => toggleActiveMutation.mutate({ id: template.id, is_active: !template.is_active })}>
+                  {isInactive ? (
+                    <><Eye className="mr-2 h-4 w-4" /> Activate</>
+                  ) : (
+                    <><EyeOff className="mr-2 h-4 w-4" /> Deactivate</>
+                  )}
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   className="text-destructive"
                   onClick={() => {
-                    if (confirm("Move this template to trash?")) deleteMutation.mutate(template.id);
+                    if (confirm("Permanently delete this template?")) deleteMutation.mutate(template.id);
                   }}
                 >
                   <Trash2 className="mr-2 h-4 w-4" /> Delete
@@ -414,8 +399,8 @@ export default function AdminTemplatesPage() {
             </DropdownMenu>
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            {template.season && template.season !== "any" && (
-              <Badge variant="secondary">{template.season}</Badge>
+            {isInactive && (
+              <Badge variant="outline" className="text-muted-foreground">Inactive</Badge>
             )}
             {template.is_default && (
               <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-100">Default</Badge>
@@ -434,77 +419,10 @@ export default function AdminTemplatesPage() {
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Templates</h1>
             <p className="text-muted-foreground">
-              Monthly &amp; seasonal postcard designs · {templates.length} template{templates.length !== 1 ? "s" : ""}
+              Monthly postcard designs · {templates.filter(t => t.is_active).length} active, {templates.filter(t => !t.is_active).length} inactive
             </p>
           </div>
-          <Button
-            variant={showTrash ? "default" : "outline"}
-            size="sm"
-            onClick={() => setShowTrash(!showTrash)}
-          >
-            <Archive className="mr-2 h-4 w-4" />
-            Trash{deletedTemplates.length > 0 && showTrash ? ` (${deletedTemplates.length})` : ""}
-          </Button>
         </div>
-
-        {/* ── Trash section ── */}
-        {showTrash && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Trash2 className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <h2 className="text-lg font-semibold">Deleted Templates</h2>
-                <p className="text-sm text-muted-foreground">
-                  {deletedTemplates.length} deleted template{deletedTemplates.length !== 1 ? "s" : ""} — click restore to recover
-                </p>
-              </div>
-            </div>
-
-            {deletedTemplates.length === 0 ? (
-              <Card>
-                <CardHeader className="text-center py-8">
-                  <CardTitle className="text-base">Trash is empty</CardTitle>
-                  <CardDescription>No deleted templates to recover.</CardDescription>
-                </CardHeader>
-              </Card>
-            ) : (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {deletedTemplates.map((template) => {
-                  const frontDesign = template.front_html ? parseDesign(template.front_html) : null;
-                  const backDesign = template.back_html ? parseDesign(template.back_html) : null;
-                  const showDesign = frontDesign || backDesign;
-                  return (
-                    <Card key={template.id} className="overflow-hidden opacity-70 hover:opacity-100 transition-opacity">
-                      <TemplatePreviewCard design={showDesign} aspectRatio="3/2" />
-                      <div className="p-4">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <h3 className="font-semibold text-sm">{template.name}</h3>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              {template.description || "No description"}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="mt-3 flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="flex-1"
-                            onClick={() => restoreMutation.mutate(template.id)}
-                            disabled={restoreMutation.isPending}
-                          >
-                            <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
-                            Restore
-                          </Button>
-                        </div>
-                      </div>
-                    </Card>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
 
         {/* ── Section 1: Front Designs ── */}
         <div className="space-y-4">
