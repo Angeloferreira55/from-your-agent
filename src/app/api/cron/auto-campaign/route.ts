@@ -221,8 +221,9 @@ export async function POST(req: NextRequest) {
     .update({ total_postcards: insertedPostcards.length })
     .eq("id", campaign.id);
 
-  // Pre-fetch brokerage templates for agents (cache by brokerage_id)
+  // Pre-fetch brokerage data for agents (cache by brokerage_id)
   const brokerageBackHtmlCache: Record<string, string | null> = {};
+  const brokerageLogoCache: Record<string, string | null> = {};
 
   // Build Lob params
   for (const pc of insertedPostcards) {
@@ -246,23 +247,37 @@ export async function POST(req: NextRequest) {
 
     const offer = pc.offer_id ? offersMap[pc.offer_id] : null;
 
-    // Fetch brokerage template if monthly and agent has a brokerage
+    // Fetch brokerage data (logo + back template) if agent has a brokerage
     let brokerageBackHtml: string | null = null;
-    if (template.type === "monthly" && agent.brokerage_id) {
-      if (!(agent.brokerage_id in brokerageBackHtmlCache)) {
-        const { data: brokerageTemplate } = await admin
-          .from("postcard_templates")
-          .select("back_html")
-          .eq("type", "brokerage")
-          .eq("brokerage_id", agent.brokerage_id)
-          .eq("is_active", true)
-          .order("is_default", { ascending: false })
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        brokerageBackHtmlCache[agent.brokerage_id] = brokerageTemplate?.back_html || null;
+    let brokerageLogoUrl: string | null = null;
+    if (agent.brokerage_id) {
+      // Cache brokerage logo URL
+      if (!(agent.brokerage_id in brokerageLogoCache)) {
+        const { data: brokerage } = await admin
+          .from("brokerages")
+          .select("logo_url")
+          .eq("id", agent.brokerage_id)
+          .single();
+        brokerageLogoCache[agent.brokerage_id] = brokerage?.logo_url || null;
       }
-      brokerageBackHtml = brokerageBackHtmlCache[agent.brokerage_id];
+      brokerageLogoUrl = brokerageLogoCache[agent.brokerage_id];
+
+      if (template.type === "monthly") {
+        if (!(agent.brokerage_id in brokerageBackHtmlCache)) {
+          const { data: brokerageTemplate } = await admin
+            .from("postcard_templates")
+            .select("back_html")
+            .eq("type", "brokerage")
+            .eq("brokerage_id", agent.brokerage_id)
+            .eq("is_active", true)
+            .order("is_default", { ascending: false })
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          brokerageBackHtmlCache[agent.brokerage_id] = brokerageTemplate?.back_html || null;
+        }
+        brokerageBackHtml = brokerageBackHtmlCache[agent.brokerage_id];
+      }
     }
 
     postcardParams.push({
@@ -276,7 +291,7 @@ export async function POST(req: NextRequest) {
         custom_message: agent.custom_message,
         photo_url: agent.photo_url,
         logo_url: agent.logo_url,
-        brokerage_logo_url: agent.brokerage_logo_url,
+        brokerage_logo_url: agent.brokerage_logo_url || brokerageLogoUrl,
         brand_color: agent.brand_color,
         address_line1: agent.address_line1,
         city: agent.city,

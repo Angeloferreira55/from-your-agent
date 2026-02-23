@@ -77,20 +77,31 @@ export async function POST(req: NextRequest) {
   const sizeKey = (template.size || "6x9") as keyof typeof LOB_DIMENSIONS;
   const dims = LOB_DIMENSIONS[sizeKey] || LOB_DIMENSIONS["6x9"];
 
-  // Fetch brokerage template if monthly
+  // Fetch brokerage data for front placeholders / overlay + back template
   let brokerageBackHtml: string | null = null;
-  if (template.type === "monthly" && agent.brokerage_id) {
-    const { data: brokerageTemplate } = await admin
-      .from("postcard_templates")
-      .select("back_html")
-      .eq("type", "brokerage")
-      .eq("brokerage_id", agent.brokerage_id)
-      .eq("is_active", true)
-      .order("is_default", { ascending: false })
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    brokerageBackHtml = brokerageTemplate?.back_html || null;
+  let brokerageLogoUrl: string | null = null;
+  if (agent.brokerage_id) {
+    // Fetch brokerage logo for front placeholders / overlay
+    const { data: brokerage } = await admin
+      .from("brokerages")
+      .select("logo_url")
+      .eq("id", agent.brokerage_id)
+      .single();
+    brokerageLogoUrl = brokerage?.logo_url || null;
+
+    if (template.type === "monthly") {
+      const { data: brokerageTemplate } = await admin
+        .from("postcard_templates")
+        .select("back_html")
+        .eq("type", "brokerage")
+        .eq("brokerage_id", agent.brokerage_id)
+        .eq("is_active", true)
+        .order("is_default", { ascending: false })
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      brokerageBackHtml = brokerageTemplate?.back_html || null;
+    }
   }
 
   const mergeVars = buildMergeVariables(agent, contact, offer);
@@ -100,7 +111,7 @@ export async function POST(req: NextRequest) {
   const agentData: AgentPlaceholderData = {
     agent_name: agentName,
     brokerage_name: agent.company_name || undefined,
-    brokerage_logo_url: agent.brokerage_logo_url || agent.logo_url || undefined,
+    brokerage_logo_url: agent.brokerage_logo_url || brokerageLogoUrl || agent.logo_url || undefined,
     agent_phone: agent.phone || undefined,
   };
 
@@ -111,7 +122,7 @@ export async function POST(req: NextRequest) {
 
   const frontHtml = hasPlaceholders
     ? resolvedFront
-    : injectFrontOverlay(resolvedFront, agentName, agent.company_name, dims.front.width, agent.brokerage_logo_url || agent.logo_url);
+    : injectFrontOverlay(resolvedFront, agentName, agent.company_name, dims.front.width, agent.brokerage_logo_url || brokerageLogoUrl || agent.logo_url);
 
   const now = new Date();
   const rawBackHtml = renderFullBackHtml({
