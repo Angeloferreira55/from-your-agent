@@ -1248,22 +1248,6 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
                   </Button>
                   <Button
                     variant="outline" size="sm" className="text-xs h-7 border-violet-200 hover:border-violet-400 hover:bg-violet-50"
-                    disabled={curElements.some((el) => el.placeholder === "brokerage_name")}
-                    onClick={() => {
-                      const el: DesignElement = {
-                        id: genId(), type: "text", x: 5, y: 87, width: 50, height: 8,
-                        text: "Brokerage Name", fontSize: 18, fontColor: "#FFFFFF",
-                        fontWeight: "normal", fontStyle: "normal", textAlign: "left", fontFamily: "sans-serif",
-                        placeholder: "brokerage_name",
-                      };
-                      setCurElements((p) => [...p, el]);
-                      setSelectedId(el.id);
-                    }}
-                  >
-                    <Building2 className="mr-1 h-3 w-3" /> Brokerage
-                  </Button>
-                  <Button
-                    variant="outline" size="sm" className="text-xs h-7 border-violet-200 hover:border-violet-400 hover:bg-violet-50"
                     disabled={curElements.some((el) => el.placeholder === "brokerage_logo")}
                     onClick={() => {
                       const el: DesignElement = {
@@ -1275,7 +1259,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
                       setSelectedId(el.id);
                     }}
                   >
-                    <ImageIcon className="mr-1 h-3 w-3" /> Logo
+                    <Building2 className="mr-1 h-3 w-3" /> Brokerage
                   </Button>
                   <Button
                     variant="outline" size="sm" className="text-xs h-7 border-violet-200 hover:border-violet-400 hover:bg-violet-50"
