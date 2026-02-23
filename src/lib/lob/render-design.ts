@@ -178,10 +178,9 @@ function renderElement(el: DesignElement, pxWidth: number, pxHeight: number, des
     ].join(";");
 
     if (el.tintColor) {
-      const filterId = `tint-${el.id}`;
-      const svgFilter = `<svg style="position:absolute;width:0;height:0"><defs><filter id="${filterId}"><feFlood flood-color="${el.tintColor}"/><feComposite in2="SourceAlpha" operator="in"/></filter></defs></svg>`;
-      const imgStyle = `width:100%;height:100%;object-fit:${el.objectFit || "contain"};filter:url(#${filterId})`;
-      return `<div style="${style}">${svgFilter}<img src="${el.src}" style="${imgStyle}" /></div>`;
+      const fit = el.objectFit || "contain";
+      const tintStyle = `${style};background-color:${el.tintColor};-webkit-mask-image:url(${el.src});mask-image:url(${el.src});-webkit-mask-size:${fit};mask-size:${fit};-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center`;
+      return `<div style="${tintStyle}"></div>`;
     }
 
     const imgStyle = `width:100%;height:100%;object-fit:${el.objectFit || "contain"}`;
@@ -516,9 +515,9 @@ function renderFlatPanel(
     } else if (processedEl.type === "image" && processedEl.src) {
       const wrapStyle = `position:absolute;left:${processedEl.x}%;top:${processedEl.y}%;width:${processedEl.width}%;height:${processedEl.height || 10}%;opacity:${processedEl.opacity ?? 1}`;
       if (processedEl.tintColor) {
-        const filterId = `tint-${processedEl.id}`;
-        const svgFilter = `<svg style="position:absolute;width:0;height:0"><defs><filter id="${filterId}"><feFlood flood-color="${processedEl.tintColor}"/><feComposite in2="SourceAlpha" operator="in"/></filter></defs></svg>`;
-        parts.push(`<div style="${wrapStyle}">${svgFilter}<img src="${processedEl.src}" style="width:100%;height:100%;object-fit:${processedEl.objectFit || "contain"};filter:url(#${filterId})" /></div>`);
+        const fit = processedEl.objectFit || "contain";
+        const tintStyle = `${wrapStyle};background-color:${processedEl.tintColor};-webkit-mask-image:url(${processedEl.src});mask-image:url(${processedEl.src});-webkit-mask-size:${fit};mask-size:${fit};-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center`;
+        parts.push(`<div style="${tintStyle}"></div>`);
       } else {
         parts.push(`<div style="${wrapStyle}"><img src="${processedEl.src}" style="width:100%;height:100%;object-fit:${processedEl.objectFit || "contain"}" /></div>`);
       }

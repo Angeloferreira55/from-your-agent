@@ -1132,22 +1132,20 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
                   )}
                   {el.type === "image" && el.src && (
                     el.tintColor ? (
-                      <div className="w-full h-full pointer-events-none relative">
-                        <svg style={{ position: "absolute", width: 0, height: 0 }}>
-                          <defs>
-                            <filter id={`tint-${el.id}`}>
-                              <feFlood floodColor={el.tintColor} />
-                              <feComposite in2="SourceAlpha" operator="in" />
-                            </filter>
-                          </defs>
-                        </svg>
-                        <img
-                          src={el.src}
-                          alt=""
-                          className="w-full h-full"
-                          style={{ objectFit: el.objectFit || "contain", filter: `url(#tint-${el.id})` }}
-                        />
-                      </div>
+                      <div
+                        className="w-full h-full pointer-events-none"
+                        style={{
+                          backgroundColor: el.tintColor,
+                          WebkitMaskImage: `url(${el.src})`,
+                          maskImage: `url(${el.src})`,
+                          WebkitMaskSize: el.objectFit || "contain",
+                          maskSize: el.objectFit || "contain",
+                          WebkitMaskRepeat: "no-repeat",
+                          maskRepeat: "no-repeat",
+                          WebkitMaskPosition: "center",
+                          maskPosition: "center",
+                        }}
+                      />
                     ) : (
                       <img
                         src={el.src}
