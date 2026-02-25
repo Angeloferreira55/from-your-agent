@@ -91,7 +91,12 @@ export default function CampaignsPage() {
         });
       }
       if (data.failed > 0) {
-        toast.error(`${data.failed} postcard${data.failed > 1 ? "s" : ""} failed`);
+        const failedResults = data.results?.filter((r: { success: boolean }) => !r.success) || [];
+        const firstError = failedResults[0]?.error || "Unknown error";
+        toast.error(`${data.failed} postcard${data.failed > 1 ? "s" : ""} failed`, {
+          description: firstError,
+          duration: 10000,
+        });
       }
       setShowTestDialog(false);
       setTestContactIds([]);
