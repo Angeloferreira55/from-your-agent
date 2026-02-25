@@ -14,10 +14,13 @@ const HTML_BUCKET = "postcard-html";
 async function uploadHtmlForLob(html: string, postcardId: string, side: "front" | "back"): Promise<string> {
   const admin = createAdminClient();
 
-  // Ensure bucket exists (public, auto-create if missing)
+  // Ensure bucket exists and is public
   const { data: buckets } = await admin.storage.listBuckets();
   if (!buckets?.some((b) => b.name === HTML_BUCKET)) {
     await admin.storage.createBucket(HTML_BUCKET, { public: true });
+  } else {
+    // Ensure existing bucket is public (it may have been created without public:true)
+    await admin.storage.updateBucket(HTML_BUCKET, { public: true });
   }
 
   const filePath = `${postcardId}/${side}.html`;
@@ -106,7 +109,12 @@ export async function createPostcard({
 
   // Resolve JSON DesignConfig → print HTML, then apply merge variables
   // Front was designed at 900px basis in the TemplateDesigner
-  const agentName = `${agent.first_name} ${agent.last_name}`.trim();
+  const agentName = `${agent.first_name || ""} ${agent.last_name || ""}`.trim();
+
+  if (!template.front_html || !template.front_html.trim()) {
+    throw new Error("Template has no front design (front_html is empty)");
+  }
+
   const hasPlaceholders = designHasFrontPlaceholders(template.front_html);
 
   // Build agent placeholder data for front-side substitution
@@ -117,15 +125,15 @@ export async function createPostcard({
     agent_phone: agent.phone || undefined,
   };
 
-  const resolvedFront = renderTemplate(
-    resolveHtml(template.front_html, dims.front, 900, hasPlaceholders ? agentData : undefined),
-    mergeVars
-  );
+  const resolvedFrontHtml = resolveHtml(template.front_html, dims.front, 900, hasPlaceholders ? agentData : undefined);
+  const resolvedFront = renderTemplate(resolvedFrontHtml, mergeVars);
 
   // Skip hardcoded overlay when placeholders handle agent info positioning
   const frontHtml = hasPlaceholders
     ? resolvedFront
     : injectFrontOverlay(resolvedFront, agentName, agent.company_name, dims.front.width, agent.brokerage_logo_url || agent.logo_url);
+
+  console.log(`[createPostcard] front_html length=${frontHtml.length}, hasPlaceholders=${hasPlaceholders}, agent="${agentName}"`);
 
   // Compose full back with all 4 quadrants (brokerage + agent + offer + mailing)
   const rawBackHtml = renderFullBackHtml({
@@ -146,8 +154,9 @@ export async function createPostcard({
   try {
     const backUrl = await uploadHtmlForLob(backHtml, postcardDbId, "back");
     lobBack = backUrl;
-  } catch {
-    // Fall back to inline HTML — will work if under 10K
+    console.log(`[createPostcard] back uploaded to: ${backUrl}`);
+  } catch (uploadErr) {
+    console.warn(`[createPostcard] Back upload failed, using inline (${backHtml.length} chars):`, uploadErr);
   }
 
   // Map our sizes to Lob sizes
