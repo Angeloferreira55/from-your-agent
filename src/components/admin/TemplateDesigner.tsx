@@ -1216,7 +1216,24 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
               );
             })()}
 
-            {/* Disclaimer removed — no longer shown on postcards */}
+            {/* Disclaimer preview on canvas (brokerage back panel only) */}
+            {!isFront && !isAgent && disclaimer && (
+              <div
+                className="absolute bottom-[2%] left-[3%] right-[3%] pointer-events-none z-10"
+              >
+                <p
+                  className="text-center leading-snug"
+                  style={{
+                    fontSize: `${disclaimerFontSize * scale}px`,
+                    color: disclaimerColor,
+                    fontFamily: "Arial, sans-serif",
+                    margin: 0,
+                  }}
+                >
+                  {disclaimer}
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
