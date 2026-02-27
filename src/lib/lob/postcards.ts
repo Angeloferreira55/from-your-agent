@@ -148,8 +148,17 @@ export async function createPostcard({
   });
   const backHtml = renderTemplate(rawBackHtml, mergeVars);
 
-  // Upload back HTML to Supabase Storage as a remote URL to bypass Lob's 10K inline limit.
-  // This lets us use the full SVG social icons (matching the preview exactly).
+  // Upload both front and back HTML to Supabase Storage as remote URLs.
+  // This bypasses Lob's 10K inline HTML limit and ensures consistent rendering.
+  let lobFront: string = frontHtml; // fallback to inline
+  try {
+    const frontUrl = await uploadHtmlForLob(frontHtml, postcardDbId, "front");
+    lobFront = frontUrl;
+    console.log(`[createPostcard] front uploaded to: ${frontUrl}`);
+  } catch (uploadErr) {
+    console.warn(`[createPostcard] Front upload failed, using inline (${frontHtml.length} chars):`, uploadErr);
+  }
+
   let lobBack: string = backHtml; // fallback to inline
   try {
     const backUrl = await uploadHtmlForLob(backHtml, postcardDbId, "back");
@@ -189,7 +198,7 @@ export async function createPostcard({
             address_country: "US",
           }
         : undefined,
-      front: frontHtml,
+      front: lobFront,
       back: lobBack,
       size: sizeMap[template.size] || ("6x9" as PostcardSize),
       use_type: "operational",

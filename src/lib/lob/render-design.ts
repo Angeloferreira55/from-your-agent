@@ -9,6 +9,26 @@ import type { DesignConfig, DesignElement } from "@/components/admin/TemplateDes
 /** Convert 300-DPI pixels to CSS inches for Lob's WebKit renderer */
 const toIn = (px300: number): string => (px300 / 300).toFixed(4) + "in";
 
+/**
+ * Converts relative URLs (e.g. /brokerages/kw-logo-white.png) to absolute URLs
+ * so that Lob's remote HTML renderer can fetch the assets.
+ *
+ * Uses NEXT_PUBLIC_APP_URL (set to the public .vercel.app project URL)
+ * because deployment-specific VERCEL_URL may have Vercel Authentication.
+ */
+function toAbsoluteUrl(url: string | undefined | null): string {
+  if (!url) return "";
+  const trimmed = url.trim();
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.startsWith("data:")) return trimmed;
+  const base = (
+    process.env.NEXT_PUBLIC_APP_URL?.trim() ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL.trim()}` : "") ||
+    ""
+  ).replace(/\/+$/, ""); // strip trailing slashes
+  if (!base) return trimmed;
+  return `${base}${trimmed.startsWith("/") ? "" : "/"}${trimmed}`;
+}
+
 const FONT_MAP: Record<string, string> = {
   "sans-serif": "Arial, Helvetica, sans-serif",
   helvetica: "Helvetica, Arial, sans-serif",
@@ -86,13 +106,13 @@ function resolvePlaceholder(
 
   switch (el.placeholder) {
     case "team_logo":
-      return teamLogoUrl ? { ...el, src: teamLogoUrl } : el;
+      return teamLogoUrl ? { ...el, src: toAbsoluteUrl(teamLogoUrl) } : el;
     case "agent_name":
       return agentData?.agent_name ? { ...el, text: agentData.agent_name } : el;
     case "brokerage_name":
       return agentData?.brokerage_name ? { ...el, text: agentData.brokerage_name } : el;
     case "brokerage_logo":
-      return agentData?.brokerage_logo_url ? { ...el, src: agentData.brokerage_logo_url } : el;
+      return agentData?.brokerage_logo_url ? { ...el, src: toAbsoluteUrl(agentData.brokerage_logo_url) } : el;
     case "agent_phone":
       return agentData?.agent_phone ? { ...el, text: agentData.agent_phone } : el;
     default:
@@ -179,12 +199,13 @@ function renderElement(el: DesignElement, pxWidth: number, pxHeight: number, des
 
     if (el.tintColor) {
       const fit = el.objectFit || "contain";
-      const tintStyle = `${style};background-color:${el.tintColor};-webkit-mask-image:url(${el.src});mask-image:url(${el.src});-webkit-mask-size:${fit};mask-size:${fit};-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center`;
+      const absSrc = toAbsoluteUrl(el.src);
+      const tintStyle = `${style};background-color:${el.tintColor};-webkit-mask-image:url(${absSrc});mask-image:url(${absSrc});-webkit-mask-size:${fit};mask-size:${fit};-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center`;
       return `<div style="${tintStyle}"></div>`;
     }
 
     const imgStyle = `width:100%;height:100%;object-fit:${el.objectFit || "contain"}`;
-    return `<div style="${style}"><img src="${el.src}" style="${imgStyle}" /></div>`;
+    return `<div style="${style}"><img src="${toAbsoluteUrl(el.src)}" style="${imgStyle}" /></div>`;
   }
 
   if (el.type === "shape") {
@@ -245,7 +266,7 @@ function renderDesignContent(
   if (bg.imageUrl) {
     const opacity = bg.colorEnabled !== false ? 0.3 : 1;
     const fit = bg.imageFit || "cover";
-    bgImageHtml = `<img src="${bg.imageUrl}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:${fit};opacity:${opacity}" />`;
+    bgImageHtml = `<img src="${toAbsoluteUrl(bg.imageUrl)}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:${fit};opacity:${opacity}" />`;
   }
 
   let overlayHtml = "";
@@ -330,7 +351,7 @@ export function injectFrontOverlay(
   // Bottom left: logo image if available, otherwise company name text
   let leftElement = "";
   if (logoUrl) {
-    leftElement = `<img src="${logoUrl}" style="position:absolute;bottom:${toIn(bottomPx)};left:${toIn(sidePx)};height:${toIn(logoHeightPx)};width:auto;object-fit:contain;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.5))" />`;
+    leftElement = `<img src="${toAbsoluteUrl(logoUrl)}" style="position:absolute;bottom:${toIn(bottomPx)};left:${toIn(sidePx)};height:${toIn(logoHeightPx)};width:auto;object-fit:contain;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.5))" />`;
   } else if (companyName) {
     const companyFontPx = cardWidth * 0.022;
     leftElement = `<p style="position:absolute;bottom:${toIn(bottomPx)};left:${toIn(sidePx)};color:#fff;font-family:Arial,sans-serif;font-size:${toIn(companyFontPx)};font-weight:600;text-shadow:0 1px 4px rgba(0,0,0,0.7);margin:0">${escapeHtml(companyName)}</p>`;
@@ -470,7 +491,7 @@ function renderFlatPanel(
   if (bg.imageUrl) {
     const opacity = bg.colorEnabled !== false ? 0.3 : 1;
     const fit = bg.imageFit || "cover";
-    parts.push(`<img src="${bg.imageUrl}" style="position:absolute;left:0;top:0;width:100%;height:100%;object-fit:${fit};opacity:${opacity}" />`);
+    parts.push(`<img src="${toAbsoluteUrl(bg.imageUrl)}" style="position:absolute;left:0;top:0;width:100%;height:100%;object-fit:${fit};opacity:${opacity}" />`);
   }
   if (bg.colorEnabled !== false && bg.overlayColor && bg.overlayColor !== "rgba(0,0,0,0)") {
     parts.push(`<div style="position:absolute;left:0;top:0;width:100%;height:100%;background-color:${bg.overlayColor}"></div>`);
@@ -516,10 +537,11 @@ function renderFlatPanel(
       const wrapStyle = `position:absolute;left:${processedEl.x}%;top:${processedEl.y}%;width:${processedEl.width}%;height:${processedEl.height || 10}%;opacity:${processedEl.opacity ?? 1}`;
       if (processedEl.tintColor) {
         const fit = processedEl.objectFit || "contain";
-        const tintStyle = `${wrapStyle};background-color:${processedEl.tintColor};-webkit-mask-image:url(${processedEl.src});mask-image:url(${processedEl.src});-webkit-mask-size:${fit};mask-size:${fit};-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center`;
+        const absSrc = toAbsoluteUrl(processedEl.src);
+        const tintStyle = `${wrapStyle};background-color:${processedEl.tintColor};-webkit-mask-image:url(${absSrc});mask-image:url(${absSrc});-webkit-mask-size:${fit};mask-size:${fit};-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center`;
         parts.push(`<div style="${tintStyle}"></div>`);
       } else {
-        parts.push(`<div style="${wrapStyle}"><img src="${processedEl.src}" style="width:100%;height:100%;object-fit:${processedEl.objectFit || "contain"}" /></div>`);
+        parts.push(`<div style="${wrapStyle}"><img src="${toAbsoluteUrl(processedEl.src)}" style="width:100%;height:100%;object-fit:${processedEl.objectFit || "contain"}" /></div>`);
       }
     } else if (processedEl.type === "shape") {
       const borderWidthPx = (processedEl.shapeBorderWidth || 2) * fontScale;
@@ -540,6 +562,15 @@ function renderFlatPanel(
   }
 
   if (extraContent) parts.push(extraContent);
+
+  // Disclaimer text at bottom of panel (if present)
+  if (design.disclaimer) {
+    const ds = design.disclaimerStyle;
+    const dsFontSize = (ds?.fontSize || 8) * fontScale;
+    const dsColor = ds?.color || "rgba(255,255,255,0.55)";
+    const dsFamily = FONT_MAP[ds?.fontFamily || "sans-serif"] || "Arial, sans-serif";
+    parts.push(`<p style="position:absolute;bottom:2%;left:3%;right:3%;font-size:${toIn(dsFontSize)};color:${dsColor};font-family:${dsFamily};text-align:center;margin:0;line-height:1.3;z-index:10">${escapeHtml(design.disclaimer)}</p>`);
+  }
 
   // Wrap in a positioned container with overflow:hidden (matches PostcardBack div)
   return `<div style="position:absolute;left:${toIn(originX)};top:${toIn(originY)};width:${toIn(panelW)};height:${toIn(panelH)};overflow:hidden">\n  ${parts.join("\n  ")}\n</div>`;
@@ -576,7 +607,6 @@ export function renderFullBackHtml(params: FullBackParams): string {
 
   // ── 2. Top-right: Brokerage display (designed per brokerage) ──
   const brokerageDesign = params.brokerageBackHtml ? parseDesign(params.brokerageBackHtml) : null;
-  if (brokerageDesign) brokerageDesign.disclaimer = "";
   let brokerageElements = "";
   if (brokerageDesign) {
     brokerageElements = renderFlatPanel(brokerageDesign, halfW, 0, halfW, halfH);
@@ -587,7 +617,7 @@ export function renderFullBackHtml(params: FullBackParams): string {
       brokerageElements += `<p style="position:absolute;left:${toIn(halfW + halfW * 0.1)};top:${toIn(halfH * 0.35)};width:${toIn(halfW * 0.8)};text-align:center;font-size:${toIn(18 * s)};color:#fff;font-family:Georgia,serif;font-style:italic;line-height:1.3;margin:0">${escapeHtml(params.agent.company_name)}</p>`;
     }
     if (params.agent.logo_url) {
-      brokerageElements += `<img src="${params.agent.logo_url}" style="position:absolute;left:${toIn(halfW + halfW * 0.05)};top:${toIn(halfH * 0.05)};height:${toIn(halfH * 0.2)};width:auto;object-fit:contain" />`;
+      brokerageElements += `<img src="${toAbsoluteUrl(params.agent.logo_url)}" style="position:absolute;left:${toIn(halfW + halfW * 0.05)};top:${toIn(halfH * 0.05)};height:${toIn(halfH * 0.2)};width:auto;object-fit:contain" />`;
     }
   }
 
@@ -623,7 +653,7 @@ export function renderFullBackHtml(params: FullBackParams): string {
     let inner = "";
     inner += `<div style="position:absolute;left:0;top:0;width:100%;height:100%;background:#fff"></div>`;
     if (agent.photo_url) {
-      inner += `<img src="${agent.photo_url}" style="position:absolute;left:${toIn(halfW * 0.04)};top:${toIn(halfH * 0.04)};width:${toIn(100 * aS)};height:${toIn(130 * aS)};object-fit:cover;border-radius:${toIn(6 * aS)};border:${toIn(3 * aS)} solid ${brandColor}" />`;
+      inner += `<img src="${toAbsoluteUrl(agent.photo_url)}" style="position:absolute;left:${toIn(halfW * 0.04)};top:${toIn(halfH * 0.04)};width:${toIn(100 * aS)};height:${toIn(130 * aS)};object-fit:cover;border-radius:${toIn(6 * aS)};border:${toIn(3 * aS)} solid ${brandColor}" />`;
     }
     const textLeftPx = halfW * 0.04 + 110 * aS;
     inner += `<p style="position:absolute;left:${toIn(textLeftPx)};top:${toIn(halfH * 0.04)};width:${toIn(halfW * 0.55)};font-size:${toIn(16 * aS)};color:#111827;font-weight:bold;font-family:Arial,sans-serif;margin:0;line-height:1.2">${escapeHtml(agentName)}</p>`;
@@ -632,7 +662,7 @@ export function renderFullBackHtml(params: FullBackParams): string {
     if (agent.phone) inner += `<p style="position:absolute;left:${toIn(textLeftPx)};top:${toIn(halfH * 0.24)};width:${toIn(halfW * 0.55)};font-size:${toIn(9 * aS)};color:#6b7280;font-family:Arial,sans-serif;margin:0">${escapeHtml(agent.phone)}</p>`;
     inner += `<p style="position:absolute;left:${toIn(textLeftPx)};top:${toIn(halfH * 0.30)};width:${toIn(halfW * 0.55)};font-size:${toIn(8 * aS)};color:#6b7280;font-family:Arial,sans-serif;margin:0">${escapeHtml(agent.email)}</p>`;
     if (agent.team_logo_url) {
-      inner += `<img src="${agent.team_logo_url}" style="position:absolute;right:${toIn(halfW * 0.04)};top:${toIn(halfH * 0.04)};height:${toIn(55 * aS)};object-fit:contain" />`;
+      inner += `<img src="${toAbsoluteUrl(agent.team_logo_url)}" style="position:absolute;right:${toIn(halfW * 0.04)};top:${toIn(halfH * 0.04)};height:${toIn(55 * aS)};object-fit:contain" />`;
     }
     if (seasonalFooterHtml) inner += seasonalFooterHtml;
     agentElements = `<div style="position:absolute;left:0;top:${toIn(halfH)};width:${toIn(halfW)};height:${toIn(halfH)};overflow:hidden">${inner}</div>`;
@@ -696,7 +726,7 @@ export function renderAgentPanelHtml(params: {
     let inner = "";
     inner += `<div style="position:absolute;left:0;top:0;width:100%;height:100%;background:#fff"></div>`;
     if (agent.photo_url) {
-      inner += `<img src="${agent.photo_url}" style="position:absolute;left:${toIn(halfW * 0.04)};top:${toIn(halfH * 0.04)};width:${toIn(100 * aS)};height:${toIn(130 * aS)};object-fit:cover;border-radius:${toIn(6 * aS)};border:${toIn(3 * aS)} solid ${brandColor}" />`;
+      inner += `<img src="${toAbsoluteUrl(agent.photo_url)}" style="position:absolute;left:${toIn(halfW * 0.04)};top:${toIn(halfH * 0.04)};width:${toIn(100 * aS)};height:${toIn(130 * aS)};object-fit:cover;border-radius:${toIn(6 * aS)};border:${toIn(3 * aS)} solid ${brandColor}" />`;
     }
     const textLeftPx = halfW * 0.04 + 110 * aS;
     inner += `<p style="position:absolute;left:${toIn(textLeftPx)};top:${toIn(halfH * 0.04)};width:${toIn(halfW * 0.55)};font-size:${toIn(16 * aS)};color:#111827;font-weight:bold;font-family:Arial,sans-serif;margin:0;line-height:1.2">${escapeHtml(agentName)}</p>`;
@@ -705,7 +735,7 @@ export function renderAgentPanelHtml(params: {
     if (agent.phone) inner += `<p style="position:absolute;left:${toIn(textLeftPx)};top:${toIn(halfH * 0.24)};width:${toIn(halfW * 0.55)};font-size:${toIn(9 * aS)};color:#6b7280;font-family:Arial,sans-serif;margin:0">${escapeHtml(agent.phone)}</p>`;
     inner += `<p style="position:absolute;left:${toIn(textLeftPx)};top:${toIn(halfH * 0.30)};width:${toIn(halfW * 0.55)};font-size:${toIn(8 * aS)};color:#6b7280;font-family:Arial,sans-serif;margin:0">${escapeHtml(agent.email)}</p>`;
     if (agent.team_logo_url) {
-      inner += `<img src="${agent.team_logo_url}" style="position:absolute;right:${toIn(halfW * 0.04)};top:${toIn(halfH * 0.04)};height:${toIn(55 * aS)};object-fit:contain" />`;
+      inner += `<img src="${toAbsoluteUrl(agent.team_logo_url)}" style="position:absolute;right:${toIn(halfW * 0.04)};top:${toIn(halfH * 0.04)};height:${toIn(55 * aS)};object-fit:contain" />`;
     }
     if (seasonalFooterHtml) inner += seasonalFooterHtml;
     panelContent = `<div style="position:absolute;left:0;top:0;width:${toIn(halfW)};height:${toIn(halfH)};overflow:hidden">${inner}</div>`;

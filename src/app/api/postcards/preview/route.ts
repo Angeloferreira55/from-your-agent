@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
   const agentData: AgentPlaceholderData = {
     agent_name: agentName,
     brokerage_name: agent.company_name || undefined,
-    brokerage_logo_url: agent.brokerage_logo_url || brokerageLogoUrl || agent.logo_url || undefined,
+    brokerage_logo_url: brokerageLogoUrl || agent.brokerage_logo_url || agent.logo_url || undefined,
     agent_phone: agent.phone || undefined,
   };
 
@@ -122,7 +122,7 @@ export async function POST(req: NextRequest) {
 
   const frontHtml = hasPlaceholders
     ? resolvedFront
-    : injectFrontOverlay(resolvedFront, agentName, agent.company_name, dims.front.width, agent.brokerage_logo_url || brokerageLogoUrl || agent.logo_url);
+    : injectFrontOverlay(resolvedFront, agentName, agent.company_name, dims.front.width, brokerageLogoUrl || agent.brokerage_logo_url || agent.logo_url);
 
   const now = new Date();
   const rawBackHtml = renderFullBackHtml({
