@@ -1865,7 +1865,25 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
             </div>
           )}
 
-          {/* Disclaimer editing removed — disclaimers no longer shown on postcards */}
+          {/* Disclaimer — only on brokerage back panel */}
+          {!isFront && !isAgent && (
+            <div className="space-y-2 border-t pt-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Disclaimer</p>
+              <textarea
+                className="w-full rounded border bg-background px-2 py-1.5 text-xs"
+                rows={2}
+                value={disclaimer}
+                onChange={(e) => setDisclaimer(e.target.value)}
+                placeholder="e.g. Each office is independently owned and operated."
+              />
+              <div className="flex items-center gap-2">
+                <label className="text-[10px] text-muted-foreground">Size</label>
+                <input type="number" min={5} max={14} value={disclaimerFontSize} onChange={(e) => setDisclaimerFontSize(Number(e.target.value))} className="w-14 rounded border bg-background px-1.5 py-0.5 text-xs" />
+                <label className="text-[10px] text-muted-foreground">Color</label>
+                <input type="color" value={disclaimerColor.startsWith("rgba") ? "#ffffff" : disclaimerColor} onChange={(e) => setDisclaimerColor(e.target.value)} className="h-5 w-5 cursor-pointer rounded border-0 p-0" />
+              </div>
+            </div>
+          )}
 
           {/* Elements list */}
           <div className="space-y-1.5">
