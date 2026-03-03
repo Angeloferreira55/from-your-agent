@@ -136,11 +136,8 @@ function welcomeTemplate(firstName: string, appUrl: string): string {
           <!-- Footer -->
           <tr>
             <td style="padding:24px 40px;background-color:#f8fafc;border-top:1px solid #e2e8f0;text-align:center;">
-              <p style="margin:0 0 4px;font-size:13px;color:#94a3b8;">
-                Questions? Reply to this email or reach us at support@from-your-agent.com
-              </p>
-              <p style="margin:0;font-size:12px;color:#cbd5e1;">
-                &copy; ${new Date().getFullYear()} From Your Agent. All rights reserved.
+              <p style="margin:0;font-size:13px;color:#94a3b8;">
+                Questions? Reply to this email or reach us at <a href="mailto:support@from-your-agent.com" style="color:#94a3b8;">support@from-your-agent.com</a> &middot; &copy; ${new Date().getFullYear()} From Your Agent
               </p>
             </td>
           </tr>
