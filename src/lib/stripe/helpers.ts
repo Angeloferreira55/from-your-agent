@@ -15,9 +15,14 @@ export async function getOrCreateStripeCustomer(agentId: string): Promise<string
 
   if (!agent) throw new Error("Agent not found");
 
-  // Return existing customer ID if already set
+  // Verify existing customer ID is valid on this Stripe account
   if (agent.stripe_customer_id) {
-    return agent.stripe_customer_id;
+    try {
+      await stripe.customers.retrieve(agent.stripe_customer_id);
+      return agent.stripe_customer_id;
+    } catch {
+      // Customer doesn't exist on this Stripe account — create a new one
+    }
   }
 
   // Create new Stripe customer
@@ -45,42 +50,26 @@ export async function getOrCreateStripeCustomer(agentId: string): Promise<string
  */
 export async function reportUsage(
   customerId: string,
-  mailedCards: number,
-  unmailedCards: number,
+  cardCount: number,
+  _unused: number,
   campaignId: string,
-  description: string
+  description: string,
+  totalForPricing?: number
 ): Promise<void> {
   const { getPricePerCard } = await import("./config");
-  const totalCards = mailedCards + unmailedCards;
 
-  // Create invoice items for mailed cards
-  if (mailedCards > 0) {
-    const pricePerMailed = getPricePerCard(totalCards, true);
+  if (cardCount > 0) {
+    // Use totalForPricing for tier calculation if provided (e.g. mailed + prints combined)
+    const pricePerCard = getPricePerCard(totalForPricing ?? cardCount);
     await stripe.invoiceItems.create({
       customer: customerId,
-      amount: Math.round(pricePerMailed * mailedCards * 100), // cents
+      amount: Math.round(pricePerCard * cardCount * 100), // cents
       currency: "usd",
-      description: `${description} — ${mailedCards} mailed postcards @ $${pricePerMailed.toFixed(2)}`,
+      description: `${description} — ${cardCount} postcards @ $${pricePerCard.toFixed(2)}`,
       metadata: {
         campaign_id: campaignId,
-        type: "mailed",
-        count: String(mailedCards),
-      },
-    });
-  }
-
-  // Create invoice items for unmailed (opted-in but not mailed) cards
-  if (unmailedCards > 0) {
-    const pricePerUnmailed = getPricePerCard(totalCards, false);
-    await stripe.invoiceItems.create({
-      customer: customerId,
-      amount: Math.round(pricePerUnmailed * unmailedCards * 100), // cents
-      currency: "usd",
-      description: `${description} — ${unmailedCards} unmailed postcards @ $${pricePerUnmailed.toFixed(2)}`,
-      metadata: {
-        campaign_id: campaignId,
-        type: "unmailed",
-        count: String(unmailedCards),
+        type: "postcard",
+        count: String(cardCount),
       },
     });
   }

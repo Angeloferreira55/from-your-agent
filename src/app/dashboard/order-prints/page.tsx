@@ -24,6 +24,10 @@ interface Campaign {
   year: number;
   template_id: string;
   status: string;
+  total_postcards: number;
+  my_participation: {
+    contact_count: number;
+  } | null;
 }
 
 export default function OrderPrintsPage() {
@@ -95,7 +99,10 @@ export default function OrderPrintsPage() {
 
   const hasAddress = deliveryAddress?.line1 && deliveryAddress?.city && deliveryAddress?.state && deliveryAddress?.zip;
 
-  const pricePerCard = getPricePerCard(quantity);
+  // Combine mailed cards + print quantity for volume pricing
+  const mailedCards = selectedCampaign?.my_participation?.contact_count || 0;
+  const combinedTotal = mailedCards + quantity;
+  const pricePerCard = getPricePerCard(combinedTotal);
   const totalPrice = (pricePerCard * quantity).toFixed(2);
 
   if (orderComplete && orderResult) {
