@@ -32,6 +32,8 @@ export function Footer() {
             <ul className="space-y-2 text-sm">
               <li><Link href="/login" className="hover:text-white transition-colors">Agent Login</Link></li>
               <li><Link href="/signup" className="hover:text-white transition-colors">Get Started</Link></li>
+              <li><Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link></li>
+              <li><Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
             </ul>
           </div>
 
@@ -39,7 +41,7 @@ export function Footer() {
           <div>
             <h4 className="mb-3 text-sm font-semibold text-white">Support</h4>
             <ul className="space-y-2 text-sm">
-              <li><a href="mailto:support@fromyouragent.com" className="hover:text-white transition-colors">support@fromyouragent.com</a></li>
+              <li><a href="mailto:support@from-your-agent.com" className="hover:text-white transition-colors">support@from-your-agent.com</a></li>
             </ul>
           </div>
         </div>

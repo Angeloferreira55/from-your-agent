@@ -159,7 +159,7 @@ export default function FaqPage() {
         <div className="mx-auto max-w-3xl px-6 text-center">
           <h2 className="font-serif text-3xl font-bold text-[#1a1a2e]">Still have questions?</h2>
           <p className="mt-3 text-lg text-muted-foreground">
-            Email us at support@fromyouragent.com or sign up and try it out yourself.
+            Email us at support@from-your-agent.com or sign up and try it out yourself.
           </p>
           <Link href="/signup">
             <Button size="lg" className="mt-6 bg-[#E8733A] hover:bg-[#CF6430] text-white text-lg px-8">
