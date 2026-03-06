@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import React from "react";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Send, Mail, TrendingUp, Camera, Image, MessageSquare, Upload, Settings, UserPlus, Printer, CreditCard } from "lucide-react";
+import { Users, Send, Mail, TrendingUp, Camera, Image, MessageSquare, Upload, Settings, UserPlus, Printer, CreditCard, Phone } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function DashboardPage() {
@@ -108,6 +108,7 @@ export default async function DashboardPage() {
                 !profile?.logo_url && { href: "/dashboard/settings", icon: Image, label: "Upload your logo" },
                 !profile?.custom_message && { href: "/dashboard/personalization", icon: MessageSquare, label: "Set your custom message" },
                 (contactCount ?? 0) === 0 && { href: "/dashboard/contacts/upload", icon: Upload, label: "Upload your contact database" },
+                !profile?.phone && { href: "/dashboard/settings", icon: Phone, label: "Add your phone number" },
                 profile?.subscription_status !== "active" && { href: "/dashboard/billing", icon: CreditCard, label: "Add a payment method" },
               ].filter(Boolean) as { href: string; icon: React.ElementType; label: string }[];
 

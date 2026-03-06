@@ -149,23 +149,23 @@ export default function CampaignsPage() {
         </Button>
       </div>
 
-      {/* Auto-campaign info card */}
+      {/* Campaign info card */}
       <Card className="border-orange-200 bg-orange-50/50">
         <CardContent className="flex items-start gap-4 pt-6">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-orange-100">
             <Rocket className="h-5 w-5 text-orange-600" />
           </div>
           <div className="space-y-1">
-            <p className="font-semibold text-sm">Automatic Monthly Campaigns</p>
+            <p className="font-semibold text-sm">Monthly Campaigns</p>
             <p className="text-sm text-muted-foreground">
-              Postcards are automatically mailed on the 25th of each month so they arrive by the first week.
-              Just keep your contacts list and personalization up to date — we handle the rest.
+              Each month a new campaign is created with curated local deals. We mail postcards to your active contacts
+              and bill you per card sent. Keep your contacts list and personalization up to date — we handle the rest.
               Use the &quot;Send Test Postcards&quot; button above to do a trial run before your first campaign.
             </p>
             <div className="flex items-center gap-4 pt-2 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Info className="h-3 w-3" />
-                To stop mailings, set your subscription to inactive in Settings
+                Questions? Contact us at support@from-your-agent.com
               </span>
             </div>
           </div>
@@ -184,8 +184,7 @@ export default function CampaignsPage() {
             </div>
             <CardTitle>No campaigns yet</CardTitle>
             <CardDescription>
-              Your first automatic campaign will be created on the 1st of next month.
-              Use &quot;Send Test Postcards&quot; above to verify everything is set up correctly.
+              No campaigns have been created yet. Use &quot;Send Test Postcards&quot; above to verify your profile and contacts are set up correctly.
             </CardDescription>
           </CardHeader>
         </Card>
