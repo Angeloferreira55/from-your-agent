@@ -62,13 +62,8 @@ export default function SignupPage() {
       body: JSON.stringify({ email, firstName }),
     }).catch(() => {});
 
-    // Check if this email should be auto-promoted to admin
-    const adminCheck = await fetch("/api/auth/check-admin", { method: "POST" });
-    const { role } = await adminCheck.json();
-
-    toast.success("Account created! Redirecting to your dashboard...");
-    router.push(role === "admin" ? "/admin" : "/dashboard");
-    router.refresh();
+    toast.success("Account created! Please check your email to confirm.");
+    router.push("/check-email");
   }
 
   return (
