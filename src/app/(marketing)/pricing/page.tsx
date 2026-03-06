@@ -12,24 +12,21 @@ const tiers = [
   {
     name: "Starter",
     range: "1 - 99 cards / month",
-    mailed: 1.25,
-    unmailed: 0.90,
+    price: 1.39,
     popular: false,
     description: "Perfect for agents just getting started with relationship marketing.",
   },
   {
     name: "Standard",
     range: "100 - 499 cards / month",
-    mailed: 1.10,
-    unmailed: 0.85,
+    price: 1.25,
     popular: true,
     description: "The most popular tier. Great for established agents with a solid sphere.",
   },
   {
     name: "Volume",
     range: "500+ cards / month",
-    mailed: 1.00,
-    unmailed: 0.85,
+    price: 1.10,
     popular: false,
     description: "Best value for top producers and teams with large databases.",
   },
@@ -51,12 +48,8 @@ const included = [
 
 const faqs = [
   {
-    q: "What's the difference between mailed and unmailed pricing?",
-    a: "Mailed price applies to postcards that are printed, stamped, and mailed to your database. Unmailed price applies when you decide to not mail those through us. We will ship them directly to you (Shipping fee will vary depending on the quantity starting at $9.99 up to 100 cards).",
-  },
-  {
     q: "How does volume pricing work?",
-    a: "Your tier is based on your total card count for the month. If you send 150 cards in a month, all 150 cards are priced at the Standard tier ($1.10 each), not just the ones over 100.",
+    a: "Your tier is based on your total card count for the month. If you send 150 cards in a month, all 150 cards are priced at the Standard tier ($1.25 each), not just the ones over 100.",
   },
   {
     q: "Are there any hidden fees?",
@@ -101,12 +94,9 @@ export default function PricingPage() {
                 </CardHeader>
                 <CardContent className="text-center">
                   <div className="mt-2">
-                    <span className="text-5xl font-extrabold">${tier.mailed.toFixed(2)}</span>
-                    <span className="text-sm text-muted-foreground"> / mailed card</span>
+                    <span className="text-5xl font-extrabold">${tier.price.toFixed(2)}</span>
+                    <span className="text-sm text-muted-foreground"> / card</span>
                   </div>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    ${tier.unmailed.toFixed(2)} / unmailed card
-                  </p>
                   <p className="mt-4 text-sm text-muted-foreground">{tier.description}</p>
                   <Link href="/signup" className="mt-6 block">
                     <Button

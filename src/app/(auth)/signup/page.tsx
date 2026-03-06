@@ -55,6 +55,13 @@ export default function SignupPage() {
         .eq("user_id", user.id);
     }
 
+    // Send welcome email (fire-and-forget — don't block signup)
+    fetch("/api/email/welcome", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, firstName }),
+    }).catch(() => {});
+
     // Check if this email should be auto-promoted to admin
     const adminCheck = await fetch("/api/auth/check-admin", { method: "POST" });
     const { role } = await adminCheck.json();

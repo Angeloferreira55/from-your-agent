@@ -1,4 +1,5 @@
 import type { DesignConfig, DesignElement } from "@/components/admin/TemplateDesigner";
+import { PANEL_TEMPLATES, profileToTemplateData } from "@/lib/agent-panel-templates";
 
 /**
  * Lob's HTML renderer is WebKit-based and expects body dimensions in inches
@@ -646,26 +647,13 @@ export function renderFullBackHtml(params: FullBackParams): string {
     const agentDesign = designData as unknown as DesignConfig;
     agentElements = renderFlatPanel(agentDesign, 0, halfH, halfW, halfH, seasonalFooterHtml, "#000", params.agent.team_logo_url);
   } else {
-    // Fallback agent panel — wrapped in container with overflow:hidden
-    const agent = params.agent;
-    const agentName = `${agent.first_name} ${agent.last_name}`.trim();
-    const aS = halfW / 675;
-    let inner = "";
-    inner += `<div style="position:absolute;left:0;top:0;width:100%;height:100%;background:#fff"></div>`;
-    if (agent.photo_url) {
-      inner += `<img src="${toAbsoluteUrl(agent.photo_url)}" style="position:absolute;left:${toIn(halfW * 0.04)};top:${toIn(halfH * 0.04)};width:${toIn(100 * aS)};height:${toIn(130 * aS)};object-fit:cover;border-radius:${toIn(6 * aS)};border:${toIn(3 * aS)} solid ${brandColor}" />`;
+    // No custom design saved — auto-generate Classic template from agent profile
+    const classicBuilder = PANEL_TEMPLATES.find(t => t.key === "classic");
+    if (classicBuilder) {
+      const templateData = profileToTemplateData(params.agent);
+      const autoDesign = classicBuilder.build(templateData);
+      agentElements = renderFlatPanel(autoDesign, 0, halfH, halfW, halfH, seasonalFooterHtml, "#000", params.agent.team_logo_url);
     }
-    const textLeftPx = halfW * 0.04 + 110 * aS;
-    inner += `<p style="position:absolute;left:${toIn(textLeftPx)};top:${toIn(halfH * 0.04)};width:${toIn(halfW * 0.55)};font-size:${toIn(16 * aS)};color:#111827;font-weight:bold;font-family:Arial,sans-serif;margin:0;line-height:1.2">${escapeHtml(agentName)}</p>`;
-    if (agent.tagline) inner += `<p style="position:absolute;left:${toIn(textLeftPx)};top:${toIn(halfH * 0.12)};width:${toIn(halfW * 0.55)};font-size:${toIn(9 * aS)};color:${brandColor};font-style:italic;font-family:Arial,sans-serif;margin:0">${escapeHtml(agent.tagline)}</p>`;
-    if (agent.company_name) inner += `<p style="position:absolute;left:${toIn(textLeftPx)};top:${toIn(halfH * 0.18)};width:${toIn(halfW * 0.55)};font-size:${toIn(10 * aS)};color:#374151;font-weight:600;font-family:Arial,sans-serif;margin:0">${escapeHtml(agent.company_name)}</p>`;
-    if (agent.phone) inner += `<p style="position:absolute;left:${toIn(textLeftPx)};top:${toIn(halfH * 0.24)};width:${toIn(halfW * 0.55)};font-size:${toIn(9 * aS)};color:#6b7280;font-family:Arial,sans-serif;margin:0">${escapeHtml(agent.phone)}</p>`;
-    inner += `<p style="position:absolute;left:${toIn(textLeftPx)};top:${toIn(halfH * 0.30)};width:${toIn(halfW * 0.55)};font-size:${toIn(8 * aS)};color:#6b7280;font-family:Arial,sans-serif;margin:0">${escapeHtml(agent.email)}</p>`;
-    if (agent.team_logo_url) {
-      inner += `<img src="${toAbsoluteUrl(agent.team_logo_url)}" style="position:absolute;right:${toIn(halfW * 0.04)};top:${toIn(halfH * 0.04)};height:${toIn(55 * aS)};object-fit:contain" />`;
-    }
-    if (seasonalFooterHtml) inner += seasonalFooterHtml;
-    agentElements = `<div style="position:absolute;left:0;top:${toIn(halfH)};width:${toIn(halfW)};height:${toIn(halfH)};overflow:hidden">${inner}</div>`;
   }
 
   // ── 4. Compose full back ──
@@ -720,25 +708,13 @@ export function renderAgentPanelHtml(params: {
     // Render at origin (0,0) since this is standalone
     panelContent = renderFlatPanel(agentDesign, 0, 0, halfW, halfH, seasonalFooterHtml, "#000", params.agent.team_logo_url);
   } else {
-    const agent = params.agent;
-    const agentName = `${agent.first_name} ${agent.last_name}`.trim();
-    const aS = halfW / 675;
-    let inner = "";
-    inner += `<div style="position:absolute;left:0;top:0;width:100%;height:100%;background:#fff"></div>`;
-    if (agent.photo_url) {
-      inner += `<img src="${toAbsoluteUrl(agent.photo_url)}" style="position:absolute;left:${toIn(halfW * 0.04)};top:${toIn(halfH * 0.04)};width:${toIn(100 * aS)};height:${toIn(130 * aS)};object-fit:cover;border-radius:${toIn(6 * aS)};border:${toIn(3 * aS)} solid ${brandColor}" />`;
+    // No custom design saved — auto-generate Classic template from agent profile
+    const classicBuilder = PANEL_TEMPLATES.find(t => t.key === "classic");
+    if (classicBuilder) {
+      const templateData = profileToTemplateData(params.agent);
+      const autoDesign = classicBuilder.build(templateData);
+      panelContent = renderFlatPanel(autoDesign, 0, 0, halfW, halfH, seasonalFooterHtml, "#000", params.agent.team_logo_url);
     }
-    const textLeftPx = halfW * 0.04 + 110 * aS;
-    inner += `<p style="position:absolute;left:${toIn(textLeftPx)};top:${toIn(halfH * 0.04)};width:${toIn(halfW * 0.55)};font-size:${toIn(16 * aS)};color:#111827;font-weight:bold;font-family:Arial,sans-serif;margin:0;line-height:1.2">${escapeHtml(agentName)}</p>`;
-    if (agent.tagline) inner += `<p style="position:absolute;left:${toIn(textLeftPx)};top:${toIn(halfH * 0.12)};width:${toIn(halfW * 0.55)};font-size:${toIn(9 * aS)};color:${brandColor};font-style:italic;font-family:Arial,sans-serif;margin:0">${escapeHtml(agent.tagline)}</p>`;
-    if (agent.company_name) inner += `<p style="position:absolute;left:${toIn(textLeftPx)};top:${toIn(halfH * 0.18)};width:${toIn(halfW * 0.55)};font-size:${toIn(10 * aS)};color:#374151;font-weight:600;font-family:Arial,sans-serif;margin:0">${escapeHtml(agent.company_name)}</p>`;
-    if (agent.phone) inner += `<p style="position:absolute;left:${toIn(textLeftPx)};top:${toIn(halfH * 0.24)};width:${toIn(halfW * 0.55)};font-size:${toIn(9 * aS)};color:#6b7280;font-family:Arial,sans-serif;margin:0">${escapeHtml(agent.phone)}</p>`;
-    inner += `<p style="position:absolute;left:${toIn(textLeftPx)};top:${toIn(halfH * 0.30)};width:${toIn(halfW * 0.55)};font-size:${toIn(8 * aS)};color:#6b7280;font-family:Arial,sans-serif;margin:0">${escapeHtml(agent.email)}</p>`;
-    if (agent.team_logo_url) {
-      inner += `<img src="${toAbsoluteUrl(agent.team_logo_url)}" style="position:absolute;right:${toIn(halfW * 0.04)};top:${toIn(halfH * 0.04)};height:${toIn(55 * aS)};object-fit:contain" />`;
-    }
-    if (seasonalFooterHtml) inner += seasonalFooterHtml;
-    panelContent = `<div style="position:absolute;left:0;top:0;width:${toIn(halfW)};height:${toIn(halfH)};overflow:hidden">${inner}</div>`;
   }
 
   // Convert panel dimensions to CSS inch values for the scale script

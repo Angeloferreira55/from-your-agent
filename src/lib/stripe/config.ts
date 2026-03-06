@@ -9,9 +9,9 @@ export const STRIPE_CONFIG = {
 
   // Pricing tiers (matched to DB pricing_tiers)
   tiers: [
-    { name: "Starter", minCards: 1, maxCards: 99, pricePerMailed: 1.25, pricePerUnmailed: 0.90 },
-    { name: "Standard", minCards: 100, maxCards: 499, pricePerMailed: 1.10, pricePerUnmailed: 0.85 },
-    { name: "Volume", minCards: 500, maxCards: null, pricePerMailed: 1.00, pricePerUnmailed: 0.85 },
+    { name: "Starter", minCards: 1, maxCards: 99, pricePerMailed: 1.39 },
+    { name: "Standard", minCards: 100, maxCards: 499, pricePerMailed: 1.25 },
+    { name: "Volume", minCards: 500, maxCards: null, pricePerMailed: 1.10 },
   ],
 
   // Portal return URL
@@ -25,11 +25,11 @@ export const STRIPE_CONFIG = {
 /**
  * Get the price per card based on total count.
  */
-export function getPricePerCard(totalCards: number, mailed: boolean): number {
+export function getPricePerCard(totalCards: number): number {
   for (const tier of STRIPE_CONFIG.tiers) {
     if (totalCards >= tier.minCards && (tier.maxCards === null || totalCards <= tier.maxCards)) {
-      return mailed ? tier.pricePerMailed : tier.pricePerUnmailed;
+      return tier.pricePerMailed;
     }
   }
-  return mailed ? 1.25 : 0.90;
+  return 1.39;
 }

@@ -12,6 +12,46 @@ function getResend(): Resend {
   return _resend;
 }
 
+export async function sendNewAgentNotification(agentEmail: string, agentName: string) {
+  const fromEmail = process.env.EMAIL_FROM || "onboarding@resend.dev";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const now = new Date().toLocaleString("en-US", { timeZone: "America/New_York", dateStyle: "full", timeStyle: "short" });
+
+  await getResend().emails.send({
+    from: `From Your Agent <${fromEmail}>`,
+    to: ["angelo@from-your-agent.com", "contact@from-your-agent.com"],
+    subject: `New agent signup: ${agentName || agentEmail}`,
+    html: `
+<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:40px 20px;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);margin:0 auto;">
+    <tr>
+      <td style="background:#E8733A;padding:24px 32px;">
+        <p style="margin:0;font-size:18px;font-weight:700;color:#fff;">New Agent Signup 🎉</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:32px;">
+        <p style="margin:0 0 16px;font-size:15px;color:#334155;line-height:1.6;">
+          A new agent just created an account on <strong>From Your Agent</strong>.
+        </p>
+        <table cellpadding="0" cellspacing="0" style="background:#f8fafc;border-radius:8px;padding:20px;width:100%;margin-bottom:24px;">
+          <tr><td style="font-size:13px;color:#64748b;padding-bottom:6px;">Name</td><td style="font-size:15px;font-weight:600;color:#1e293b;">${agentName || "—"}</td></tr>
+          <tr><td style="font-size:13px;color:#64748b;padding-bottom:6px;padding-top:10px;">Email</td><td style="font-size:15px;color:#1e293b;">${agentEmail}</td></tr>
+          <tr><td style="font-size:13px;color:#64748b;padding-top:10px;">Signed up</td><td style="font-size:15px;color:#1e293b;">${now} ET</td></tr>
+        </table>
+        <a href="${appUrl}/admin" style="display:inline-block;background:#E8733A;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-size:14px;font-weight:600;">
+          View in Admin Dashboard →
+        </a>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`,
+  });
+}
+
 export async function sendWelcomeEmail(to: string, firstName: string) {
   const fromEmail = process.env.EMAIL_FROM || "onboarding@resend.dev";
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -137,7 +177,7 @@ function welcomeTemplate(firstName: string, appUrl: string): string {
           <tr>
             <td style="padding:24px 40px;background-color:#f8fafc;border-top:1px solid #e2e8f0;text-align:center;">
               <p style="margin:0;font-size:13px;color:#94a3b8;">
-                Questions? Reply to this email or reach us at <a href="mailto:support@from-your-agent.com" style="color:#94a3b8;">support@from-your-agent.com</a> &middot; &copy; ${new Date().getFullYear()} From Your Agent
+                Questions? Reach us at <a href="mailto:support@from-your-agent.com" style="color:#94a3b8;">support@from-your-agent.com</a> &middot; &copy; ${new Date().getFullYear()} From Your Agent
               </p>
             </td>
           </tr>

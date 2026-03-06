@@ -36,8 +36,8 @@ export default function HomePage() {
             </p>
             <div className="mt-8">
               <img
-                src="/postcards-enjoy.png"
-                alt="Sample postcards your clients and friends will enjoy"
+                src="/from-your-agent-home.jpeg"
+                alt="From Your Agent — relationship marketing postcards"
                 className="mx-auto max-w-4xl w-full rounded-lg shadow-lg"
               />
             </div>

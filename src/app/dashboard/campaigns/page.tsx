@@ -12,7 +12,6 @@ import { PostcardFront } from "@/components/postcard/PostcardFront";
 import { OfferMatchPreview } from "@/components/campaigns/OfferMatchPreview";
 import { useAgentProfile } from "@/hooks/use-agent-profile";
 import { useAgentCampaigns, useOptInCampaign, useOptOutCampaign } from "@/hooks/use-campaigns";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Send, Eye, Check, X, Loader2, Calendar, Users, Mail, TestTube, Rocket, Info } from "lucide-react";
 import { toast } from "sonner";
 import type { Campaign } from "@/types/database";
@@ -36,7 +35,6 @@ export default function CampaignsPage() {
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
   const [showTestDialog, setShowTestDialog] = useState(false);
   const [testContactIds, setTestContactIds] = useState<string[]>([]);
-  const [testTemplateId, setTestTemplateId] = useState<string>("");
 
   // Fetch agent contacts for opt-in selection and test
   const { data: contactsData } = useQuery({
@@ -49,21 +47,9 @@ export default function CampaignsPage() {
     enabled: !!optInCampaign || showTestDialog,
   });
 
-  // Fetch front templates for the template picker
-  const { data: templatesData } = useQuery({
-    queryKey: ["front-templates"],
-    queryFn: async () => {
-      const res = await fetch("/api/admin/templates");
-      if (!res.ok) throw new Error("Failed to fetch");
-      return res.json();
-    },
-    enabled: showTestDialog,
-  });
-
-  const frontTemplates = (templatesData?.templates || []).filter(
-    (t: { type: string; is_active: boolean; front_html: string | null }) =>
-      t.type === "monthly" && t.is_active && t.front_html
-  );
+  // Find the current active campaign's template_id for test sends
+  const typedAllCampaigns = (campaigns || []) as EnrichedCampaign[];
+  const currentCampaign = typedAllCampaigns.find((c) => !c.name?.startsWith("Test")) || typedAllCampaigns[0];
 
   const contacts = contactsData?.contacts || [];
 
@@ -390,30 +376,23 @@ export default function CampaignsPage() {
       </Dialog>
 
       {/* Send Test Postcards Dialog */}
-      <Dialog open={showTestDialog} onOpenChange={(open) => { setShowTestDialog(open); if (!open) { setTestContactIds([]); setTestTemplateId(""); } }}>
+      <Dialog open={showTestDialog} onOpenChange={(open) => { setShowTestDialog(open); if (!open) { setTestContactIds([]); } }}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Send Test Postcards</DialogTitle>
             <DialogDescription>
-              Select a template and contacts to send real postcards to.
+              Select contacts to send a real test postcard to.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-3">
-            {/* Template picker */}
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium">Template</label>
-              <Select value={testTemplateId} onValueChange={setTestTemplateId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a template..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {frontTemplates.map((t: { id: string; name: string }) => (
-                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Current campaign info */}
+            {currentCampaign && (
+              <div className="rounded-md border bg-muted/50 p-3">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Campaign</p>
+                <p className="text-sm font-semibold">{currentCampaign.name || `${MONTHS[currentCampaign.month]} ${currentCampaign.year}`}</p>
+              </div>
+            )}
 
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium">
@@ -476,8 +455,8 @@ export default function CampaignsPage() {
             </Button>
             <Button
               className="bg-orange-600 hover:bg-orange-700"
-              disabled={testContactIds.length === 0 || !testTemplateId || sendTest.isPending}
-              onClick={() => sendTest.mutate({ contactIds: testContactIds, templateId: testTemplateId })}
+              disabled={testContactIds.length === 0 || sendTest.isPending}
+              onClick={() => sendTest.mutate({ contactIds: testContactIds, templateId: currentCampaign?.template_id })}
             >
               {sendTest.isPending ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -81,6 +81,11 @@ export default function ContactsPage() {
     toast.success(`${ids.length} contact(s) restored`);
   }
 
+  async function handleStatusChange(contact: Contact, status: string) {
+    await updateContact.mutateAsync({ id: contact.id, status } as Contact & { id: string });
+    toast.success(status === "inactive" ? "Contact marked inactive" : "Contact marked active");
+  }
+
   // Empty state
   if (!isLoading && total === 0 && !search && (statusFilter === "all" || statusFilter === "active")) {
     return (
@@ -267,6 +272,7 @@ export default function ContactsPage() {
         onSelectOne={handleSelectOne}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        onStatusChange={handleStatusChange}
       />
 
       {/* Pagination */}

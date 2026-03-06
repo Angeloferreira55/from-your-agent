@@ -24,6 +24,7 @@ import {
   Settings,
   LogOut,
   Mail,
+  Printer,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -41,6 +42,7 @@ const navItems = [
       { title: "Campaigns", href: "/dashboard/campaigns", icon: Send },
       { title: "Postcards", href: "/dashboard/postcards", icon: Mail },
       { title: "Personalization", href: "/dashboard/personalization", icon: Palette },
+      { title: "Order Prints", href: "/dashboard/order-prints", icon: Printer },
     ],
   },
   {

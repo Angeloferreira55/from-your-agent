@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import {
   Table,
   TableBody,
@@ -18,7 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Pencil, Trash2, CheckCircle2, AlertCircle } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2, CheckCircle2, AlertCircle, EyeOff, Eye } from "lucide-react";
 import type { Contact } from "@/types/database";
 
 interface ContactTableProps {
@@ -28,6 +27,7 @@ interface ContactTableProps {
   onSelectOne: (id: string, checked: boolean) => void;
   onEdit: (contact: Contact) => void;
   onDelete: (ids: string[]) => void;
+  onStatusChange: (contact: Contact, status: string) => void;
 }
 
 const STATUS_BADGE: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
@@ -54,6 +54,7 @@ export function ContactTable({
   onSelectOne,
   onEdit,
   onDelete,
+  onStatusChange,
 }: ContactTableProps) {
   const allSelected = contacts.length > 0 && selectedIds.size === contacts.length;
 
@@ -140,6 +141,17 @@ export function ContactTable({
                           <Pencil className="mr-2 h-4 w-4" />
                           Edit
                         </DropdownMenuItem>
+                        {contact.status === "active" ? (
+                          <DropdownMenuItem onClick={() => onStatusChange(contact, "inactive")}>
+                            <EyeOff className="mr-2 h-4 w-4" />
+                            Mark Inactive
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem onClick={() => onStatusChange(contact, "active")}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            Mark Active
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem
                           className="text-destructive"
                           onClick={() => onDelete([contact.id])}

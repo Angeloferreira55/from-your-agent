@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
 
   const { data: profile } = await admin
     .from("agent_profiles")
-    .select("id, stripe_customer_id, subscription_status")
+    .select("id, stripe_customer_id, subscription_status, stripe_coupon_id")
     .eq("user_id", userId)
     .single();
 
@@ -67,6 +67,21 @@ export async function GET(req: NextRequest) {
     .eq("is_active", true)
     .order("min_cards", { ascending: true });
 
+  // Get active discount info if agent has a coupon
+  let activeDiscount: string | null = null;
+  if (profile.stripe_coupon_id) {
+    try {
+      const coupon = await stripe.coupons.retrieve(profile.stripe_coupon_id);
+      if (coupon.valid) {
+        activeDiscount = coupon.percent_off
+          ? `${coupon.percent_off}% off`
+          : `$${((coupon.amount_off || 0) / 100).toFixed(2)} off`;
+      }
+    } catch {
+      // Coupon may have been deleted
+    }
+  }
+
   return NextResponse.json({
     subscription_status: profile.subscription_status,
     payment_method: paymentMethod,
@@ -75,5 +90,6 @@ export async function GET(req: NextRequest) {
       unbilled_cards: unbilledCards,
     },
     pricing_tiers: tiers || [],
+    active_discount: activeDiscount,
   });
 }

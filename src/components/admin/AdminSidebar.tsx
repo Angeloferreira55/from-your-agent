@@ -25,6 +25,7 @@ import {
   Building2,
   LogOut,
   Shield,
+  TicketPercent,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -49,6 +50,7 @@ const navItems = [
     group: "Management",
     items: [
       { title: "Agents", href: "/admin/agents", icon: Users },
+      { title: "Promo Codes", href: "/admin/promos", icon: TicketPercent },
     ],
   },
 ];

@@ -98,19 +98,30 @@ export async function PATCH(request: NextRequest) {
 
   const admin = createAdminClient();
 
+  const { data: profile } = await admin
+    .from("agent_profiles")
+    .select("id")
+    .eq("user_id", userId)
+    .single();
+
+  if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+
   const body = await request.json();
   const { id, ...updates } = body;
 
   if (!id) return NextResponse.json({ error: "Contact ID required" }, { status: 400 });
 
+  // Only allow updating contacts that belong to this agent
   const { data, error } = await admin
     .from("contacts")
     .update(updates)
     .eq("id", id)
+    .eq("agent_id", profile.id)
     .select()
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (!data) return NextResponse.json({ error: "Contact not found" }, { status: 404 });
 
   return NextResponse.json(data);
 }
@@ -122,13 +133,23 @@ export async function DELETE(request: NextRequest) {
 
   const admin = createAdminClient();
 
+  const { data: profile } = await admin
+    .from("agent_profiles")
+    .select("id")
+    .eq("user_id", userId)
+    .single();
+
+  if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+
   const body = await request.json();
   const ids: string[] = Array.isArray(body.ids) ? body.ids : [body.id];
 
+  // Only soft-delete contacts that belong to this agent
   const { error } = await admin
     .from("contacts")
     .update({ status: "inactive" })
-    .in("id", ids);
+    .in("id", ids)
+    .eq("agent_id", profile.id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 

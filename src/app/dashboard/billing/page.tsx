@@ -14,7 +14,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CreditCard, Plus, Settings, Loader2 } from "lucide-react";
+import { CreditCard, Plus, Settings, Loader2, TicketPercent } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 interface PaymentMethod {
   brand: string;
@@ -49,6 +50,7 @@ interface BillingData {
   billing_records: BillingRecord[];
   current_month_estimate: { unbilled_cards: number };
   pricing_tiers: PricingTier[];
+  active_discount: string | null;
 }
 
 export default function BillingPage() {
@@ -56,6 +58,9 @@ export default function BillingPage() {
   const [data, setData] = useState<BillingData | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [promoCode, setPromoCode] = useState("");
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [activeDiscount, setActiveDiscount] = useState<string | null>(null);
 
   useEffect(() => {
     if (searchParams.get("success") === "true") {
@@ -69,7 +74,10 @@ export default function BillingPage() {
   useEffect(() => {
     fetch("/api/billing")
       .then((r) => r.json())
-      .then(setData)
+      .then((d) => {
+        setData(d);
+        if (d.active_discount) setActiveDiscount(d.active_discount);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -104,6 +112,30 @@ export default function BillingPage() {
       toast.error("Something went wrong. Please try again.");
     } finally {
       setActionLoading(false);
+    }
+  }
+
+  async function handleApplyPromo() {
+    if (!promoCode.trim()) return;
+    setPromoLoading(true);
+    try {
+      const res = await fetch("/api/billing/apply-promo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: promoCode }),
+      });
+      const result = await res.json();
+      if (!res.ok) {
+        toast.error(result.error || "Failed to apply promo code");
+        return;
+      }
+      toast.success(`Promo code applied! ${result.discount} on future invoices`);
+      setActiveDiscount(result.discount);
+      setPromoCode("");
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setPromoLoading(false);
     }
   }
 
@@ -227,6 +259,45 @@ export default function BillingPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Promo Code */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Promo Code</CardTitle>
+          <CardDescription>Have a discount code? Enter it below</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {activeDiscount ? (
+            <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-4">
+              <TicketPercent className="h-5 w-5 text-green-600" />
+              <p className="text-sm font-medium text-green-800">
+                Active discount: {activeDiscount}
+              </p>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <Input
+                value={promoCode}
+                onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                placeholder="Enter promo code"
+                className="font-mono"
+              />
+              <Button
+                className="bg-orange-600 hover:bg-orange-700"
+                onClick={handleApplyPromo}
+                disabled={promoLoading || !promoCode.trim()}
+              >
+                {promoLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <TicketPercent className="mr-2 h-4 w-4" />
+                )}
+                Apply
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* This Month */}
       <Card>

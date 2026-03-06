@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { stripe } from "@/lib/stripe/client";
 import { reportUsage } from "@/lib/stripe/helpers";
 import { getPricePerCard } from "@/lib/stripe/config";
+import type Stripe from "stripe";
 
 export async function POST(req: NextRequest) {
   const userId = getUserId(req);
@@ -32,7 +33,7 @@ export async function POST(req: NextRequest) {
   // Verify agent has payment method on file
   const { data: agent } = await admin
     .from("agent_profiles")
-    .select("stripe_customer_id, subscription_status")
+    .select("stripe_customer_id, subscription_status, stripe_coupon_id")
     .eq("id", agent_id)
     .single();
 
@@ -60,15 +61,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Already billed" }, { status: 400 });
   }
 
-  // Count mailed vs unmailed postcards
+  // Count postcards
   const { data: postcards } = await admin
     .from("postcards")
-    .select("id, mailed")
+    .select("id")
     .eq("agent_campaign_id", agentCampaign.id);
 
-  const mailedCards = (postcards || []).filter((p) => p.mailed).length;
-  const unmailedCards = (postcards || []).filter((p) => !p.mailed).length;
-  const totalCards = mailedCards + unmailedCards;
+  const totalCards = (postcards || []).length;
 
   if (totalCards === 0) {
     return NextResponse.json({ error: "No postcards to bill" }, { status: 400 });
@@ -84,10 +83,10 @@ export async function POST(req: NextRequest) {
   const description = `${campaign?.name || "Campaign"} — ${campaign?.month}/${campaign?.year}`;
 
   // Create invoice items via reportUsage
-  await reportUsage(agent.stripe_customer_id, mailedCards, unmailedCards, campaign_id, description);
+  await reportUsage(agent.stripe_customer_id, totalCards, 0, campaign_id, description);
 
   // Create and finalize Stripe invoice (auto-charges card on file)
-  const invoice = await stripe.invoices.create({
+  const invoiceParams: Stripe.InvoiceCreateParams = {
     customer: agent.stripe_customer_id,
     auto_advance: true,
     collection_method: "charge_automatically",
@@ -95,14 +94,20 @@ export async function POST(req: NextRequest) {
       campaign_id,
       agent_id,
     },
-  });
+  };
+
+  // Apply coupon discount if agent has one
+  if (agent.stripe_coupon_id) {
+    invoiceParams.discounts = [{ coupon: agent.stripe_coupon_id }];
+  }
+
+  const invoice = await stripe.invoices.create(invoiceParams);
 
   const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id);
 
   // Create billing record
-  const pricePerMailed = getPricePerCard(totalCards, true);
-  const pricePerUnmailed = getPricePerCard(totalCards, false);
-  const subtotal = mailedCards * pricePerMailed + unmailedCards * pricePerUnmailed;
+  const pricePerCard = getPricePerCard(totalCards);
+  const subtotal = totalCards * pricePerCard;
 
   await admin.from("billing_records").insert({
     agent_id,
@@ -110,10 +115,10 @@ export async function POST(req: NextRequest) {
     campaign_id,
     description,
     total_cards: totalCards,
-    mailed_cards: mailedCards,
-    unmailed_cards: unmailedCards,
-    price_per_mailed: pricePerMailed,
-    price_per_unmailed: pricePerUnmailed,
+    mailed_cards: totalCards,
+    unmailed_cards: 0,
+    price_per_mailed: pricePerCard,
+    price_per_unmailed: 0,
     subtotal,
     tax: 0,
     total: subtotal,
@@ -125,7 +130,6 @@ export async function POST(req: NextRequest) {
     invoice_id: invoice.id,
     invoice_url: finalizedInvoice.hosted_invoice_url,
     total: subtotal,
-    mailed_cards: mailedCards,
-    unmailed_cards: unmailedCards,
+    total_cards: totalCards,
   });
 }
