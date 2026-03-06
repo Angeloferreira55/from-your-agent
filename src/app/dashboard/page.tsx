@@ -1,8 +1,9 @@
 export const dynamic = "force-dynamic";
 
+import React from "react";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Send, Mail, TrendingUp, Camera, Image, MessageSquare, Upload, Settings, UserPlus, Printer } from "lucide-react";
+import { Users, Send, Mail, TrendingUp, Camera, Image, MessageSquare, Upload, Settings, UserPlus, Printer, CreditCard } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function DashboardPage() {
@@ -20,10 +21,12 @@ export default async function DashboardPage() {
     .select("*", { count: "exact", head: true })
     .eq("agent_id", profile?.id ?? "");
 
-  const { count: campaignCount } = await supabase
+  const { data: agentCampaignsData, count: campaignCount } = await supabase
     .from("agent_campaigns")
-    .select("*", { count: "exact", head: true })
+    .select("contact_count", { count: "exact" })
     .eq("agent_id", profile?.id ?? "");
+
+  const postcardsSent = agentCampaignsData?.reduce((sum, ac) => sum + (ac.contact_count || 0), 0) ?? 0;
 
   const stats = [
     {
@@ -40,7 +43,7 @@ export default async function DashboardPage() {
     },
     {
       title: "Postcards Sent",
-      value: 0,
+      value: postcardsSent,
       icon: Mail,
       description: "All time",
     },
@@ -99,43 +102,31 @@ export default async function DashboardPage() {
             <CardDescription>Get started with your account</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {!profile?.onboarding_completed && (
-              <div className="rounded-lg border border-orange-200 bg-orange-50 p-3">
-                <p className="text-sm font-medium text-orange-800">
-                  Complete your setup
-                </p>
-                <ul className="mt-2 space-y-1 text-sm text-orange-700">
-                  {!profile?.photo_url && (
-                    <li>
-                      <Link href="/dashboard/settings" className="inline-flex items-center gap-1.5 hover:underline">
-                        <Camera className="h-3.5 w-3.5" /> Upload your headshot
-                      </Link>
-                    </li>
-                  )}
-                  {!profile?.logo_url && (
-                    <li>
-                      <Link href="/dashboard/settings" className="inline-flex items-center gap-1.5 hover:underline">
-                        <Image className="h-3.5 w-3.5" /> Upload your logo
-                      </Link>
-                    </li>
-                  )}
-                  {!profile?.custom_message && (
-                    <li>
-                      <Link href="/dashboard/personalization" className="inline-flex items-center gap-1.5 hover:underline">
-                        <MessageSquare className="h-3.5 w-3.5" /> Set your custom message
-                      </Link>
-                    </li>
-                  )}
-                  {(contactCount ?? 0) === 0 && (
-                    <li>
-                      <Link href="/dashboard/contacts/upload" className="inline-flex items-center gap-1.5 hover:underline">
-                        <Upload className="h-3.5 w-3.5" /> Upload your contact database
-                      </Link>
-                    </li>
-                  )}
-                </ul>
-              </div>
-            )}
+            {(() => {
+              const pendingItems = [
+                !profile?.photo_url && { href: "/dashboard/settings", icon: Camera, label: "Upload your headshot" },
+                !profile?.logo_url && { href: "/dashboard/settings", icon: Image, label: "Upload your logo" },
+                !profile?.custom_message && { href: "/dashboard/personalization", icon: MessageSquare, label: "Set your custom message" },
+                (contactCount ?? 0) === 0 && { href: "/dashboard/contacts/upload", icon: Upload, label: "Upload your contact database" },
+                profile?.subscription_status !== "active" && { href: "/dashboard/billing", icon: CreditCard, label: "Add a payment method" },
+              ].filter(Boolean) as { href: string; icon: React.ElementType; label: string }[];
+
+              if (pendingItems.length === 0) return null;
+              return (
+                <div className="rounded-lg border border-orange-200 bg-orange-50 p-3">
+                  <p className="text-sm font-medium text-orange-800">Complete your setup</p>
+                  <ul className="mt-2 space-y-1 text-sm text-orange-700">
+                    {pendingItems.map((item) => (
+                      <li key={item.href + item.label}>
+                        <Link href={item.href} className="inline-flex items-center gap-1.5 hover:underline">
+                          <item.icon className="h-3.5 w-3.5" /> {item.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })()}
             <div className="grid grid-cols-2 gap-2">
               <Link href="/dashboard/settings" className="flex items-center gap-2 rounded-lg border p-3 text-sm font-medium hover:bg-muted transition-colors">
                 <Settings className="h-4 w-4 text-muted-foreground" /> Edit Profile

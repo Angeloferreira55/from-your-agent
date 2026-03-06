@@ -171,6 +171,10 @@ export default function BillingPage() {
         </p>
       </div>
 
+      <div className="rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-blue-800">
+        <strong>How billing works:</strong> You are charged per postcard mailed at the end of each campaign. No monthly fees — you only pay when postcards go out.
+      </div>
+
       <div className="grid gap-6 md:grid-cols-2">
         {/* Payment Method */}
         <Card>
