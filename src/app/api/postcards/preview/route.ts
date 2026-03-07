@@ -151,33 +151,9 @@ export async function POST(req: NextRequest) {
   });
   const backHtml = renderTemplate(rawBackHtml, mergeVars);
 
-  // Inject a scale-to-fit script so the iframe preview renders correctly
-  // (Lob HTML uses inch-based body dimensions at 300dpi; we need to scale to container)
-  const scaleScript = `<script>
-    function fit(){
-      var bw=parseFloat(document.body.style.width)||document.body.offsetWidth||1;
-      var bh=parseFloat(document.body.style.height)||document.body.offsetHeight||1;
-      // body dimensions are in inches (e.g. "9.25in") — convert to px at 96dpi
-      var wStr=document.body.style.width||'';
-      var hStr=document.body.style.height||'';
-      if(wStr.indexOf('in')>-1)bw=parseFloat(wStr)*96;
-      if(hStr.indexOf('in')>-1)bh=parseFloat(hStr)*96;
-      var s=Math.min(window.innerWidth/bw,window.innerHeight/bh);
-      document.body.style.transform='scale('+s+')';
-      document.body.style.transformOrigin='top left';
-    }
-    window.addEventListener('load',fit);
-    window.addEventListener('resize',fit);
-  </script>`;
-
-  function injectScale(html: string): string {
-    if (html.includes("</head>")) return html.replace("</head>", scaleScript + "</head>");
-    return html;
-  }
-
   return NextResponse.json({
-    front_html: injectScale(frontHtml),
-    back_html: injectScale(backHtml),
+    front_html: frontHtml,
+    back_html: backHtml,
     merge_variables: mergeVars,
   });
 }

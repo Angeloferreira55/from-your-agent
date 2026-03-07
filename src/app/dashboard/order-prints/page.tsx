@@ -1,6 +1,44 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+
+// Postcard dimensions at 96dpi (9.25in × 6.25in for 6x9 with bleed)
+const CARD_W = 888;
+const CARD_H = 600;
+
+function PostcardFrame({ html }: { html: string }) {
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(0.5);
+
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const obs = new ResizeObserver(() => {
+      setScale(el.clientWidth / CARD_W);
+    });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  const scaledH = Math.round(CARD_H * scale);
+
+  return (
+    <div ref={wrapRef} className="rounded-md border overflow-hidden w-full" style={{ height: scaledH }}>
+      <iframe
+        srcDoc={html}
+        sandbox="allow-same-origin"
+        style={{
+          width: CARD_W,
+          height: CARD_H,
+          border: 0,
+          transform: `scale(${scale})`,
+          transformOrigin: "top left",
+          display: "block",
+        }}
+      />
+    </div>
+  );
+}
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -257,25 +295,11 @@ export default function OrderPrintsPage() {
                 <>
                   <div>
                     <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">Front</p>
-                    <div className="rounded-md border overflow-hidden" style={{ aspectRatio: "9/6" }}>
-                      <iframe
-                        srcDoc={preview.front_html}
-                        className="w-full h-full border-0"
-                        sandbox="allow-same-origin"
-                        style={{ overflow: "hidden" }}
-                      />
-                    </div>
+                    <PostcardFrame html={preview.front_html} />
                   </div>
                   <div>
                     <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">Back</p>
-                    <div className="rounded-md border overflow-hidden" style={{ aspectRatio: "9/6" }}>
-                      <iframe
-                        srcDoc={preview.back_html}
-                        className="w-full h-full border-0"
-                        sandbox="allow-same-origin"
-                        style={{ overflow: "hidden" }}
-                      />
-                    </div>
+                    <PostcardFrame html={preview.back_html} />
                   </div>
                 </>
               )}
