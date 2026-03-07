@@ -48,6 +48,9 @@ export async function PATCH(req: NextRequest) {
       .from(bucket)
       .getPublicUrl(filePath);
 
+    // Append cache-buster so browser always loads the new image
+    const urlWithCacheBust = `${publicUrl}?t=${Date.now()}`;
+
     const fieldMap: Record<string, string> = {
       logo: "logo_url",
       photo: "photo_url",
@@ -57,14 +60,14 @@ export async function PATCH(req: NextRequest) {
 
     const { error: updateError } = await admin
       .from("agent_profiles")
-      .update({ [fieldMap[type]]: publicUrl })
+      .update({ [fieldMap[type]]: urlWithCacheBust })
       .eq("user_id", userId);
 
     if (updateError) {
       return NextResponse.json({ error: updateError.message }, { status: 500 });
     }
 
-    return NextResponse.json({ url: publicUrl });
+    return NextResponse.json({ url: urlWithCacheBust });
   }
 
   // Regular profile update
