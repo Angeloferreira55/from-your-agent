@@ -206,7 +206,7 @@ function renderElement(el: DesignElement, pxWidth: number, pxHeight: number, des
     }
 
     const imgStyle = `width:100%;height:100%;object-fit:${el.objectFit || "contain"}`;
-    return `<div style="${style}"><img src="${toAbsoluteUrl(el.src)}" style="${imgStyle}" /></div>`;
+    return `<div style="${style};overflow:hidden"><img src="${toAbsoluteUrl(el.src)}" style="${imgStyle}" /></div>`;
   }
 
   if (el.type === "shape") {
@@ -344,24 +344,25 @@ export function injectFrontOverlay(
   if (!agentName && !companyName && !logoUrl) return html;
 
   const agentFontPx = cardWidth * 0.034;
-  const bottomPx = cardWidth * 0.018;
+  const logoBottomPx = cardWidth * 0.018;
+  const nameBottomPx = cardWidth * 0.007; // lower than the logo so it hugs the bottom edge
   const sidePx = cardWidth * 0.04;
   const agentRightPx = cardWidth * 0.12; // shifted left to sit closer to the design's "as a gift from" text
-  const logoHeightPx = cardWidth * 0.09; // ~0.83in logo height
+  const logoHeightPx = cardWidth * 0.065; // ~0.6in logo height — smaller to stay within the card's logo box
+  const logoMaxWidthPx = cardWidth * 0.2;  // cap at ~20% card width for wide logos (eXp, etc.)
 
   // Bottom left: logo image if available, otherwise company name text
   let leftElement = "";
   if (logoUrl) {
-    const logoMaxWidthPx = cardWidth * 0.28; // cap at ~28% card width so wide logos (eXp, etc.) stay in bounds
-    leftElement = `<img src="${toAbsoluteUrl(logoUrl)}" style="position:absolute;bottom:${toIn(bottomPx)};left:${toIn(sidePx)};height:${toIn(logoHeightPx)};max-height:${toIn(logoHeightPx)};width:auto;max-width:${toIn(logoMaxWidthPx)};object-fit:contain;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.5))" />`;
+    leftElement = `<img src="${toAbsoluteUrl(logoUrl)}" style="position:absolute;bottom:${toIn(logoBottomPx)};left:${toIn(sidePx)};height:${toIn(logoHeightPx)};max-height:${toIn(logoHeightPx)};width:auto;max-width:${toIn(logoMaxWidthPx)};object-fit:contain;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.5))" />`;
   } else if (companyName) {
     const companyFontPx = cardWidth * 0.022;
-    leftElement = `<p style="position:absolute;bottom:${toIn(bottomPx)};left:${toIn(sidePx)};color:#fff;font-family:Arial,sans-serif;font-size:${toIn(companyFontPx)};font-weight:600;text-shadow:0 1px 4px rgba(0,0,0,0.7);margin:0">${escapeHtml(companyName)}</p>`;
+    leftElement = `<p style="position:absolute;bottom:${toIn(logoBottomPx)};left:${toIn(sidePx)};color:#fff;font-family:Arial,sans-serif;font-size:${toIn(companyFontPx)};font-weight:600;text-shadow:0 1px 4px rgba(0,0,0,0.7);margin:0">${escapeHtml(companyName)}</p>`;
   }
 
   // Bottom right: agent name only (the "as a gift from" text is part of the design image)
   const agentSpan = agentName
-    ? `<p style="position:absolute;bottom:${toIn(bottomPx)};right:${toIn(agentRightPx)};font-family:Arial,sans-serif;font-size:${toIn(agentFontPx)};color:#000;font-style:normal;text-shadow:0 1px 4px rgba(0,0,0,0.7);margin:0">${escapeHtml(agentName)}</p>`
+    ? `<p style="position:absolute;bottom:${toIn(nameBottomPx)};right:${toIn(agentRightPx)};font-family:Arial,sans-serif;font-size:${toIn(agentFontPx)};color:#000;font-style:normal;text-shadow:0 1px 4px rgba(0,0,0,0.7);margin:0">${escapeHtml(agentName)}</p>`
     : "";
   const overlay = `\n  ${leftElement}\n  ${agentSpan}`;
 
