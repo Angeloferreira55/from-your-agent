@@ -257,19 +257,25 @@ export default function OrderPrintsPage() {
                 <>
                   <div>
                     <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">Front</p>
-                    <div
-                      className="rounded-md border overflow-hidden"
-                      dangerouslySetInnerHTML={{ __html: preview.front_html }}
-                      style={{ aspectRatio: "9/6" }}
-                    />
+                    <div className="rounded-md border overflow-hidden" style={{ aspectRatio: "9/6" }}>
+                      <iframe
+                        srcDoc={preview.front_html}
+                        className="w-full h-full border-0"
+                        sandbox="allow-same-origin"
+                        style={{ overflow: "hidden" }}
+                      />
+                    </div>
                   </div>
                   <div>
                     <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">Back</p>
-                    <div
-                      className="rounded-md border overflow-hidden"
-                      dangerouslySetInnerHTML={{ __html: preview.back_html }}
-                      style={{ aspectRatio: "9/6" }}
-                    />
+                    <div className="rounded-md border overflow-hidden" style={{ aspectRatio: "9/6" }}>
+                      <iframe
+                        srcDoc={preview.back_html}
+                        className="w-full h-full border-0"
+                        sandbox="allow-same-origin"
+                        style={{ overflow: "hidden" }}
+                      />
+                    </div>
                   </div>
                 </>
               )}

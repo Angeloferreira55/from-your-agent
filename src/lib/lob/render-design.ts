@@ -352,7 +352,8 @@ export function injectFrontOverlay(
   // Bottom left: logo image if available, otherwise company name text
   let leftElement = "";
   if (logoUrl) {
-    leftElement = `<img src="${toAbsoluteUrl(logoUrl)}" style="position:absolute;bottom:${toIn(bottomPx)};left:${toIn(sidePx)};height:${toIn(logoHeightPx)};width:auto;object-fit:contain;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.5))" />`;
+    const logoMaxWidthPx = cardWidth * 0.28; // cap at ~28% card width so wide logos (eXp, etc.) stay in bounds
+    leftElement = `<img src="${toAbsoluteUrl(logoUrl)}" style="position:absolute;bottom:${toIn(bottomPx)};left:${toIn(sidePx)};height:${toIn(logoHeightPx)};max-height:${toIn(logoHeightPx)};width:auto;max-width:${toIn(logoMaxWidthPx)};object-fit:contain;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.5))" />`;
   } else if (companyName) {
     const companyFontPx = cardWidth * 0.022;
     leftElement = `<p style="position:absolute;bottom:${toIn(bottomPx)};left:${toIn(sidePx)};color:#fff;font-family:Arial,sans-serif;font-size:${toIn(companyFontPx)};font-weight:600;text-shadow:0 1px 4px rgba(0,0,0,0.7);margin:0">${escapeHtml(companyName)}</p>`;
