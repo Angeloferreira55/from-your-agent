@@ -35,15 +35,21 @@ async function getCroppedBlob(
     img.src = imageSrc;
   });
 
+  // Scale up to print quality: 3× ensures ≥300dpi for typical postcard logo areas.
+  // Also respect the source image's natural resolution — don't upscale beyond it.
+  const PRINT_SCALE = Math.min(3, image.naturalWidth / crop.width, image.naturalHeight / crop.height);
+  const outW = Math.round(crop.width * PRINT_SCALE);
+  const outH = Math.round(crop.height * PRINT_SCALE);
+
   const canvas = document.createElement("canvas");
-  canvas.width = crop.width;
-  canvas.height = crop.height;
+  canvas.width = outW;
+  canvas.height = outH;
   const ctx = canvas.getContext("2d")!;
 
   // For PNG transparency, don't fill background
   if (mimeType !== "image/png") {
     ctx.fillStyle = "#FFFFFF";
-    ctx.fillRect(0, 0, crop.width, crop.height);
+    ctx.fillRect(0, 0, outW, outH);
   }
 
   ctx.drawImage(
@@ -54,8 +60,8 @@ async function getCroppedBlob(
     crop.height,
     0,
     0,
-    crop.width,
-    crop.height
+    outW,
+    outH
   );
 
   return new Promise((resolve, reject) => {
