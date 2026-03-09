@@ -117,11 +117,11 @@ export async function createPostcard({
 
   const hasPlaceholders = designHasFrontPlaceholders(template.front_html);
 
-  // Build agent placeholder data for front-side substitution
+  // Brokerage logo only appears on the back (brokerage panel) — not on the front
   const agentData: AgentPlaceholderData = {
     agent_name: agentName,
     brokerage_name: agent.company_name || undefined,
-    brokerage_logo_url: agent.brokerage_logo_url || agent.logo_url || undefined,
+    brokerage_logo_url: undefined,
     agent_phone: agent.phone || undefined,
   };
 
@@ -131,7 +131,7 @@ export async function createPostcard({
   // Skip hardcoded overlay when placeholders handle agent info positioning
   const frontHtml = hasPlaceholders
     ? resolvedFront
-    : injectFrontOverlay(resolvedFront, agentName, agent.company_name, dims.front.width, agent.brokerage_logo_url || agent.logo_url);
+    : injectFrontOverlay(resolvedFront, agentName, agent.company_name, dims.front.width, null);
 
   console.log(`[createPostcard] front_html length=${frontHtml.length}, hasPlaceholders=${hasPlaceholders}, agent="${agentName}"`);
 

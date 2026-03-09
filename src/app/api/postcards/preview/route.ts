@@ -108,10 +108,11 @@ export async function POST(req: NextRequest) {
   const agentName = `${agent.first_name} ${agent.last_name}`.trim();
   const hasPlaceholders = designHasFrontPlaceholders(template.front_html);
 
+  // Brokerage logo only appears on the back (brokerage panel) — not on the front
   const agentData: AgentPlaceholderData = {
     agent_name: agentName,
     brokerage_name: agent.company_name || undefined,
-    brokerage_logo_url: brokerageLogoUrl || agent.brokerage_logo_url || agent.logo_url || undefined,
+    brokerage_logo_url: undefined,
     agent_phone: agent.phone || undefined,
   };
 
@@ -122,7 +123,7 @@ export async function POST(req: NextRequest) {
 
   const frontHtml = hasPlaceholders
     ? resolvedFront
-    : injectFrontOverlay(resolvedFront, agentName, agent.company_name, dims.front.width, brokerageLogoUrl || agent.brokerage_logo_url || agent.logo_url);
+    : injectFrontOverlay(resolvedFront, agentName, agent.company_name, dims.front.width, null);
 
   const now = new Date();
   const rawBackHtml = renderFullBackHtml({
