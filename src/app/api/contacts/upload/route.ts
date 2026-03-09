@@ -28,6 +28,9 @@ function normalizeState(raw: string): string {
   return trimmed.toUpperCase().substring(0, 2);
 }
 
+// Extend Vercel function timeout for large imports
+export const maxDuration = 60;
+
 // POST /api/contacts/upload — bulk import contacts from CSV data
 export async function POST(request: NextRequest) {
   const userId = getUserId(request);
@@ -35,13 +38,33 @@ export async function POST(request: NextRequest) {
 
   const admin = createAdminClient();
 
-  const { data: profile } = await admin
+  let { data: profile } = await admin
     .from("agent_profiles")
     .select("id")
     .eq("user_id", userId)
     .single();
 
-  if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+  // Profile missing (e.g. created before trigger was deployed) — auto-create it
+  if (!profile) {
+    const { data: { user } } = await admin.auth.admin.getUserById(userId);
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const { data: newProfile, error: createError } = await admin
+      .from("agent_profiles")
+      .insert({
+        user_id: userId,
+        first_name: user.user_metadata?.first_name || "",
+        last_name: user.user_metadata?.last_name || "",
+        email: user.email || "",
+      })
+      .select("id")
+      .single();
+
+    if (createError) {
+      return NextResponse.json({ error: "Failed to initialize profile" }, { status: 500 });
+    }
+    profile = newProfile;
+  }
 
   const body = await request.json();
   const { contacts, fileName, columnMapping } = body;
