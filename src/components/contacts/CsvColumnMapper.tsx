@@ -11,13 +11,15 @@ interface CsvColumnMapperProps {
 }
 
 const CONTACT_FIELDS = [
-  { key: "first_name", label: "First Name", required: true },
-  { key: "last_name", label: "Last Name", required: true },
-  { key: "address_line1", label: "Address", required: true },
+  { key: "full_name", label: "Full Name (auto-split into first + last)", required: false },
+  { key: "first_name", label: "First Name", required: false },
+  { key: "last_name", label: "Last Name", required: false },
+  { key: "full_address", label: "Full Address (auto-split into street, city, state, ZIP)", required: false },
+  { key: "address_line1", label: "Street Address", required: false },
   { key: "address_line2", label: "Address Line 2", required: false },
-  { key: "city", label: "City", required: true },
-  { key: "state", label: "State", required: true },
-  { key: "zip", label: "ZIP Code", required: true },
+  { key: "city", label: "City", required: false },
+  { key: "state", label: "State", required: false },
+  { key: "zip", label: "ZIP Code", required: false },
   { key: "email", label: "Email", required: false },
   { key: "phone", label: "Phone", required: false },
 ];

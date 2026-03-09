@@ -102,18 +102,40 @@ export async function POST(request: NextRequest) {
 
     const rows = batch
       .map((contact: Record<string, string>, idx: number) => {
-        const firstName = (contact.first_name || "").trim();
-        const lastName = (contact.last_name || "").trim();
-        const addressLine1 = (contact.address_line1 || "").trim();
-        const city = (contact.city || "").trim();
-        const state = (contact.state || "").trim();
-        const zip = (contact.zip || "").trim();
+        // Support full_name column — split on first space into first + last
+        let firstName = (contact.first_name || "").trim();
+        let lastName = (contact.last_name || "").trim();
+        if (!firstName && !lastName && contact.full_name) {
+          const parts = contact.full_name.trim().split(/\s+/);
+          firstName = parts[0] || "";
+          lastName = parts.slice(1).join(" ") || parts[0] || "";
+        }
+        // Support full_address column — parse "123 Main St, City, ST 12345"
+        let addressLine1 = (contact.address_line1 || "").trim();
+        let city = (contact.city || "").trim();
+        let state = (contact.state || "").trim();
+        let zip = (contact.zip || "").trim();
+        if (!addressLine1 && contact.full_address) {
+          const parts = contact.full_address.split(",").map((p: string) => p.trim());
+          if (parts.length >= 3) {
+            addressLine1 = parts[0];
+            city = parts[1];
+            const stateZip = parts[2].trim().split(/\s+/);
+            state = stateZip[0] || "";
+            zip = stateZip[1] || "";
+          } else if (parts.length === 2) {
+            addressLine1 = parts[0];
+            city = parts[1];
+          } else {
+            addressLine1 = parts[0] || contact.full_address.trim();
+          }
+        }
 
         // Validate required fields
         if (!firstName || !lastName || !addressLine1 || !city || !state || !zip) {
           errors.push({
             row: i + idx + 1,
-            error: "Missing required field(s): first_name, last_name, address, city, state, or zip",
+            error: "Missing required field(s): name, address, city, state, or zip",
           });
           errorCount++;
           return null;

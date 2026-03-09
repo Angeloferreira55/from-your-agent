@@ -40,8 +40,9 @@ export default function UploadContactsPage() {
     setStep("map");
   }
 
-  const requiredFields = ["first_name", "last_name", "address_line1", "city", "state", "zip"];
-  const allRequiredMapped = requiredFields.every((f) => mapping[f]);
+  const hasName = !!(mapping["full_name"] || (mapping["first_name"] && mapping["last_name"]));
+  const hasAddress = !!(mapping["full_address"] || (mapping["address_line1"] && mapping["city"] && mapping["state"] && mapping["zip"]));
+  const allRequiredMapped = hasName && hasAddress;
 
   async function handleImport() {
     if (!csvData) return;
@@ -187,7 +188,7 @@ export default function UploadContactsPage() {
                   {previewData.map((row, i) => (
                     <TableRow key={i}>
                       <TableCell className="font-medium">
-                        {row.first_name} {row.last_name}
+                        {row.full_name || `${row.first_name || ""} ${row.last_name || ""}`.trim()}
                       </TableCell>
                       <TableCell>{row.address_line1}</TableCell>
                       <TableCell>{row.city}</TableCell>

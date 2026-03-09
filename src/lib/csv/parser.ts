@@ -30,9 +30,11 @@ export function parseCSV(file: File): Promise<ParseResult> {
 
 // Auto-detect which CSV column maps to which contact field
 const FIELD_PATTERNS: Record<string, RegExp[]> = {
+  full_name: [/^(full.?)?name$/i, /^contact.?name$/i, /^client.?name$/i, /^owner.?name$/i],
   first_name: [/first.?name/i, /fname/i, /^first$/i, /given.?name/i],
   last_name: [/last.?name/i, /lname/i, /^last$/i, /surname/i, /family.?name/i],
-  address_line1: [/address.?(1|line.?1)?$/i, /street/i, /^address$/i, /mailing.?address/i],
+  full_address: [/^full.?address$/i, /^mailing.?address$/i, /^property.?address$/i],
+  address_line1: [/address.?(1|line.?1)?$/i, /street/i, /^address$/i],
   address_line2: [/address.?(2|line.?2)/i, /apt/i, /suite/i, /unit/i],
   city: [/^city$/i, /^town$/i],
   state: [/^state$/i, /^st$/i, /province/i, /state.?province/i, /^region$/i],
