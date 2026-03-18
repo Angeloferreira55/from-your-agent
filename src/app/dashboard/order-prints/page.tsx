@@ -108,7 +108,7 @@ export default function OrderPrintsPage() {
       const res = await fetch("/api/postcards/order-prints", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ template_id: selectedCampaign!.template_id, quantity }),
+        body: JSON.stringify({ template_id: selectedCampaign!.template_id, campaign_id: selectedCampaign!.id, quantity }),
       });
       if (!res.ok) {
         const err = await res.json();

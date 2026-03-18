@@ -4,6 +4,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createPostcard } from "@/lib/lob/postcards";
 import { getOrCreateStripeCustomer, reportUsage } from "@/lib/stripe/helpers";
 
+export const maxDuration = 60;
+
 /**
  * POST — Order bulk printed postcards shipped to the agent's office address.
  * All postcards are identical (same design) and sent to the brokerage/office address.
@@ -22,9 +24,9 @@ export async function POST(req: NextRequest) {
 
   if (!agent) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
 
-  const { template_id, quantity } = await req.json();
+  const { template_id, campaign_id, quantity } = await req.json();
 
-  if (!template_id) return NextResponse.json({ error: "template_id is required" }, { status: 400 });
+  if (!template_id || !campaign_id) return NextResponse.json({ error: "template_id and campaign_id are required" }, { status: 400 });
   const qty = Math.min(Math.max(Math.round(Number(quantity) || 0), 1), 500);
 
   // Require brokerage/office address for delivery
@@ -97,46 +99,43 @@ export async function POST(req: NextRequest) {
       }
     : null;
 
-  // Create a "Print Order" campaign
-  const now = new Date();
-  const orderMonth = now.getMonth() + 1;
-  const orderYear = now.getFullYear();
-
-  const { data: campaign, error: campErr } = await admin
+  // Use the existing selected campaign — do NOT insert a new one (UNIQUE month/year constraint)
+  const { data: campaign } = await admin
     .from("campaigns")
-    .insert({
-      name: `Print Order — ${orderMonth}/${orderYear} (${qty} cards)`,
-      description: `Bulk print order: ${qty} postcards shipped to office`,
-      month: orderMonth,
-      year: orderYear,
-      template_id: template.id,
-      offer_ids: offers?.map((o) => o.id) || [],
-      status: "mailed",
-      total_postcards: qty,
-      mail_date: now.toISOString().split("T")[0],
-      cutoff_date: now.toISOString().split("T")[0],
-    })
-    .select()
+    .select("*")
+    .eq("id", campaign_id)
     .single();
 
-  if (campErr || !campaign) {
-    return NextResponse.json({ error: campErr?.message || "Failed to create order" }, { status: 500 });
-  }
+  if (!campaign) return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
 
-  // Create agent_campaign record
-  const { data: agentCampaign, error: acErr } = await admin
+  const orderMonth = campaign.month;
+
+  // Look up or create the agent_campaign record for this campaign
+  let agentCampaign: { id: string } | null = null;
+  const { data: existingAC } = await admin
     .from("agent_campaigns")
-    .insert({
-      agent_id: agent.id,
-      campaign_id: campaign.id,
-      status: "opted_in",
-      contact_count: qty,
-    })
-    .select()
-    .single();
+    .select("id")
+    .eq("agent_id", agent.id)
+    .eq("campaign_id", campaign.id)
+    .maybeSingle();
 
-  if (acErr || !agentCampaign) {
-    return NextResponse.json({ error: acErr?.message || "Failed to create agent campaign" }, { status: 500 });
+  if (existingAC) {
+    agentCampaign = existingAC;
+  } else {
+    const { data: newAC, error: acErr } = await admin
+      .from("agent_campaigns")
+      .insert({
+        agent_id: agent.id,
+        campaign_id: campaign.id,
+        status: "opted_in",
+        contact_count: qty,
+      })
+      .select("id")
+      .single();
+    if (acErr || !newAC) {
+      return NextResponse.json({ error: acErr?.message || "Failed to create print order record" }, { status: 500 });
+    }
+    agentCampaign = newAC;
   }
 
   // Create postcard records and send via Lob
