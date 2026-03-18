@@ -138,6 +138,43 @@ export async function POST(req: NextRequest) {
     agentCampaign = newAC;
   }
 
+  // For print orders, postcards all go to the agent's office address.
+  // The postcards table requires contact_id NOT NULL, so create/reuse an "office" contact.
+  const { data: officeContact } = await admin
+    .from("contacts")
+    .select("id")
+    .eq("agent_id", agent.id)
+    .eq("address_line1", deliveryAddress.address_line1)
+    .eq("zip", deliveryAddress.zip)
+    .eq("source", "manual")
+    .maybeSingle();
+
+  let officeContactId: string;
+  if (officeContact) {
+    officeContactId = officeContact.id;
+  } else {
+    const nameParts = `${agent.first_name} ${agent.last_name}`.trim().split(/\s+/);
+    const { data: newContact, error: contactErr } = await admin
+      .from("contacts")
+      .insert({
+        agent_id: agent.id,
+        first_name: nameParts[0] || agent.first_name,
+        last_name: nameParts.slice(1).join(" ") || "(Office)",
+        address_line1: deliveryAddress.address_line1,
+        city: deliveryAddress.city,
+        state: deliveryAddress.state,
+        zip: deliveryAddress.zip,
+        source: "manual",
+        notes: "Print order delivery address",
+      })
+      .select("id")
+      .single();
+    if (contactErr || !newContact) {
+      return NextResponse.json({ error: "Failed to create delivery contact" }, { status: 500 });
+    }
+    officeContactId = newContact.id;
+  }
+
   // Create postcard records and send via Lob
   const agentName = `${agent.first_name} ${agent.last_name}`.trim();
   let mailedCount = 0;
@@ -149,6 +186,7 @@ export async function POST(req: NextRequest) {
       .insert({
         agent_campaign_id: agentCampaign.id,
         campaign_id: campaign.id,
+        contact_id: officeContactId,
         offer_id: offers?.[0]?.id || null,
         status: "queued",
         merge_variables: { _print_order: "true", _copy: String(i + 1) },
