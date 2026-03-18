@@ -9,7 +9,7 @@ const MONTHS = [
 
 /**
  * POST — Auto-campaign cron endpoint.
- * Runs on the 25th of each month via Vercel Cron.
+ * Runs on the 21st of each month via Vercel Cron.
  * Targets NEXT month's campaign so postcards arrive by the first week.
  *
  * If an admin already created a campaign for the target month (draft/scheduled),
