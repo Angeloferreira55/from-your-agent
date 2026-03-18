@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Tag, Send, Mail } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { TestEmailButtons } from "@/components/admin/TestEmailButtons";
 
 export default async function AdminDashboardPage() {
   const supabase = await createClient();
@@ -56,6 +57,8 @@ export default async function AdminDashboardPage() {
           </Card>
         ))}
       </div>
+
+      <TestEmailButtons />
     </div>
   );
 }
