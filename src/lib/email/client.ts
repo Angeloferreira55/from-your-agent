@@ -70,6 +70,160 @@ export async function sendWelcomeEmail(to: string, firstName: string) {
   }
 }
 
+export async function sendBillingReminderFinalEmail(to: string, firstName: string, contactCount: number) {
+  const fromEmail = process.env.EMAIL_FROM || "onboarding@resend.dev";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
+  await getResend().emails.send({
+    from: `From Your Agent <${fromEmail}>`,
+    replyTo: "support@from-your-agent.com",
+    to,
+    subject: "Last chance: postcards go out tomorrow — add your payment method now",
+    html: billingReminderFinalTemplate(firstName, appUrl, contactCount),
+  });
+}
+
+function billingReminderFinalTemplate(firstName: string, appUrl: string, contactCount: number): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body style="margin:0;padding:0;background-color:#FFF5EE;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#FFF5EE;padding:40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+          <tr>
+            <td style="background-color:#FFF5EE;padding:32px 40px;text-align:center;">
+              <img src="${appUrl}/logo-email.png" alt="From Your Agent" width="120" height="120" style="width:120px;height:120px;" />
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:40px;">
+              <h1 style="margin:0 0 16px;font-size:24px;color:#1e293b;font-family:Georgia,'Times New Roman',serif;">
+                Last chance, ${firstName} — postcards go out tomorrow!
+              </h1>
+              <p style="margin:0 0 16px;font-size:16px;line-height:1.6;color:#475569;">
+                ${contactCount > 0 ? `Your <strong>${contactCount} postcards</strong> are queued and ready to mail tomorrow.` : "Your postcards are queued and ready to mail tomorrow."}
+                We still don't see a payment method on your account.
+              </p>
+              <p style="margin:0 0 28px;font-size:16px;line-height:1.6;color:#475569;">
+                Add one now to make sure your contacts receive their postcards this month. It only takes a minute.
+              </p>
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+                <tr>
+                  <td style="background:#fef2f2;border-left:4px solid #ef4444;padding:16px 20px;border-radius:0 8px 8px 0;">
+                    <p style="margin:0;font-size:14px;color:#991b1b;font-weight:600;">🚨 Postcards mail tomorrow, the 21st</p>
+                    <p style="margin:4px 0 0;font-size:14px;color:#7f1d1d;">Without a payment method, your contacts will be skipped this month.</p>
+                  </td>
+                </tr>
+              </table>
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="${appUrl}/dashboard/billing" style="display:inline-block;background-color:#E8733A;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-size:16px;font-weight:600;">
+                      Add Payment Method Now →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:24px 40px;background-color:#f8fafc;border-top:1px solid #e2e8f0;text-align:center;">
+              <p style="margin:0;font-size:13px;color:#94a3b8;">
+                Questions? Reply to this email or reach us at <a href="mailto:support@from-your-agent.com" style="color:#94a3b8;">support@from-your-agent.com</a> &middot; &copy; ${new Date().getFullYear()} From Your Agent
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+export async function sendBillingReminderEmail(to: string, firstName: string, contactCount: number) {
+  const fromEmail = process.env.EMAIL_FROM || "onboarding@resend.dev";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
+  await getResend().emails.send({
+    from: `From Your Agent <${fromEmail}>`,
+    replyTo: "support@from-your-agent.com",
+    to,
+    subject: "Action required: Add a payment method before your postcards go out",
+    html: billingReminderTemplate(firstName, appUrl, contactCount),
+  });
+}
+
+function billingReminderTemplate(firstName: string, appUrl: string, contactCount: number): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body style="margin:0;padding:0;background-color:#FFF5EE;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#FFF5EE;padding:40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+          <tr>
+            <td style="background-color:#FFF5EE;padding:32px 40px;text-align:center;">
+              <img src="${appUrl}/logo-email.png" alt="From Your Agent" width="120" height="120" style="width:120px;height:120px;" />
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:40px;">
+              <h1 style="margin:0 0 16px;font-size:24px;color:#1e293b;font-family:Georgia,'Times New Roman',serif;">
+                Your postcards go out in 5 days, ${firstName}!
+              </h1>
+              <p style="margin:0 0 16px;font-size:16px;line-height:1.6;color:#475569;">
+                ${contactCount > 0 ? `We're ready to send your next batch of <strong>${contactCount} postcards</strong> to your contacts on the 21st.` : "We're ready to send your next batch of postcards to your contacts on the 21st."}
+                To make sure they go out without a hitch, you'll need a payment method on file.
+              </p>
+              <p style="margin:0 0 28px;font-size:16px;line-height:1.6;color:#475569;">
+                You're only charged for postcards that are actually mailed — no monthly fees, no minimums.
+              </p>
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+                <tr>
+                  <td style="background:#fff8f5;border-left:4px solid #E8733A;padding:16px 20px;border-radius:0 8px 8px 0;">
+                    <p style="margin:0;font-size:14px;color:#92400e;font-weight:600;">⏰ Deadline: the 21st of this month</p>
+                    <p style="margin:4px 0 0;font-size:14px;color:#78350f;">Postcards without a payment method on file will be skipped for this month.</p>
+                  </td>
+                </tr>
+              </table>
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="${appUrl}/dashboard/billing" style="display:inline-block;background-color:#E8733A;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-size:16px;font-weight:600;">
+                      Add Payment Method →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:24px 40px;background-color:#f8fafc;border-top:1px solid #e2e8f0;text-align:center;">
+              <p style="margin:0;font-size:13px;color:#94a3b8;">
+                Questions? Reply to this email or reach us at <a href="mailto:support@from-your-agent.com" style="color:#94a3b8;">support@from-your-agent.com</a> &middot; &copy; ${new Date().getFullYear()} From Your Agent
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
 function welcomeTemplate(firstName: string, appUrl: string): string {
   return `
 <!DOCTYPE html>
