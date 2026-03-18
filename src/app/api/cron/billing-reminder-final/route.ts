@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
         continue;
       }
 
-      await sendBillingReminderFinalEmail(agent.email, agent.first_name || "there", contactCount);
+      await sendBillingReminderFinalEmail(agent.email, agent.first_name || "there");
       sent++;
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown error";

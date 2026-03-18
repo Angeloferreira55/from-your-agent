@@ -24,9 +24,9 @@ export async function POST(req: NextRequest) {
   const firstName = profile.first_name || "there";
 
   if (type === "final") {
-    await sendBillingReminderFinalEmail(sendTo, firstName, 47);
+    await sendBillingReminderFinalEmail(sendTo, firstName);
   } else {
-    await sendBillingReminderEmail(sendTo, firstName, 47);
+    await sendBillingReminderEmail(sendTo, firstName);
   }
 
   return NextResponse.json({ ok: true, sent_to: sendTo, type });

@@ -70,7 +70,7 @@ export async function sendWelcomeEmail(to: string, firstName: string) {
   }
 }
 
-export async function sendBillingReminderFinalEmail(to: string, firstName: string, contactCount: number) {
+export async function sendBillingReminderFinalEmail(to: string, firstName: string) {
   const fromEmail = process.env.EMAIL_FROM || "onboarding@resend.dev";
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
@@ -79,11 +79,11 @@ export async function sendBillingReminderFinalEmail(to: string, firstName: strin
     replyTo: "support@from-your-agent.com",
     to,
     subject: "Last chance: postcards go out tomorrow — add your payment method now",
-    html: billingReminderFinalTemplate(firstName, appUrl, contactCount),
+    html: billingReminderFinalTemplate(firstName, appUrl),
   });
 }
 
-function billingReminderFinalTemplate(firstName: string, appUrl: string, contactCount: number): string {
+function billingReminderFinalTemplate(firstName: string, appUrl: string): string {
   return `
 <!DOCTYPE html>
 <html>
@@ -107,7 +107,7 @@ function billingReminderFinalTemplate(firstName: string, appUrl: string, contact
                 Last chance, ${firstName} — postcards go out tomorrow!
               </h1>
               <p style="margin:0 0 16px;font-size:16px;line-height:1.6;color:#475569;">
-                ${contactCount > 0 ? `Your <strong>${contactCount} postcards</strong> are queued and ready to mail tomorrow.` : "Your postcards are queued and ready to mail tomorrow."}
+                Your next batch of postcards with an amazing exclusive offer to your contacts is queued and ready to mail tomorrow.
                 We still don't see a payment method on your account.
               </p>
               <p style="margin:0 0 28px;font-size:16px;line-height:1.6;color:#475569;">
@@ -147,7 +147,7 @@ function billingReminderFinalTemplate(firstName: string, appUrl: string, contact
 </html>`;
 }
 
-export async function sendBillingReminderEmail(to: string, firstName: string, contactCount: number) {
+export async function sendBillingReminderEmail(to: string, firstName: string) {
   const fromEmail = process.env.EMAIL_FROM || "onboarding@resend.dev";
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
@@ -156,11 +156,11 @@ export async function sendBillingReminderEmail(to: string, firstName: string, co
     replyTo: "support@from-your-agent.com",
     to,
     subject: "Action required: Add a payment method before your postcards go out",
-    html: billingReminderTemplate(firstName, appUrl, contactCount),
+    html: billingReminderTemplate(firstName, appUrl),
   });
 }
 
-function billingReminderTemplate(firstName: string, appUrl: string, contactCount: number): string {
+function billingReminderTemplate(firstName: string, appUrl: string): string {
   return `
 <!DOCTYPE html>
 <html>
@@ -184,7 +184,7 @@ function billingReminderTemplate(firstName: string, appUrl: string, contactCount
                 Your postcards go out in 5 days, ${firstName}!
               </h1>
               <p style="margin:0 0 16px;font-size:16px;line-height:1.6;color:#475569;">
-                ${contactCount > 0 ? `We're ready to send your next batch of <strong>${contactCount} postcards</strong> to your contacts on the 21st.` : "We're ready to send your next batch of postcards to your contacts on the 21st."}
+                We're ready to send your next batch of postcards with an amazing exclusive offer to your contacts on the 21st.
                 To make sure they go out without a hitch, you'll need a payment method on file.
               </p>
               <p style="margin:0 0 28px;font-size:16px;line-height:1.6;color:#475569;">

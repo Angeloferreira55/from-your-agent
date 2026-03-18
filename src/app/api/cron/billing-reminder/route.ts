@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
         continue;
       }
 
-      await sendBillingReminderEmail(agent.email, agent.first_name || "there", contactCount);
+      await sendBillingReminderEmail(agent.email, agent.first_name || "there");
       sent++;
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown error";
