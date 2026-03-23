@@ -78,7 +78,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
     return <p className="text-muted-foreground py-12 text-center">Campaign not found.</p>;
   }
 
-  const canMail = ["scheduled", "ready_to_mail"].includes(campaign.status);
+  const canMail = !["canceled", "mailing", "mailed", "completed"].includes(campaign.status);
 
   return (
     <div className="space-y-6">
@@ -99,7 +99,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
           <Button
             className="bg-orange-600 hover:bg-orange-700"
             onClick={() => {
-              if (confirm("This will send postcards to all opted-in agents' contacts via Lob. Continue?")) {
+              if (confirm("This will send postcards to all agents with a payment method on file via Lob. Continue?")) {
                 sendMutation.mutate();
               }
             }}

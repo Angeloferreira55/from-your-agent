@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
   }
 
-  if (!["scheduled", "ready_to_mail"].includes(campaign.status)) {
+  if (["canceled", "mailing"].includes(campaign.status)) {
     return NextResponse.json({ error: `Campaign status is '${campaign.status}', cannot mail` }, { status: 400 });
   }
 
@@ -54,15 +54,55 @@ export async function POST(req: NextRequest) {
     .eq("id", campaign_id);
 
   // Get all opted-in agent_campaigns with agent profiles
-  const { data: agentCampaigns } = await admin
+  let { data: agentCampaigns } = await admin
     .from("agent_campaigns")
     .select("*, agent_profiles (*)")
     .eq("campaign_id", campaign_id)
     .eq("status", "opted_in");
 
+  // If no agents opted in, auto-opt all agents with a payment method on file
   if (!agentCampaigns || agentCampaigns.length === 0) {
-    await admin.from("campaigns").update({ status: "scheduled" }).eq("id", campaign_id);
-    return NextResponse.json({ error: "No agents opted in" }, { status: 400 });
+    const { data: eligibleAgents } = await admin
+      .from("agent_profiles")
+      .select("*")
+      .not("stripe_customer_id", "is", null)
+      .not("email", "is", null);
+
+    if (!eligibleAgents || eligibleAgents.length === 0) {
+      return NextResponse.json({ error: "No agents with a payment method on file" }, { status: 400 });
+    }
+
+    for (const agent of eligibleAgents) {
+      const { data: existing } = await admin
+        .from("agent_campaigns")
+        .select("id")
+        .eq("agent_id", agent.id)
+        .eq("campaign_id", campaign_id)
+        .maybeSingle();
+
+      if (!existing) {
+        await admin.from("agent_campaigns").insert({
+          agent_id: agent.id,
+          campaign_id,
+          status: "opted_in",
+          contact_count: 0,
+        });
+      } else {
+        await admin.from("agent_campaigns").update({ status: "opted_in" }).eq("id", existing.id);
+      }
+    }
+
+    const { data: refreshed } = await admin
+      .from("agent_campaigns")
+      .select("*, agent_profiles (*)")
+      .eq("campaign_id", campaign_id)
+      .eq("status", "opted_in");
+
+    agentCampaigns = refreshed || [];
+  }
+
+  if (agentCampaigns.length === 0) {
+    return NextResponse.json({ error: "No agents to mail to" }, { status: 400 });
   }
 
   // Get offers for this campaign
