@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { CampaignForm } from "@/components/admin/CampaignForm";
-import { Plus, Send, MoreHorizontal, Trash2, Eye, Archive, RotateCcw } from "lucide-react";
+import { Plus, Send, MoreHorizontal, Trash2, Eye, Archive, RotateCcw, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import type { Campaign } from "@/types/database";
@@ -57,6 +57,28 @@ export default function AdminCampaignsPage() {
       return res.json();
     },
   });
+
+  const [sendingId, setSendingId] = useState<string | null>(null);
+
+  async function handleSend(id: string) {
+    if (!confirm("Send postcards to all agents with a payment method on file via Lob?")) return;
+    setSendingId(id);
+    try {
+      const res = await fetch("/api/postcards/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ campaign_id: id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      toast.success(`Mailed ${data.mailed} postcards (${data.failed} failed)`);
+      queryClient.invalidateQueries({ queryKey: ["admin", "campaigns"] });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to send");
+    } finally {
+      setSendingId(null);
+    }
+  }
 
   const createMutation = useMutation({
     mutationFn: async (formData: Record<string, unknown>) => {
@@ -200,6 +222,19 @@ export default function AdminCampaignsPage() {
                             <Eye className="mr-2 h-4 w-4" />View Details
                           </Link>
                         </DropdownMenuItem>
+                        {!["canceled", "mailing", "mailed", "completed"].includes(campaign.status) && (
+                          <DropdownMenuItem
+                            onClick={() => handleSend(campaign.id)}
+                            disabled={sendingId === campaign.id}
+                          >
+                            {sendingId === campaign.id ? (
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                              <Send className="mr-2 h-4 w-4" />
+                            )}
+                            Send Postcards
+                          </DropdownMenuItem>
+                        )}
                         {campaign.status === "canceled" ? (
                           <DropdownMenuItem onClick={() => restoreMutation.mutate(campaign.id)}>
                             <RotateCcw className="mr-2 h-4 w-4" />Restore
