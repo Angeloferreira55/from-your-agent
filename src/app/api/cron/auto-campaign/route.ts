@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendPostcardBatch } from "@/lib/lob/postcards";
 
+export const maxDuration = 300;
+
 const MONTHS = [
   "", "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December",
@@ -147,11 +149,12 @@ export async function POST(req: NextRequest) {
     campaign = created;
   }
 
-  // Get all active agents
+  // Get all agents who have a payment method on file
   const { data: agents } = await admin
     .from("agent_profiles")
     .select("*")
-    .in("subscription_status", ["active", "trialing"]);
+    .not("stripe_customer_id", "is", null)
+    .not("email", "is", null);
 
   if (!agents || agents.length === 0) {
     await admin.from("campaigns").update({ status: "completed", mailed_count: 0 }).eq("id", campaign.id);
