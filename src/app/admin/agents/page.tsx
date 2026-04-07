@@ -5,10 +5,12 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { format } from "date-fns";
 
 export default async function AdminAgentsPage() {
   const supabase = await createClient();
+  const admin = createAdminClient();
 
   const { data: agents } = await supabase
     .from("agent_profiles")
@@ -17,11 +19,15 @@ export default async function AdminAgentsPage() {
     .order("created_at", { ascending: false });
 
   // Get contact counts per agent
-  const agentIds = (agents || []).map((a) => a.id);
-  const { data: contactCounts } = agentIds.length > 0
-    ? await supabase.rpc("get_agent_id") // fallback: we'll count inline
-      .then(() => ({ data: null }))
-    : { data: null };
+  const contactCountMap: Record<string, number> = {};
+  for (const agent of agents || []) {
+    const { count } = await admin
+      .from("contacts")
+      .select("id", { count: "exact", head: true })
+      .eq("agent_id", agent.id)
+      .eq("status", "active");
+    contactCountMap[agent.id] = count || 0;
+  }
 
   return (
     <div className="space-y-6">
@@ -53,6 +59,7 @@ export default async function AdminAgentsPage() {
                 <TableHead>Email</TableHead>
                 <TableHead>Company</TableHead>
                 <TableHead>Subscription</TableHead>
+                <TableHead>Contacts</TableHead>
                 <TableHead>Onboarding</TableHead>
                 <TableHead>Joined</TableHead>
               </TableRow>
@@ -74,6 +81,9 @@ export default async function AdminAgentsPage() {
                     }>
                       {agent.subscription_status}
                     </Badge>
+                  </TableCell>
+                  <TableCell className="text-sm font-medium">
+                    {contactCountMap[agent.id] || 0}
                   </TableCell>
                   <TableCell>
                     {agent.onboarding_completed ? (
