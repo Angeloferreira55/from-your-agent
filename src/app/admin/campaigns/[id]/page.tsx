@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, Send, Loader2, Mail, CheckCircle, XCircle, Clock, Truck } from "lucide-react";
+import { ArrowLeft, Send, Loader2, Mail, CheckCircle, XCircle, Clock, Truck, Users } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 
@@ -65,6 +65,29 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
 
   const campaign = campaignData?.campaign || campaignData?.campaigns?.[0];
   const postcards = postcardsData?.postcards || [];
+
+  // Build per-agent breakdown
+  const agentMap = new Map<string, { name: string; email: string; total: number; mailed: number; delivered: number; returned: number; failed: number }>();
+  for (const pc of postcards) {
+    const ac = pc.agent_campaigns as { agent_id: string; agent_profiles: { first_name: string; last_name: string; email: string; company_name: string } | null } | null;
+    if (!ac) continue;
+    const agentId = ac.agent_id;
+    const agent = ac.agent_profiles;
+    if (!agentMap.has(agentId)) {
+      agentMap.set(agentId, {
+        name: agent ? `${agent.first_name} ${agent.last_name}`.trim() : "Unknown",
+        email: agent?.email || "",
+        total: 0, mailed: 0, delivered: 0, returned: 0, failed: 0,
+      });
+    }
+    const entry = agentMap.get(agentId)!;
+    entry.total++;
+    if (["mailed", "in_transit", "in_local_area", "delivered"].includes(pc.status)) entry.mailed++;
+    if (pc.status === "delivered") entry.delivered++;
+    if (pc.status === "returned") entry.returned++;
+    if (pc.status === "failed") entry.failed++;
+  }
+  const agentBreakdown = Array.from(agentMap.values()).sort((a, b) => b.total - a.total);
 
   if (isLoading) {
     return (
@@ -142,6 +165,48 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
           </CardHeader>
         </Card>
       </div>
+
+      {/* Per-Agent Breakdown */}
+      {agentBreakdown.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" /> Per-Agent Breakdown
+            </CardTitle>
+            <CardDescription>{agentBreakdown.length} agent{agentBreakdown.length !== 1 ? "s" : ""} in this campaign</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Agent</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead className="text-center">Total</TableHead>
+                    <TableHead className="text-center">Mailed</TableHead>
+                    <TableHead className="text-center">Delivered</TableHead>
+                    <TableHead className="text-center">Returned</TableHead>
+                    <TableHead className="text-center">Failed</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {agentBreakdown.map((agent) => (
+                    <TableRow key={agent.email}>
+                      <TableCell className="font-medium">{agent.name}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{agent.email}</TableCell>
+                      <TableCell className="text-center">{agent.total}</TableCell>
+                      <TableCell className="text-center text-blue-600">{agent.mailed}</TableCell>
+                      <TableCell className="text-center text-green-600">{agent.delivered}</TableCell>
+                      <TableCell className="text-center text-red-500">{agent.returned}</TableCell>
+                      <TableCell className="text-center text-red-600">{agent.failed}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Postcards Table */}
       <Card>

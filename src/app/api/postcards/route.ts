@@ -28,7 +28,8 @@ export async function GET(req: NextRequest) {
     .select(`
       *,
       contacts ( first_name, last_name, city, state ),
-      campaigns ( name, month, year )
+      campaigns ( name, month, year ),
+      agent_campaigns ( id, agent_id, agent_profiles ( first_name, last_name, email, company_name ) )
     `, { count: "exact" });
 
   // Admin sees all, agents see only theirs
