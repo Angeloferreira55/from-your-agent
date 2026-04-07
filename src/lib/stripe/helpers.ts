@@ -66,6 +66,7 @@ export async function reportUsage(
       amount: Math.round(pricePerCard * cardCount * 100), // cents
       currency: "usd",
       description: `${description} — ${cardCount} postcards @ $${pricePerCard.toFixed(2)}`,
+      tax_code: "txcd_10103001",
       metadata: {
         campaign_id: campaignId,
         type: "postcard",
