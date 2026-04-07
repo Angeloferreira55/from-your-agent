@@ -39,7 +39,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
   const { data: postcardsData } = useQuery({
     queryKey: ["admin", "postcards", id],
     queryFn: async () => {
-      const res = await fetch(`/api/postcards?campaign_id=${id}&limit=200`);
+      const res = await fetch(`/api/postcards?campaign_id=${id}&limit=1000`);
       if (!res.ok) throw new Error("Failed to fetch");
       return res.json();
     },
