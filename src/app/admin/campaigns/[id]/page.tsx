@@ -101,7 +101,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
     return <p className="text-muted-foreground py-12 text-center">Campaign not found.</p>;
   }
 
-  const canMail = !["canceled", "mailing", "mailed", "completed"].includes(campaign.status);
+  const canMail = !["canceled", "mailing"].includes(campaign.status);
 
   return (
     <div className="space-y-6">

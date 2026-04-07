@@ -141,6 +141,14 @@ export async function POST(req: NextRequest) {
     const agent = ac.agent_profiles;
     if (!agent) continue;
 
+    // Skip agents who already have postcards in this campaign
+    const { count: existingCount } = await admin
+      .from("postcards")
+      .select("id", { count: "exact", head: true })
+      .eq("agent_campaign_id", ac.id);
+
+    if (existingCount && existingCount > 0) continue;
+
     // Get contacts for this agent campaign — check contact_filter for selected IDs
     const contactFilter = ac.contact_filter as { selected_ids?: string[] } | null;
     const selectedIds = contactFilter?.selected_ids || [];
