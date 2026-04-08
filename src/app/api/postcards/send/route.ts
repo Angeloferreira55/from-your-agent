@@ -60,16 +60,15 @@ export async function POST(req: NextRequest) {
     .eq("campaign_id", campaign_id)
     .eq("status", "opted_in");
 
-  // If no agents opted in, auto-opt all agents with a payment method on file
+  // If no agents opted in, auto-opt all agents who have active contacts
   if (!agentCampaigns || agentCampaigns.length === 0) {
     const { data: eligibleAgents } = await admin
       .from("agent_profiles")
       .select("*")
-      .not("stripe_customer_id", "is", null)
       .not("email", "is", null);
 
     if (!eligibleAgents || eligibleAgents.length === 0) {
-      return NextResponse.json({ error: "No agents with a payment method on file" }, { status: 400 });
+      return NextResponse.json({ error: "No agents found" }, { status: 400 });
     }
 
     for (const agent of eligibleAgents) {
