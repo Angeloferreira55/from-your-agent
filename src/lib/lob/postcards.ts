@@ -208,9 +208,27 @@ export async function createPostcard({
       },
     } as any);
   } catch (lobErr: unknown) {
-    // Log to console for server-side debugging
-    console.error("[Lob API error]", lobErr instanceof Error ? lobErr.message : lobErr);
-    throw lobErr;
+    // Extract the most useful error message from Lob's error format
+    let errMsg = "Unknown Lob error";
+    if (lobErr instanceof Error) {
+      errMsg = lobErr.message;
+    }
+    // Lob SDK errors often have a nested structure
+    const lobAny = lobErr as Record<string, unknown>;
+    if (lobAny?.body) {
+      const body = lobAny.body as Record<string, unknown>;
+      if (body?.error) {
+        const lobError = body.error as Record<string, unknown>;
+        errMsg = `${lobError.message || errMsg} (code: ${lobError.status_code || "unknown"})`;
+      }
+    }
+    if (lobAny?.message) errMsg = lobAny.message as string;
+    if (lobAny?.error && typeof lobAny.error === "object" && "message" in (lobAny.error as object)) {
+      errMsg = (lobAny.error as Record<string, unknown>).message as string;
+    }
+
+    console.error("[Lob API error]", errMsg, JSON.stringify(lobErr).substring(0, 500));
+    throw new Error(errMsg);
   }
 
   return lobPostcard;
