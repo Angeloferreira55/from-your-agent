@@ -188,16 +188,14 @@ export async function createPostcard({
         address_zip: contact.zip,
         address_country: "US",
       },
-      from: agent.address_line1
-        ? {
-            name: `${agent.first_name} ${agent.last_name}`,
-            address_line1: agent.address_line1,
-            address_city: agent.city || "",
-            address_state: agent.state || "",
-            address_zip: agent.zip || "",
-            address_country: "US",
-          }
-        : undefined,
+      from: {
+        name: `${agent.first_name} ${agent.last_name}`,
+        address_line1: agent.address_line1 || "6703 Academy Rd NE",
+        address_city: agent.city || "Albuquerque",
+        address_state: agent.state || "NM",
+        address_zip: agent.zip || "87109",
+        address_country: "US",
+      },
       front: lobFront,
       back: lobBack,
       size: sizeMap[template.size] || ("6x9" as PostcardSize),
