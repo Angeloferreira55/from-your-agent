@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, Send, Loader2, Mail, CheckCircle, XCircle, Clock, Truck, Users } from "lucide-react";
+import { ArrowLeft, Send, Loader2, Mail, CheckCircle, XCircle, Clock, Truck, Users, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 
@@ -67,6 +67,24 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
     onError: (err) => toast.error(err.message),
   });
 
+  const syncMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/postcards/sync-status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ campaign_id: id }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error);
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "campaign", id] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "postcards", id] });
+      toast.success(`Synced: ${data.updated} updated out of ${data.total} postcards`);
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
   const campaign = campaignData?.campaign || campaignData?.campaigns?.[0];
   const postcards = postcardsData?.postcards || [];
 
@@ -122,6 +140,18 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
         <Badge variant={campaign.status === "mailed" || campaign.status === "completed" ? "secondary" : "default"}>
           {campaign.status.replace(/_/g, " ")}
         </Badge>
+        <Button
+          variant="outline"
+          onClick={() => syncMutation.mutate()}
+          disabled={syncMutation.isPending}
+        >
+          {syncMutation.isPending ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <RefreshCw className="mr-2 h-4 w-4" />
+          )}
+          Sync Statuses
+        </Button>
         {canMail && (
           <Button
             className="bg-orange-600 hover:bg-orange-700"
