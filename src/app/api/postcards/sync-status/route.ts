@@ -50,11 +50,19 @@ export async function POST(req: NextRequest) {
 
   let updated = 0;
   let errors = 0;
+  const sampleStatuses: string[] = [];
 
   for (const pc of postcards) {
     try {
       const lobPc = await lobPostcards.get(pc.lob_postcard_id);
-      const lobStatus = (lobPc as unknown as Record<string, unknown>).status as string || "";
+      const lobRaw = lobPc as unknown as Record<string, unknown>;
+      const lobStatus = (lobRaw.status as string) || "";
+
+      // Log first 3 statuses for debugging
+      if (sampleStatuses.length < 3) {
+        sampleStatuses.push(`${pc.lob_postcard_id}: lob="${lobStatus}" db="${pc.status}"`);
+      }
+
       const mappedStatus = STATUS_MAP[lobStatus] || lobStatus;
 
       if (mappedStatus && mappedStatus !== pc.status) {
@@ -78,5 +86,6 @@ export async function POST(req: NextRequest) {
     total: postcards.length,
     updated,
     errors,
+    sampleStatuses,
   });
 }

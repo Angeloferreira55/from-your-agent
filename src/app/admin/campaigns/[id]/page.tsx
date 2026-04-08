@@ -80,7 +80,8 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["admin", "campaign", id] });
       queryClient.invalidateQueries({ queryKey: ["admin", "postcards", id] });
-      toast.success(`Synced: ${data.updated} updated out of ${data.total} postcards`);
+      const extra = data.sampleStatuses?.length ? ` | Sample: ${data.sampleStatuses[0]}` : "";
+      toast.success(`Synced: ${data.updated} updated out of ${data.total} postcards${extra}`);
     },
     onError: (err) => toast.error(err.message),
   });
