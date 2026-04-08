@@ -72,8 +72,11 @@ export async function POST(req: NextRequest) {
           .eq("id", pc.id);
         updated++;
       }
-    } catch {
+    } catch (err) {
       errors++;
+      if (sampleStatuses.length < 3) {
+        sampleStatuses.push(`ERROR ${pc.lob_postcard_id}: ${err instanceof Error ? err.message : JSON.stringify(err).substring(0, 200)}`);
+      }
     }
 
     // Small delay to respect rate limits
