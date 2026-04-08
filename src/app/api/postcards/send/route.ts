@@ -124,13 +124,21 @@ export async function POST(req: NextRequest) {
     const agent = ac.agent_profiles;
     if (!agent) continue;
 
-    // Skip agents who already have postcards in this campaign
-    const { count: existingCount } = await admin
+    // Skip agents who already have successfully mailed postcards in this campaign
+    const { count: mailedExisting } = await admin
       .from("postcards")
       .select("id", { count: "exact", head: true })
-      .eq("agent_campaign_id", ac.id);
+      .eq("agent_campaign_id", ac.id)
+      .in("status", ["mailed", "in_transit", "in_local_area", "delivered", "queued"]);
 
-    if (existingCount && existingCount > 0) continue;
+    if (mailedExisting && mailedExisting > 0) continue;
+
+    // Delete any previously failed postcards so we can retry
+    await admin
+      .from("postcards")
+      .delete()
+      .eq("agent_campaign_id", ac.id)
+      .eq("status", "failed");
 
     // Get contacts for this agent campaign — check contact_filter for selected IDs
     const contactFilter = ac.contact_filter as { selected_ids?: string[] } | null;
@@ -344,10 +352,18 @@ export async function POST(req: NextRequest) {
       .eq("id", ac.id);
   }
 
+  // Collect unique error messages for debugging
+  const errors = results
+    .filter((r) => r.error)
+    .map((r) => r.error)
+    .filter((e, i, arr) => arr.indexOf(e) === i)
+    .slice(0, 5);
+
   return NextResponse.json({
     total: results.length,
     mailed: mailedCount,
     failed: results.length - mailedCount,
+    errors,
   });
 }
 

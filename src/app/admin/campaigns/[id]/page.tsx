@@ -58,7 +58,11 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["admin", "campaign", id] });
       queryClient.invalidateQueries({ queryKey: ["admin", "postcards", id] });
-      toast.success(`Mailed ${data.mailed} postcards (${data.failed} failed)`);
+      if (data.failed > 0 && data.errors?.length > 0) {
+        toast.error(`Mailed ${data.mailed}, failed ${data.failed}: ${data.errors[0]}`);
+      } else {
+        toast.success(`Mailed ${data.mailed} postcards (${data.failed} failed)`);
+      }
     },
     onError: (err) => toast.error(err.message),
   });
