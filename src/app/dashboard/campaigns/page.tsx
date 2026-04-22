@@ -283,7 +283,7 @@ export default function CampaignsPage() {
               {/* Iframe renders the EXACT same HTML that Lob prints */}
               <div className="relative w-full" style={{ aspectRatio: "2775 / 1875" }}>
                 <iframe
-                  src="/api/postcards/preview-back"
+                  src={`/api/postcards/preview-back?template_id=${previewCampaign?.template_id || ""}&month=${previewCampaign?.month || ""}`}
                   className="absolute inset-0 w-full h-full border rounded-md"
                   title="Postcard back preview"
                   sandbox="allow-same-origin allow-scripts"
