@@ -93,27 +93,40 @@ export async function GET(req: NextRequest) {
   const bodyStyleMatch = frontHtml.match(/<body\s+style="([^"]*)"/i);
   const bodyStyle = bodyStyleMatch ? bodyStyleMatch[1] : "";
 
+  // Use CSS zoom instead of transform for more reliable iframe scaling
   const html = `<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8" />
 <style>
-  html, body { margin:0; padding:0; overflow:hidden; }
-  body { ${bodyStyle} transform-origin: top left; }
+  html, body { margin:0; padding:0; overflow:hidden; width:100%; height:100%; }
+  #container {
+    ${bodyStyle}
+    width: ${bodyWidthIn}in;
+    height: ${bodyHeightIn}in;
+    position: relative;
+    overflow: hidden;
+    transform-origin: top left;
+  }
 </style>
 <script>
   function fit() {
+    var c = document.getElementById('container');
     var bw = ${bodyWidthIn} * 96;
     var bh = ${bodyHeightIn} * 96;
-    var s = Math.min(window.innerWidth / bw, window.innerHeight / bh);
-    document.body.style.transform = 'scale(' + s + ')';
+    var pw = document.documentElement.clientWidth || window.innerWidth;
+    var ph = document.documentElement.clientHeight || window.innerHeight;
+    var s = Math.min(pw / bw, ph / bh);
+    c.style.transform = 'scale(' + s + ')';
   }
   window.addEventListener('load', fit);
   window.addEventListener('resize', fit);
 </script>
 </head>
 <body>
-  ${bodyContent}
+  <div id="container">
+    ${bodyContent}
+  </div>
 </body>
 </html>`;
 
