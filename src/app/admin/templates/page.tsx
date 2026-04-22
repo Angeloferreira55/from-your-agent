@@ -48,12 +48,14 @@ function parseDesign(html: string): DesignConfig | null {
   return null;
 }
 
-/* ── Reusable preview card ── */
+/* ── Reusable preview card — uses iframe with actual Lob renderer ── */
 function TemplatePreviewCard({
   design,
+  templateId,
   aspectRatio,
 }: {
   design: DesignConfig | null;
+  templateId?: string;
   aspectRatio: string;
 }) {
   if (!design) {
@@ -62,6 +64,20 @@ function TemplatePreviewCard({
         <div className="absolute inset-0 flex items-center justify-center">
           <FileImage className="h-8 w-8 text-muted-foreground/40" />
         </div>
+      </div>
+    );
+  }
+
+  // If we have a templateId, use the Lob renderer via iframe for accurate preview
+  if (templateId) {
+    const month = new Date().getMonth() + 1;
+    return (
+      <div className="relative overflow-hidden" style={{ aspectRatio }}>
+        <iframe
+          src={`/api/postcards/preview-back?template_id=${templateId}&month=${month}`}
+          className="absolute inset-0 w-full h-full border-0 pointer-events-none"
+          title="Template preview"
+        />
       </div>
     );
   }
@@ -386,7 +402,7 @@ export default function AdminTemplatesPage() {
 
     return (
       <Card className={cn("overflow-hidden", isInactive && "opacity-60")}>
-        <TemplatePreviewCard design={design} aspectRatio="3/2" />
+        <TemplatePreviewCard design={design} templateId={template.id || undefined} aspectRatio="3/2" />
         <div className="p-4">
           <div className="flex items-start justify-between">
             <div>
