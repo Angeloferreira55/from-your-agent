@@ -36,7 +36,7 @@ const FONT_MAP: Record<string, string> = {
   candara: "Candara, Calibri, sans-serif",
   franklin: "'Franklin Gothic Medium', 'Franklin Gothic', sans-serif",
 };
-import { Plus, FileImage, MoreHorizontal, Trash2, Pencil, Copy, LayoutTemplate, PanelsTopLeft, EyeOff, Eye, Check, Printer } from "lucide-react";
+import { Plus, FileImage, MoreHorizontal, Trash2, Pencil, Copy, LayoutTemplate, PanelsTopLeft, EyeOff, Eye, Check, Printer, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import type { PostcardTemplate } from "@/types/database";
@@ -431,6 +431,25 @@ export default function AdminTemplatesPage() {
                     <><EyeOff className="mr-2 h-4 w-4" /> Deactivate</>
                   )}
                 </DropdownMenuItem>
+                {side === "front" && !isInactive && (
+                  <DropdownMenuItem onClick={async () => {
+                    if (!confirm("Send a test print to your office address?")) return;
+                    try {
+                      const res = await fetch("/api/postcards/test", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ template_id: template.id }),
+                      });
+                      const data = await res.json();
+                      if (!res.ok) throw new Error(data.error);
+                      toast.success(`Test print sent! ${data.mailed} postcard(s) queued.`);
+                    } catch (err) {
+                      toast.error(err instanceof Error ? err.message : "Failed to send test");
+                    }
+                  }}>
+                    <Send className="mr-2 h-4 w-4" /> Send Test Print
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem
                   className="text-destructive"
                   onClick={() => {
