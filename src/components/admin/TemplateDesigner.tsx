@@ -249,7 +249,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
   const [colorEnabled, setColorEnabled] = useState(initialData?.design?.background.colorEnabled !== false);
   const [imageFit, setImageFit] = useState<"cover" | "contain" | "fill">(initialData?.design?.background.imageFit || "cover");
   const [elements, setElements] = useState<DesignElement[]>(initialData?.design?.elements || []);
-  const [disclaimer, setDisclaimer] = useState(initialData?.design?.disclaimer || "Each office is independently owned and operated.");
+  const [disclaimer, setDisclaimer] = useState(initialData?.design?.disclaimer ?? "Each office is independently owned and operated.");
   const [disclaimerFontSize, setDisclaimerFontSize] = useState(initialData?.design?.disclaimerStyle?.fontSize || 8);
   const [disclaimerColor, setDisclaimerColor] = useState(initialData?.design?.disclaimerStyle?.color || "rgba(255,255,255,0.55)");
   const [disclaimerFont, setDisclaimerFont] = useState<FontFamilyOption>(initialData?.design?.disclaimerStyle?.fontFamily || "sans-serif");
@@ -352,7 +352,7 @@ export function TemplateDesigner({ open, onClose, onSubmit, brokerages, mode = "
     } else {
       setCustomMessage(initialData?.customMessage || "");
     }
-    setDisclaimer(initialData?.design?.disclaimer || "Each office is independently owned and operated.");
+    setDisclaimer(initialData?.design?.disclaimer ?? "Each office is independently owned and operated.");
     setDisclaimerFontSize(initialData?.design?.disclaimerStyle?.fontSize || 8);
     setDisclaimerColor(initialData?.design?.disclaimerStyle?.color || "rgba(255,255,255,0.55)");
     setDisclaimerFont(initialData?.design?.disclaimerStyle?.fontFamily || "sans-serif");
