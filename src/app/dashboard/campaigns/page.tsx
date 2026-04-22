@@ -269,15 +269,14 @@ export default function CampaignsPage() {
               <TabsTrigger value="back" className="flex-1">Back (Your Branding)</TabsTrigger>
             </TabsList>
             <TabsContent value="front" className="mt-4">
-              <PostcardFront
-                campaignName={previewCampaign?.name}
-                month={MONTHS[previewCampaign?.month || 0]}
-                year={previewCampaign?.year}
-                agentName={profile ? `${profile.first_name} ${profile.last_name}` : undefined}
-                companyName={profile?.company_name}
-                brokerageLogoUrl={profile?.brokerage_logo_url}
-                brandColor={profile?.brand_color}
-              />
+              <div className="relative w-full" style={{ aspectRatio: "2775 / 1875" }}>
+                <iframe
+                  src={`/api/postcards/preview-front?template_id=${previewCampaign?.template_id || ""}&month=${previewCampaign?.month || ""}`}
+                  className="absolute inset-0 w-full h-full border rounded-md"
+                  title="Postcard front preview"
+                  sandbox="allow-same-origin allow-scripts"
+                />
+              </div>
             </TabsContent>
             <TabsContent value="back" className="mt-4">
               {/* Iframe renders the EXACT same HTML that Lob prints */}
