@@ -16,6 +16,7 @@ interface CampaignFormProps {
   onSubmit: (data: Record<string, unknown>) => Promise<void>;
   templates: Array<{ id: string; name: string }>;
   offers: Array<{ id: string; title: string; merchant_name: string }>;
+  editingCampaign?: { id: string; name: string; description?: string | null; month: number; year: number; template_id?: string; offer_ids?: string[]; mail_date?: string; cutoff_date?: string } | null;
 }
 
 const MONTHS = [
@@ -23,19 +24,19 @@ const MONTHS = [
   "July", "August", "September", "October", "November", "December",
 ];
 
-export function CampaignForm({ open, onOpenChange, onSubmit, templates, offers }: CampaignFormProps) {
+export function CampaignForm({ open, onOpenChange, onSubmit, templates, offers, editingCampaign }: CampaignFormProps) {
   const [loading, setLoading] = useState(false);
   const currentDate = new Date();
   const [form, setForm] = useState({
-    name: "",
-    description: "",
-    month: (currentDate.getMonth() + 2).toString(), // Next month
-    year: currentDate.getFullYear().toString(),
-    template_id: "",
-    mail_date: "",
-    cutoff_date: "",
+    name: editingCampaign?.name || "",
+    description: editingCampaign?.description || "",
+    month: editingCampaign?.month?.toString() || (currentDate.getMonth() + 2).toString(),
+    year: editingCampaign?.year?.toString() || currentDate.getFullYear().toString(),
+    template_id: editingCampaign?.template_id || "",
+    mail_date: editingCampaign?.mail_date || "",
+    cutoff_date: editingCampaign?.cutoff_date || "",
   });
-  const [selectedOfferIds, setSelectedOfferIds] = useState<Set<string>>(new Set());
+  const [selectedOfferIds, setSelectedOfferIds] = useState<Set<string>>(new Set(editingCampaign?.offer_ids || []));
 
   function update(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -55,6 +56,7 @@ export function CampaignForm({ open, onOpenChange, onSubmit, templates, offers }
     setLoading(true);
     try {
       await onSubmit({
+        ...(editingCampaign?.id ? { id: editingCampaign.id } : {}),
         name: form.name,
         description: form.description || null,
         month: parseInt(form.month),
@@ -74,7 +76,7 @@ export function CampaignForm({ open, onOpenChange, onSubmit, templates, offers }
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create Campaign</DialogTitle>
+          <DialogTitle>{editingCampaign?.id ? "Edit Campaign" : "Create Campaign"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
@@ -150,7 +152,7 @@ export function CampaignForm({ open, onOpenChange, onSubmit, templates, offers }
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
             <Button type="submit" disabled={loading || !form.template_id}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Create Campaign
+              {editingCampaign?.id ? "Save Changes" : "Create Campaign"}
             </Button>
           </DialogFooter>
         </form>

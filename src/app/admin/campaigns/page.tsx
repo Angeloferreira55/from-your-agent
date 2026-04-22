@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { CampaignForm } from "@/components/admin/CampaignForm";
-import { Plus, Send, MoreHorizontal, Trash2, Eye, Archive, RotateCcw, Loader2 } from "lucide-react";
+import { Plus, Send, MoreHorizontal, Trash2, Eye, Archive, RotateCcw, Loader2, Pencil } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import type { Campaign } from "@/types/database";
@@ -28,6 +28,8 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function AdminCampaignsPage() {
   const [formOpen, setFormOpen] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [editingCampaign, setEditingCampaign] = useState<any>(null);
   const [showTrash, setShowTrash] = useState(false);
   const queryClient = useQueryClient();
 
@@ -97,6 +99,23 @@ export default function AdminCampaignsPage() {
     onError: (err) => toast.error(err.message),
   });
 
+  const updateMutation = useMutation({
+    mutationFn: async (formData: Record<string, unknown>) => {
+      const res = await fetch("/api/campaigns", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      if (!res.ok) throw new Error((await res.json()).error);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "campaigns"] });
+      toast.success("Campaign updated");
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const res = await fetch("/api/campaigns", {
@@ -159,7 +178,7 @@ export default function AdminCampaignsPage() {
             <Archive className="mr-2 h-4 w-4" />
             Trash{canceledCampaigns.length > 0 ? ` (${canceledCampaigns.length})` : ""}
           </Button>
-          <Button onClick={() => setFormOpen(true)}>
+          <Button onClick={() => { setEditingCampaign(null); setFormOpen(true); }}>
             <Plus className="mr-2 h-4 w-4" />
             Create Campaign
           </Button>
@@ -222,6 +241,12 @@ export default function AdminCampaignsPage() {
                             <Eye className="mr-2 h-4 w-4" />View Details
                           </Link>
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => {
+                          setEditingCampaign(campaign);
+                          setFormOpen(true);
+                        }}>
+                          <Pencil className="mr-2 h-4 w-4" />Edit
+                        </DropdownMenuItem>
                         {!["canceled", "mailing", "mailed", "completed"].includes(campaign.status) && (
                           <DropdownMenuItem
                             onClick={() => handleSend(campaign.id)}
@@ -257,11 +282,13 @@ export default function AdminCampaignsPage() {
       )}
 
       <CampaignForm
+        key={editingCampaign?.id || "new"}
         open={formOpen}
-        onOpenChange={setFormOpen}
-        onSubmit={(data) => createMutation.mutateAsync(data)}
+        onOpenChange={(open) => { setFormOpen(open); if (!open) setEditingCampaign(null); }}
+        onSubmit={(data) => editingCampaign?.id ? updateMutation.mutateAsync(data) : createMutation.mutateAsync(data)}
         templates={templates}
         offers={allOffers}
+        editingCampaign={editingCampaign}
       />
     </div>
   );
