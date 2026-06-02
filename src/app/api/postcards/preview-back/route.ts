@@ -22,6 +22,7 @@ export async function GET(req: NextRequest) {
   const previewAgentId = url.searchParams.get("agent_id");
   const templateId = url.searchParams.get("template_id");
   const monthParam = url.searchParams.get("month");
+  const debug = url.searchParams.get("debug") === "1";
   const campaignMonth = monthParam ? parseInt(monthParam, 10) : new Date().getMonth() + 1;
 
   const { data: currentAgent } = await admin
@@ -117,6 +118,7 @@ export async function GET(req: NextRequest) {
     const bodyContent = bodyMatch ? bodyMatch[1] : rawBackHtml;
     const bodyStyleMatch = rawBackHtml.match(/<body\s+style="([^"]*)"/i);
     const bodyStyle = bodyStyleMatch ? bodyStyleMatch[1] : "";
+    const debugOverlay = debug ? `<div style="position:absolute;top:0;left:0;right:0;padding:0.4rem 0.6rem;z-index:999;background:rgba(0,0,0,0.75);color:#fff;font-size:12px;font-family:Arial,sans-serif;line-height:1.2">previewAgentId=${previewAgentId || "self"} | currentUser=${currentAgent.id}(${currentAgent.role}) | agent=${agent.first_name} ${agent.last_name}(${agent.id})</div>` : "";
 
     html = `<!DOCTYPE html>
 <html>
@@ -149,7 +151,7 @@ export async function GET(req: NextRequest) {
 </head>
 <body>
   <div id="container">
-    ${bodyContent}
+    ${debugOverlay}${bodyContent}
   </div>
 </body>
 </html>`;

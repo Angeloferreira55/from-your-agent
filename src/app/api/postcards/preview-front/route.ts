@@ -18,6 +18,7 @@ export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const templateId = url.searchParams.get("template_id");
   const previewAgentId = url.searchParams.get("agent_id");
+  const debug = url.searchParams.get("debug") === "1";
 
   if (!templateId) return new NextResponse("template_id is required", { status: 400 });
 
@@ -116,6 +117,7 @@ export async function GET(req: NextRequest) {
   const bodyContent = bodyMatch ? bodyMatch[1] : frontHtml;
   const bodyStyleMatch = frontHtml.match(/<body\s+style="([^"]*)"/i);
   const bodyStyle = bodyStyleMatch ? bodyStyleMatch[1] : "";
+  const debugOverlay = debug ? `<div style="position:absolute;top:0;left:0;right:0;padding:0.4rem 0.6rem;z-index:999;background:rgba(0,0,0,0.75);color:#fff;font-size:12px;font-family:Arial,sans-serif;line-height:1.2">previewAgentId=${previewAgentId || "self"} | currentUser=${currentAgent.id}(${currentAgent.role}) | agent=${agent.first_name} ${agent.last_name}(${agent.id})</div>` : "";
 
   // Use CSS zoom instead of transform for more reliable iframe scaling
   const html = `<!DOCTYPE html>
@@ -149,7 +151,7 @@ export async function GET(req: NextRequest) {
 </head>
 <body>
   <div id="container">
-    ${bodyContent}
+    ${debugOverlay}${bodyContent}
   </div>
 </body>
 </html>`;

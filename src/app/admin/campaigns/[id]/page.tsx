@@ -268,7 +268,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                         {campaign?.postcard_templates?.id ? (
                           <div className="flex items-center justify-center gap-2">
                             <a
-                              href={`/api/postcards/preview-front?template_id=${campaign.postcard_templates.id}&agent_id=${agent.agentId}&month=${campaign.month}`}
+                              href={`/api/postcards/preview-front?template_id=${campaign.postcard_templates.id}&agent_id=${agent.agentId}&month=${campaign.month}&debug=1`}
                               target="_blank"
                               rel="noreferrer"
                               className="text-sm font-medium text-blue-600 hover:text-blue-800"
@@ -277,7 +277,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                             </a>
                             <span className="text-muted-foreground">|</span>
                             <a
-                              href={`/api/postcards/preview-back?template_id=${campaign.postcard_templates.id}&agent_id=${agent.agentId}&month=${campaign.month}`}
+                              href={`/api/postcards/preview-back?template_id=${campaign.postcard_templates.id}&agent_id=${agent.agentId}&month=${campaign.month}&debug=1`}
                               target="_blank"
                               rel="noreferrer"
                               className="text-sm font-medium text-blue-600 hover:text-blue-800"
