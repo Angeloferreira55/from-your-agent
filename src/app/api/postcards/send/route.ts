@@ -22,7 +22,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { campaign_id } = await req.json();
+  const body = (await req.json()) as { campaign_id?: string; force?: boolean; agent_ids?: string[] };
+  const campaign_id = body.campaign_id;
+  const force = !!body.force;
+  const agentIds = (body.agent_ids || []) as string[];
   if (!campaign_id) {
     return NextResponse.json({ error: "campaign_id is required" }, { status: 400 });
   }
@@ -78,11 +81,18 @@ export async function POST(req: NextRequest) {
   }
 
   // Get all opted-in agent_campaigns with agent profiles
-  const { data: agentCampaigns } = await admin
+  // Fetch opted-in agent_campaigns; optionally restrict to a list of agent IDs
+  let agentCampaignsQuery = admin
     .from("agent_campaigns")
     .select("*, agent_profiles (*)")
     .eq("campaign_id", campaign_id)
     .eq("status", "opted_in");
+
+  if (agentIds.length > 0) {
+    agentCampaignsQuery = agentCampaignsQuery.in("agent_id", agentIds);
+  }
+
+  const { data: agentCampaigns } = await agentCampaignsQuery;
 
   if (!agentCampaigns || agentCampaigns.length === 0) {
     return NextResponse.json({ error: "No agents to mail to" }, { status: 400 });
@@ -124,14 +134,39 @@ export async function POST(req: NextRequest) {
     const agent = ac.agent_profiles;
     if (!agent) continue;
 
-    // Skip agents who already have successfully mailed postcards in this campaign
-    const { count: mailedExisting } = await admin
+    // Get contact filter / selected IDs for this agent campaign up front.
+    const contactFilter = ac.contact_filter as { selected_ids?: string[] } | null;
+    const selectedIds = Array.from(new Set(contactFilter?.selected_ids || []));
+
+    // Always fetch the set of contact_ids that have already been mailed (or are in
+    // the mailing pipeline) for this agent_campaign — used both for skip logic
+    // below AND to filter contacts so we NEVER mail the same contact twice.
+    const { data: mailedRows } = await admin
       .from("postcards")
-      .select("id", { count: "exact", head: true })
+      .select("contact_id")
       .eq("agent_campaign_id", ac.id)
       .in("status", ["mailed", "in_transit", "in_local_area", "delivered", "queued"]);
+    const mailedContactIds = new Set((mailedRows || []).map((row) => row.contact_id));
 
-    if (mailedExisting && mailedExisting > 0) continue;
+    // Skip the whole agent (don't even consider their contacts) when all their
+    // active contacts have already been mailed — unless `force` is provided.
+    if (!force) {
+      let activeContactCount = 0;
+      if (selectedIds.length > 0) {
+        activeContactCount = selectedIds.length;
+      } else {
+        const { count: ccount } = await admin
+          .from("contacts")
+          .select("id", { count: "exact", head: true })
+          .eq("agent_id", agent.id)
+          .eq("status", "active");
+        activeContactCount = ccount || 0;
+      }
+
+      if (mailedContactIds.size > 0 && activeContactCount > 0 && mailedContactIds.size >= activeContactCount) {
+        continue;
+      }
+    }
 
     // Delete any previously failed postcards so we can retry
     await admin
@@ -141,31 +176,39 @@ export async function POST(req: NextRequest) {
       .eq("status", "failed");
 
     // Get contacts for this agent campaign — check contact_filter for selected IDs
-    const contactFilter = ac.contact_filter as { selected_ids?: string[] } | null;
-    const selectedIds = contactFilter?.selected_ids || [];
-    let contacts;
+    const contacts = (await (async () => {
+      if (selectedIds.length > 0) {
+        const { data } = await admin
+          .from("contacts")
+          .select("*")
+          .in("id", selectedIds)
+          .eq("status", "active");
+        return data || [];
+      }
 
-    if (selectedIds.length > 0) {
-      const { data } = await admin
-        .from("contacts")
-        .select("*")
-        .in("id", selectedIds)
-        .eq("status", "active");
-      contacts = data || [];
-    } else {
       const { data } = await admin
         .from("contacts")
         .select("*")
         .eq("agent_id", agent.id)
         .eq("status", "active");
-      contacts = data || [];
+      return data || [];
+    })()) as Array<{ id: string }>;
+
+    // Deduplicate within this batch AND exclude contacts that already have a
+    // mailed/queued postcard in this agent_campaign. Guarantees one card per
+    // contact regardless of whether `force` was set.
+    const uniqueContactsMap = new Map<string, { id: string }>();
+    for (const c of contacts) {
+      if (mailedContactIds.has(c.id)) continue;
+      uniqueContactsMap.set(c.id, c);
     }
+    const uniqueContacts = Array.from(uniqueContactsMap.values());
 
     // Geo-match contacts to nearest offers
-    const contactIds = contacts.map((c: { id: string }) => c.id);
+    const contactIds = uniqueContacts.map((c: { id: string }) => c.id);
     const geoMatches = await matchContactsToOffers(contactIds, offerIds);
 
-    for (const contact of contacts) {
+    for (const contact of uniqueContacts) {
       const match = geoMatches.get(contact.id);
       const matchedOfferId = match?.offerId || offerIds[0] || null;
 
