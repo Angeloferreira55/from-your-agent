@@ -64,64 +64,57 @@ export default function UpcomingPostcardPage() {
               </p>
               <div className="overflow-hidden rounded-xl border shadow-lg bg-white" style={{ aspectRatio: "9/6" }}>
                 <div className="flex flex-col h-full">
-                  {/* Top half */}
-                  <div className="flex h-1/2">
-                    {/* Featured Deal */}
-                    <div className="flex w-1/2 items-start gap-1.5 p-3 md:p-4">
-                      <img
-                        src="/roof-repair-logo.jpg"
-                        alt="Roof Repair Today"
-                        className="h-10 md:h-14 w-auto object-contain rounded shrink-0"
-                      />
-                      <div className="min-w-0">
-                        <p className="text-[5px] md:text-[7px] text-gray-500 leading-tight">
-                          Present this postcard for 10% off roof repairs or $500 off a roof replacement or coating, as a gift from your friends at Keller Williams Realty!
-                        </p>
-                        <p className="text-[5px] md:text-[6.5px] font-semibold text-gray-600 mt-0.5">(505) 433-0844 &bull; roofrepairtoday.com</p>
-                      </div>
-                    </div>
-                    {/* Brokerage branding */}
-                    <div
-                      className="relative flex w-1/2 flex-col p-2 md:p-3 overflow-hidden"
-                      style={{ backgroundColor: '#B40101' }}
+                  {/* Top half — Featured Offer Panel (your designed postcard back, spanning top-left + top-right) */}
+                  <div className="relative flex h-1/2 overflow-hidden" style={{ backgroundColor: '#1B3A5C' }}>
+                    <div className="absolute inset-0" style={{ backgroundColor: 'rgba(0,0,0,0.3)' }} />
+
+                    {/* Headline */}
+                    <p
+                      className="absolute text-center font-bold uppercase text-white leading-tight text-[8px] md:text-[13px]"
+                      style={{ left: '0.4%', top: '4.6%', width: '99%', fontFamily: "'Century Gothic', Futura, sans-serif" }}
                     >
-                      <img
-                        src="/brokerages/kw-bg.jpg"
-                        alt=""
-                        className="absolute inset-0 h-full w-full object-cover opacity-40"
-                      />
-                      <div className="absolute inset-0" style={{ backgroundColor: 'rgba(100, 0, 0, 0.55)' }} />
-                      <div className="relative z-10 flex flex-col h-full">
-                        <div className="flex items-center gap-1.5">
-                          <img
-                            src="/brokerages/kw-logo-white.png"
-                            alt="Keller Williams Realty"
-                            className="h-4 md:h-7 w-auto object-contain"
-                          />
-                        </div>
-                        <div className="my-auto text-center">
-                          <p className="text-[8px] md:text-[12px] font-serif italic text-white leading-snug">
-                            Not Just Agents.
-                          </p>
-                          <p className="text-[8px] md:text-[12px] font-serif italic text-white leading-snug">
-                            Advisors.
-                          </p>
-                        </div>
-                        <div className="mt-auto">
-                          <div className="flex items-center gap-0.5 md:gap-1">
-                            {['f', 'in', 'ig', 'yt'].map((icon) => (
-                              <div
-                                key={icon}
-                                className="h-2 w-2 md:h-3 md:w-3 rounded-sm bg-white/20 flex items-center justify-center"
-                              >
-                                <span className="text-[3px] md:text-[5px] font-bold text-white">{icon}</span>
-                              </div>
-                            ))}
-                            <p className="text-[4px] md:text-[6px] text-white/90 ml-auto font-medium">www.kw.com</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                      Extend the Life of Your Roof
+                    </p>
+
+                    {/* Roof photo (top-left) */}
+                    <img
+                      src="/roof-repair-logo.jpg"
+                      alt="Roof Repair Today"
+                      className="absolute object-contain"
+                      style={{ left: '4.2%', top: '15.6%', width: '45.9%', height: '69.2%' }}
+                    />
+
+                    {/* What we offer (top-right) */}
+                    <p
+                      className="absolute text-center text-white leading-tight whitespace-pre-line text-[5.5px] md:text-[8.5px]"
+                      style={{ left: '50.7%', top: '14.9%', width: '48.6%' }}
+                    >
+                      {"WE OFFER :\nRoof Repairs · Roof Maintenance\nRoof Replacement\nSilicone Roof Coating"}
+                    </p>
+
+                    {/* The deal (top-right) */}
+                    <p
+                      className="absolute text-center font-bold uppercase text-white leading-tight whitespace-pre-line text-[7px] md:text-[12px]"
+                      style={{ left: '50.9%', top: '39.3%', width: '48.8%', fontFamily: "'Century Gothic', Futura, sans-serif" }}
+                    >
+                      {"10% OFF Roof Repairs\n$500 OFF Roof Replacement\nor Roof Coating"}
+                    </p>
+
+                    {/* Merchant contact (top-right) */}
+                    <p
+                      className="absolute text-center text-white leading-tight whitespace-pre-line font-mono text-[5px] md:text-[8px]"
+                      style={{ left: '50.6%', top: '68.3%', width: '48.8%' }}
+                    >
+                      {"Roof Repair Today\n(505) 433-0844\nteam@roofrepairtoday.com\nwww.roofrepairtoday.com"}
+                    </p>
+
+                    {/* Fine print */}
+                    <p
+                      className="absolute text-center text-white/90 leading-tight text-[3px] md:text-[4.5px]"
+                      style={{ left: '0.4%', top: '92.7%', width: '99.4%' }}
+                    >
+                      Offer valid from 6/1/2026 through 9/1/2026, on presentation of this postcard. One coupon per person.
+                    </p>
                   </div>
 
                   {/* Fine horizontal line */}
@@ -133,9 +126,9 @@ export default function UpcomingPostcardPage() {
                     <div className="flex w-1/2 items-start gap-2 p-3 md:p-4 border-r border-gray-200">
                       <div className="h-14 w-12 md:h-20 md:w-16 shrink-0 rounded-md border-2 border-[#B40101] overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300">
                         <img
-                          src="/sample-agent-woman.jpg"
+                          src="/liz-garcia.png"
                           alt="Liz Garcia"
-                          className="h-full w-full object-cover"
+                          className="h-full w-full object-cover object-top"
                         />
                       </div>
                       <div className="min-w-0 flex flex-col justify-center mt-0.5 md:mt-1">
@@ -154,10 +147,12 @@ export default function UpcomingPostcardPage() {
                           <p className="text-[4px] md:text-[6px] text-gray-400 text-center leading-tight">POSTAGE</p>
                         </div>
                       </div>
-                      <div className="mt-auto space-y-0.5">
-                        <div className="h-[0.5px] bg-gray-300 w-3/4 ml-auto" />
-                        <div className="h-[0.5px] bg-gray-300 w-3/4 ml-auto" />
-                        <div className="h-[0.5px] bg-gray-300 w-3/4 ml-auto" />
+                      <div className="mt-auto">
+                        <p className="text-[7px] md:text-[10px] font-semibold text-gray-900 leading-tight">
+                          The Martinez Family
+                        </p>
+                        <p className="text-[6px] md:text-[9px] text-gray-600 leading-tight">4820 Juniper Hill Rd NE</p>
+                        <p className="text-[6px] md:text-[9px] text-gray-600 leading-tight">Albuquerque, NM 87111</p>
                       </div>
                       <p className="text-[3px] md:text-[4.5px] text-gray-400 leading-tight mt-1">
                         For questions about this postcard or offer please call (505) 555-0147 &bull; www.FromYourAgent.com &bull; Each office is independently owned and operated.
