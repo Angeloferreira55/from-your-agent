@@ -4,7 +4,7 @@ import { ArrowRight, Calendar, MapPin, Gift } from "lucide-react";
 
 export const metadata = {
   title: "This Month's Postcard — June 2026 — From Your Agent",
-  description: "June 2026: 10% off class packages at Be Kind Yoga + Pilates — this month's curated local merchant deal featured on every postcard.",
+  description: "June 2026: 10% off roof repairs or $500 off a roof replacement from Roof Repair Today — this month's curated local merchant deal featured on every postcard.",
 };
 
 export default function UpcomingPostcardPage() {
@@ -33,7 +33,7 @@ export default function UpcomingPostcardPage() {
             </span>
             <span className="flex items-center gap-1.5">
               <Gift className="h-4 w-4 text-[#E8733A]" />
-              Be Kind Yoga + Pilates
+              Roof Repair Today
             </span>
           </div>
         </div>
@@ -50,8 +50,8 @@ export default function UpcomingPostcardPage() {
               </p>
               <div className="overflow-hidden rounded-xl border shadow-lg bg-white" style={{ aspectRatio: "9/6" }}>
                 <img
-                  src="/be-kind-yoga-front.png"
-                  alt="Postcard Front — Be Kind Yoga + Pilates"
+                  src="/roof-repair-front.png"
+                  alt="Postcard Front — Roof Repair Today"
                   className="h-full w-full object-cover"
                 />
               </div>
@@ -69,15 +69,15 @@ export default function UpcomingPostcardPage() {
                     {/* Featured Deal */}
                     <div className="flex w-1/2 items-start gap-1.5 p-3 md:p-4">
                       <img
-                        src="/be-kind-yoga-logo.png"
-                        alt="Be Kind Yoga + Pilates"
-                        className="h-10 md:h-14 w-auto object-contain rounded mix-blend-multiply shrink-0"
+                        src="/roof-repair-logo.jpg"
+                        alt="Roof Repair Today"
+                        className="h-10 md:h-14 w-auto object-contain rounded shrink-0"
                       />
                       <div className="min-w-0">
                         <p className="text-[5px] md:text-[7px] text-gray-500 leading-tight">
-                          Present this postcard and enjoy 10% off your class package (5-class &amp; 10-class packs), as a gift from your friends at Keller Williams Realty!
+                          Present this postcard for 10% off roof repairs or $500 off a roof replacement or coating, as a gift from your friends at Keller Williams Realty!
                         </p>
-                        <p className="text-[5px] md:text-[6.5px] font-semibold text-gray-600 mt-0.5">(505) 917-6844 &bull; bekindyogapilatesabq.com</p>
+                        <p className="text-[5px] md:text-[6.5px] font-semibold text-gray-600 mt-0.5">(505) 433-0844 &bull; roofrepairtoday.com</p>
                       </div>
                     </div>
                     {/* Brokerage branding */}
@@ -172,18 +172,19 @@ export default function UpcomingPostcardPage() {
           {/* Deal Details */}
           <div className="mt-16 rounded-2xl bg-[#F7F8FA] p-8 md:p-12">
             <h2 className="font-serif text-2xl font-bold text-[#1a1a2e] md:text-3xl">
-              Featured Deal: Be Kind Yoga + Pilates
+              Featured Deal: Roof Repair Today
             </h2>
             <p className="mt-4 text-muted-foreground leading-relaxed">
-              This month&apos;s postcard features an exclusive offer from Be Kind Yoga + Pilates — 10% off any class package, as a gift from their agent. Your contacts will receive a beautifully designed 6x9 postcard with this deal on the front and your personalized branding on the back.
+              This month&apos;s postcard features an exclusive offer from Roof Repair Today — extend the life of your roof with a free roof inspection plus 10% off roof repairs or $500 off a roof replacement or coating, as a gift from their agent. Your contacts will receive a beautifully designed 6x9 postcard with this deal on the front and your personalized branding on the back.
             </p>
             <ul className="mt-6 space-y-3">
               {[
-                "10% off 5-class and 10-class packs at Be Kind Yoga + Pilates",
+                "Free roof inspection + detailed photo report",
+                "10% off roof repairs, or $500 off a roof replacement or coating",
                 "Professional 6x9 full-color postcard",
                 "Your headshot, logo, and branding on the back",
                 "Delivered via USPS First-Class Mail",
-                "Typically arrives the first week of June",
+                "Offer valid June 1 – September 1, 2026",
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2 text-sm text-gray-700">
                   <span className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-[#E8733A]" />
