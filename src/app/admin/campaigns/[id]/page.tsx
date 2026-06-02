@@ -110,7 +110,9 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
     if (pc.status === "returned") entry.returned++;
     if (pc.status === "failed") entry.failed++;
   }
-  const agentBreakdown = Array.from(agentMap.values()).sort((a, b) => b.total - a.total);
+  const agentBreakdown = Array.from(agentMap.entries())
+    .map(([agentId, entry]) => ({ agentId, ...entry }))
+    .sort((a, b) => b.total - a.total);
 
   if (isLoading) {
     return (
@@ -222,11 +224,12 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                     <TableHead className="text-center">Delivered</TableHead>
                     <TableHead className="text-center">Returned</TableHead>
                     <TableHead className="text-center">Failed</TableHead>
+                    <TableHead className="text-center">Preview</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {agentBreakdown.map((agent) => (
-                    <TableRow key={agent.email}>
+                    <TableRow key={agent.agentId}>
                       <TableCell className="font-medium">{agent.name}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{agent.email}</TableCell>
                       <TableCell className="text-center">{agent.total}</TableCell>
@@ -234,6 +237,20 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                       <TableCell className="text-center text-green-600">{agent.delivered}</TableCell>
                       <TableCell className="text-center text-red-500">{agent.returned}</TableCell>
                       <TableCell className="text-center text-red-600">{agent.failed}</TableCell>
+                      <TableCell className="text-center">
+                        {campaign?.postcard_templates?.id ? (
+                          <a
+                            href={`/api/postcards/preview-back?template_id=${campaign.postcard_templates.id}&agent_id=${agent.agentId}&month=${campaign.month}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-sm font-medium text-blue-600 hover:text-blue-800"
+                          >
+                            Back Preview
+                          </a>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">No template</span>
+                        )}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
