@@ -53,6 +53,8 @@ export async function GET(req: NextRequest) {
     agent = currentAgentFull;
   }
 
+  if (!agent) return new NextResponse("Agent not found", { status: 404 });
+
   const { data: template } = await admin
     .from("postcard_templates")
     .select("*")
@@ -89,7 +91,7 @@ export async function GET(req: NextRequest) {
   const sizeKey = (template.size || "6x9") as keyof typeof LOB_DIMENSIONS;
   const dims = LOB_DIMENSIONS[sizeKey] || LOB_DIMENSIONS["6x9"];
 
-  const mergeVars = buildMergeVariables(agent, dummyContact, offer);
+  const mergeVars = buildMergeVariables(agent as Parameters<typeof buildMergeVariables>[0], dummyContact, offer);
   const agentName = `${agent.first_name} ${agent.last_name}`.trim();
   const hasPlaceholders = designHasFrontPlaceholders(template.front_html);
 

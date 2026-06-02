@@ -55,6 +55,8 @@ export async function GET(req: NextRequest) {
     agent = currentAgentFull;
   }
 
+  if (!agent) return new NextResponse("Agent not found", { status: 404 });
+
   let html: string;
 
   if (templateId) {
