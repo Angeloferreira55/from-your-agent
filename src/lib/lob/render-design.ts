@@ -198,15 +198,21 @@ function renderElement(el: DesignElement, pxWidth: number, pxHeight: number, des
       `opacity:${el.opacity ?? 1}`,
     ].join(";");
 
+    const absSrc = toAbsoluteUrl(el.src);
+    const fit = el.objectFit || "contain";
+
     if (el.tintColor) {
-      const fit = el.objectFit || "contain";
-      const absSrc = toAbsoluteUrl(el.src);
       const tintStyle = `${style};background-color:${el.tintColor};-webkit-mask-image:url(${absSrc});mask-image:url(${absSrc});-webkit-mask-size:${fit};mask-size:${fit};-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center`;
       return `<div style="${tintStyle}"></div>`;
     }
 
-    const imgStyle = `width:100%;height:100%;object-fit:${el.objectFit || "contain"}`;
-    return `<div style="${style};overflow:hidden"><img src="${toAbsoluteUrl(el.src)}" style="${imgStyle}" /></div>`;
+    if (fit === "cover" || fit === "contain") {
+      const bgStyle = `width:100%;height:100%;background-image:url(${absSrc});background-size:${fit};background-position:center center;background-repeat:no-repeat`;
+      return `<div style="${style};overflow:hidden;${bgStyle}"></div>`;
+    }
+
+    const imgStyle = `width:100%;height:100%;object-fit:${fit}`;
+    return `<div style="${style};overflow:hidden"><img src="${absSrc}" style="${imgStyle}" /></div>`;
   }
 
   if (el.type === "shape") {
@@ -544,7 +550,13 @@ function renderFlatPanel(
         const tintStyle = `${wrapStyle};background-color:${processedEl.tintColor};-webkit-mask-image:url(${absSrc});mask-image:url(${absSrc});-webkit-mask-size:${fit};mask-size:${fit};-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center`;
         parts.push(`<div style="${tintStyle}"></div>`);
       } else {
-        parts.push(`<div style="${wrapStyle}"><img src="${toAbsoluteUrl(processedEl.src)}" style="width:100%;height:100%;object-fit:${processedEl.objectFit || "contain"}" /></div>`);
+        const absSrc = toAbsoluteUrl(processedEl.src);
+        const fit = processedEl.objectFit || "contain";
+        if (fit === "cover" || fit === "contain") {
+          parts.push(`<div style="${wrapStyle};background-image:url(${absSrc});background-size:${fit};background-position:center center;background-repeat:no-repeat"></div>`);
+        } else {
+          parts.push(`<div style="${wrapStyle}"><img src="${absSrc}" style="width:100%;height:100%;object-fit:${fit}" /></div>`);
+        }
       }
     } else if (processedEl.type === "shape") {
       const borderWidthPx = (processedEl.shapeBorderWidth || 2) * fontScale;
