@@ -45,6 +45,15 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
     },
   });
 
+  const { data: agentCampaignsData } = useQuery({
+    queryKey: ["admin", "agent_campaigns", id],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/agent-campaigns?campaign_id=${id}`);
+      if (!res.ok) throw new Error("Failed to fetch agent_campaigns");
+      return res.json();
+    },
+  });
+
   const sendMutation = useMutation({
     mutationFn: async () => {
       const res = await fetch("/api/postcards/send", {
@@ -89,14 +98,31 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
   const campaign = campaignData?.campaign || campaignData?.campaigns?.[0];
   const postcards = postcardsData?.postcards || [];
 
-  // Build per-agent breakdown
+  // Build per-agent breakdown from agent_campaigns (all agents in campaign), merge postcard counts
   const agentMap = new Map<string, { name: string; email: string; total: number; mailed: number; delivered: number; returned: number; failed: number }>();
+
+  const agentCampaigns = agentCampaignsData?.agent_campaigns || [];
+  for (const ac of agentCampaigns) {
+    const agent = ac.agent_profiles;
+    if (!agent) continue;
+    const agentId = agent.id;
+    if (!agentMap.has(agentId)) {
+      agentMap.set(agentId, {
+        name: `${agent.first_name} ${agent.last_name}`.trim() || "Unknown",
+        email: agent.email || "",
+        total: 0, mailed: 0, delivered: 0, returned: 0, failed: 0,
+      });
+    }
+  }
+
+  // Merge counts from existing postcards (if any)
   for (const pc of postcards) {
-    const ac = pc.agent_campaigns as { agent_id: string; agent_profiles: { first_name: string; last_name: string; email: string; company_name: string } | null } | null;
+    const ac = pc.agent_campaigns as { agent_id: string; agent_profiles?: any } | null;
     if (!ac) continue;
     const agentId = ac.agent_id;
-    const agent = ac.agent_profiles;
     if (!agentMap.has(agentId)) {
+      // postcards exist for an agent not in agent_campaigns (shouldn't happen), create entry
+      const agent = ac.agent_profiles;
       agentMap.set(agentId, {
         name: agent ? `${agent.first_name} ${agent.last_name}`.trim() : "Unknown",
         email: agent?.email || "",
@@ -110,6 +136,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
     if (pc.status === "returned") entry.returned++;
     if (pc.status === "failed") entry.failed++;
   }
+
   const agentBreakdown = Array.from(agentMap.entries())
     .map(([agentId, entry]) => ({ agentId, ...entry }))
     .sort((a, b) => b.total - a.total);
@@ -239,14 +266,25 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                       <TableCell className="text-center text-red-600">{agent.failed}</TableCell>
                       <TableCell className="text-center">
                         {campaign?.postcard_templates?.id ? (
-                          <a
-                            href={`/api/postcards/preview-back?template_id=${campaign.postcard_templates.id}&agent_id=${agent.agentId}&month=${campaign.month}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-sm font-medium text-blue-600 hover:text-blue-800"
-                          >
-                            Back Preview
-                          </a>
+                          <div className="flex items-center justify-center gap-2">
+                            <a
+                              href={`/api/postcards/preview-front?template_id=${campaign.postcard_templates.id}&agent_id=${agent.agentId}&month=${campaign.month}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-sm font-medium text-blue-600 hover:text-blue-800"
+                            >
+                              Front Preview
+                            </a>
+                            <span className="text-muted-foreground">|</span>
+                            <a
+                              href={`/api/postcards/preview-back?template_id=${campaign.postcard_templates.id}&agent_id=${agent.agentId}&month=${campaign.month}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-sm font-medium text-blue-600 hover:text-blue-800"
+                            >
+                              Back Preview
+                            </a>
+                          </div>
                         ) : (
                           <span className="text-sm text-muted-foreground">No template</span>
                         )}
