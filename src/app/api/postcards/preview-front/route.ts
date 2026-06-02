@@ -15,18 +15,42 @@ export async function GET(req: NextRequest) {
 
   const admin = createAdminClient();
 
-  const { data: agent } = await admin
+  const url = new URL(req.url);
+  const templateId = url.searchParams.get("template_id");
+  const previewAgentId = url.searchParams.get("agent_id");
+
+  if (!templateId) return new NextResponse("template_id is required", { status: 400 });
+
+  // Load current agent profile for auth and admin role checks.
+  const { data: currentAgent } = await admin
     .from("agent_profiles")
-    .select("*")
+    .select("id, role")
     .eq("user_id", userId)
     .single();
 
-  if (!agent) return new NextResponse("Profile not found", { status: 404 });
+  if (!currentAgent) return new NextResponse("Profile not found", { status: 404 });
 
-  const url = new URL(req.url);
-  const templateId = url.searchParams.get("template_id");
-
-  if (!templateId) return new NextResponse("template_id is required", { status: 400 });
+  let agent: Record<string, any> | null = null;
+  if (previewAgentId) {
+    if (currentAgent.role !== "admin") {
+      return new NextResponse("Forbidden", { status: 403 });
+    }
+    const { data: targetAgent } = await admin
+      .from("agent_profiles")
+      .select("*")
+      .eq("id", previewAgentId)
+      .single();
+    if (!targetAgent) return new NextResponse("Agent not found", { status: 404 });
+    agent = targetAgent;
+  } else {
+    const { data: currentAgentFull } = await admin
+      .from("agent_profiles")
+      .select("*")
+      .eq("user_id", userId)
+      .single();
+    if (!currentAgentFull) return new NextResponse("Profile not found", { status: 404 });
+    agent = currentAgentFull;
+  }
 
   const { data: template } = await admin
     .from("postcard_templates")

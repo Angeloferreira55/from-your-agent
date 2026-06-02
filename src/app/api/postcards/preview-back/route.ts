@@ -18,18 +18,41 @@ export async function GET(req: NextRequest) {
 
   const admin = createAdminClient();
 
-  const { data: agent } = await admin
-    .from("agent_profiles")
-    .select("*")
-    .eq("user_id", userId)
-    .single();
-
-  if (!agent) return new NextResponse("Profile not found", { status: 404 });
-
   const url = new URL(req.url);
+  const previewAgentId = url.searchParams.get("agent_id");
   const templateId = url.searchParams.get("template_id");
   const monthParam = url.searchParams.get("month");
   const campaignMonth = monthParam ? parseInt(monthParam, 10) : new Date().getMonth() + 1;
+
+  const { data: currentAgent } = await admin
+    .from("agent_profiles")
+    .select("id, role")
+    .eq("user_id", userId)
+    .single();
+
+  if (!currentAgent) return new NextResponse("Profile not found", { status: 404 });
+
+  let agent: Record<string, any> | null = null;
+  if (previewAgentId) {
+    if (currentAgent.role !== "admin") {
+      return new NextResponse("Forbidden", { status: 403 });
+    }
+    const { data: targetAgent } = await admin
+      .from("agent_profiles")
+      .select("*")
+      .eq("id", previewAgentId)
+      .single();
+    if (!targetAgent) return new NextResponse("Agent not found", { status: 404 });
+    agent = targetAgent;
+  } else {
+    const { data: currentAgentFull } = await admin
+      .from("agent_profiles")
+      .select("*")
+      .eq("user_id", userId)
+      .single();
+    if (!currentAgentFull) return new NextResponse("Profile not found", { status: 404 });
+    agent = currentAgentFull;
+  }
 
   let html: string;
 
