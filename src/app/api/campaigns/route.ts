@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
   if (id) {
     const { data, error } = await admin
       .from("campaigns")
-      .select("*, postcard_templates(name, size)")
+      .select("*, postcard_templates(id, name, size)")
       .eq("id", id)
       .single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await admin
     .from("campaigns")
-    .select("*, postcard_templates(name)")
+    .select("*, postcard_templates(id, name)")
     .order("year", { ascending: false })
     .order("month", { ascending: false });
 
