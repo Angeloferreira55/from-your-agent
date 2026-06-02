@@ -104,12 +104,12 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
   const agentCampaigns = agentCampaignsData?.agent_campaigns || [];
   for (const ac of agentCampaigns) {
     const agent = ac.agent_profiles;
-    if (!agent) continue;
-    const agentId = agent.id;
+    const agentId = ac.agent_id;
+    if (!agentId) continue;
     if (!agentMap.has(agentId)) {
       agentMap.set(agentId, {
-        name: `${agent.first_name} ${agent.last_name}`.trim() || "Unknown",
-        email: agent.email || "",
+        name: agent ? `${agent.first_name} ${agent.last_name}`.trim() : "Unknown",
+        email: agent?.email || "",
         total: 0, mailed: 0, delivered: 0, returned: 0, failed: 0,
       });
     }
