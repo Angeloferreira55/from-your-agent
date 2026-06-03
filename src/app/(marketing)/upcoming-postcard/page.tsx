@@ -64,57 +64,103 @@ export default function UpcomingPostcardPage() {
               </p>
               <div className="overflow-hidden rounded-xl border shadow-lg bg-white" style={{ aspectRatio: "9/6" }}>
                 <div className="flex flex-col h-full">
-                  {/* Top half — Featured Offer Panel (your designed postcard back, spanning top-left + top-right) */}
-                  <div className="relative flex h-1/2 overflow-hidden" style={{ backgroundColor: '#1B3A5C' }}>
-                    <div className="absolute inset-0" style={{ backgroundColor: 'rgba(0,0,0,0.3)' }} />
+                  {/* Top half — split in half like the bottom: offer panel (left) + brokerage branding (right) */}
+                  <div className="flex h-1/2">
+                    {/* Top-left: Featured Offer Panel (your designed postcard back) */}
+                    <div className="relative w-1/2 overflow-hidden border-r border-gray-200" style={{ backgroundColor: '#1B3A5C' }}>
+                      <div className="absolute inset-0" style={{ backgroundColor: 'rgba(0,0,0,0.3)' }} />
 
-                    {/* Headline */}
-                    <p
-                      className="absolute text-center font-bold uppercase text-white leading-tight text-[8px] md:text-[13px]"
-                      style={{ left: '0.4%', top: '4.6%', width: '99%', fontFamily: "'Century Gothic', Futura, sans-serif" }}
+                      {/* Headline */}
+                      <p
+                        className="absolute text-center font-bold uppercase text-white leading-tight text-[5px] md:text-[8px]"
+                        style={{ left: '0.4%', top: '4.6%', width: '99%', fontFamily: "'Century Gothic', Futura, sans-serif" }}
+                      >
+                        Extend the Life of Your Roof
+                      </p>
+
+                      {/* Roof photo */}
+                      <img
+                        src="/roof-repair-logo.jpg"
+                        alt="Roof Repair Today"
+                        className="absolute object-contain"
+                        style={{ left: '4.2%', top: '15.6%', width: '45.9%', height: '69.2%' }}
+                      />
+
+                      {/* What we offer */}
+                      <p
+                        className="absolute text-center text-white leading-tight whitespace-pre-line text-[3.5px] md:text-[6px]"
+                        style={{ left: '50.7%', top: '14.9%', width: '48.6%' }}
+                      >
+                        {"WE OFFER :\nRoof Repairs · Roof Maintenance\nRoof Replacement\nSilicone Roof Coating"}
+                      </p>
+
+                      {/* The deal */}
+                      <p
+                        className="absolute text-center font-bold uppercase text-white leading-tight whitespace-pre-line text-[5px] md:text-[8px]"
+                        style={{ left: '50.9%', top: '39.3%', width: '48.8%', fontFamily: "'Century Gothic', Futura, sans-serif" }}
+                      >
+                        {"10% OFF Roof Repairs\n$500 OFF Roof Replacement\nor Roof Coating"}
+                      </p>
+
+                      {/* Merchant contact */}
+                      <p
+                        className="absolute text-center text-white leading-tight whitespace-pre-line font-mono text-[3.5px] md:text-[6px]"
+                        style={{ left: '50.6%', top: '68.3%', width: '48.8%' }}
+                      >
+                        {"Roof Repair Today\n(505) 433-0844\nteam@roofrepairtoday.com\nwww.roofrepairtoday.com"}
+                      </p>
+
+                      {/* Fine print */}
+                      <p
+                        className="absolute text-center text-white/90 leading-tight text-[2.5px] md:text-[4px]"
+                        style={{ left: '0.4%', top: '92.7%', width: '99.4%' }}
+                      >
+                        Offer valid 6/1/2026 through 9/1/2026. One coupon per person.
+                      </p>
+                    </div>
+
+                    {/* Top-right: Brokerage branding */}
+                    <div
+                      className="relative flex w-1/2 flex-col p-2 md:p-3 overflow-hidden"
+                      style={{ backgroundColor: '#B40101' }}
                     >
-                      Extend the Life of Your Roof
-                    </p>
-
-                    {/* Roof photo (top-left) */}
-                    <img
-                      src="/roof-repair-logo.jpg"
-                      alt="Roof Repair Today"
-                      className="absolute object-contain"
-                      style={{ left: '4.2%', top: '15.6%', width: '45.9%', height: '69.2%' }}
-                    />
-
-                    {/* What we offer (top-right) */}
-                    <p
-                      className="absolute text-center text-white leading-tight whitespace-pre-line text-[5.5px] md:text-[8.5px]"
-                      style={{ left: '50.7%', top: '14.9%', width: '48.6%' }}
-                    >
-                      {"WE OFFER :\nRoof Repairs · Roof Maintenance\nRoof Replacement\nSilicone Roof Coating"}
-                    </p>
-
-                    {/* The deal (top-right) */}
-                    <p
-                      className="absolute text-center font-bold uppercase text-white leading-tight whitespace-pre-line text-[7px] md:text-[12px]"
-                      style={{ left: '50.9%', top: '39.3%', width: '48.8%', fontFamily: "'Century Gothic', Futura, sans-serif" }}
-                    >
-                      {"10% OFF Roof Repairs\n$500 OFF Roof Replacement\nor Roof Coating"}
-                    </p>
-
-                    {/* Merchant contact (top-right) */}
-                    <p
-                      className="absolute text-center text-white leading-tight whitespace-pre-line font-mono text-[5px] md:text-[8px]"
-                      style={{ left: '50.6%', top: '68.3%', width: '48.8%' }}
-                    >
-                      {"Roof Repair Today\n(505) 433-0844\nteam@roofrepairtoday.com\nwww.roofrepairtoday.com"}
-                    </p>
-
-                    {/* Fine print */}
-                    <p
-                      className="absolute text-center text-white/90 leading-tight text-[3px] md:text-[4.5px]"
-                      style={{ left: '0.4%', top: '92.7%', width: '99.4%' }}
-                    >
-                      Offer valid from 6/1/2026 through 9/1/2026, on presentation of this postcard. One coupon per person.
-                    </p>
+                      <img
+                        src="/brokerages/kw-bg.jpg"
+                        alt=""
+                        className="absolute inset-0 h-full w-full object-cover opacity-40"
+                      />
+                      <div className="absolute inset-0" style={{ backgroundColor: 'rgba(100, 0, 0, 0.55)' }} />
+                      <div className="relative z-10 flex flex-col h-full">
+                        <div className="flex items-center gap-1.5">
+                          <img
+                            src="/brokerages/kw-logo-white.png"
+                            alt="Keller Williams Realty"
+                            className="h-4 md:h-7 w-auto object-contain"
+                          />
+                        </div>
+                        <div className="my-auto text-center">
+                          <p className="text-[8px] md:text-[12px] font-serif italic text-white leading-snug">
+                            Not Just Agents.
+                          </p>
+                          <p className="text-[8px] md:text-[12px] font-serif italic text-white leading-snug">
+                            Advisors.
+                          </p>
+                        </div>
+                        <div className="mt-auto">
+                          <div className="flex items-center gap-0.5 md:gap-1">
+                            {['f', 'in', 'ig', 'yt'].map((icon) => (
+                              <div
+                                key={icon}
+                                className="h-2 w-2 md:h-3 md:w-3 rounded-sm bg-white/20 flex items-center justify-center"
+                              >
+                                <span className="text-[3px] md:text-[5px] font-bold text-white">{icon}</span>
+                              </div>
+                            ))}
+                            <p className="text-[4px] md:text-[6px] text-white/90 ml-auto font-medium">www.kw.com</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Fine horizontal line */}
