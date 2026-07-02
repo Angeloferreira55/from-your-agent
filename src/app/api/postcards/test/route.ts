@@ -142,10 +142,15 @@ export async function POST(req: NextRequest) {
 
   let testCampaignId: string;
 
+  // Campaigns have a UNIQUE(month, year) constraint, so there can only ever be
+  // one campaign per month. Look it up by month/year (not by name) and reuse
+  // whatever exists — otherwise inserting a "Test —" campaign for a month that
+  // already has a real campaign violates campaigns_month_year_key.
   const { data: existingTestCampaign } = await admin
     .from("campaigns")
     .select("id")
-    .eq("name", `Test — ${testMonth}/${testYear}`)
+    .eq("month", testMonth)
+    .eq("year", testYear)
     .limit(1)
     .maybeSingle();
 
