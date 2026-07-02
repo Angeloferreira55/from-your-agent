@@ -1,7 +1,30 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+// Only these routes need a live Supabase auth check in the middleware.
+// Everything else — marketing pages, API routes, static assets — skips the
+// network call entirely. API handlers derive the user from the auth cookie
+// via getUserId() (which falls back to decoding the cookie JWT), so they do
+// not depend on this middleware running.
+function needsAuthCheck(path: string): boolean {
+  return (
+    path.startsWith("/dashboard") ||
+    path.startsWith("/admin") ||
+    path === "/login" ||
+    path === "/signup"
+  );
+}
+
 export async function updateSession(request: NextRequest) {
+  const path = request.nextUrl.pathname;
+
+  // Public / API / static routes: never touch Supabase. This keeps the
+  // marketing site up even when Supabase is slow or unreachable, and is what
+  // prevents a hanging auth call from becoming a MIDDLEWARE_INVOCATION_TIMEOUT.
+  if (!needsAuthCheck(path)) {
+    return NextResponse.next({ request });
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   });
@@ -29,11 +52,33 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Guard the Supabase network call: if it doesn't answer within 3s (or throws
+  // on a network error), bail out instead of letting the request hang until
+  // Vercel returns a 504.
+  let user: Awaited<ReturnType<typeof supabase.auth.getUser>>["data"]["user"] = null;
+  let degraded = false;
+  try {
+    const authResult = await Promise.race([
+      supabase.auth.getUser(),
+      new Promise<{ data: { user: null }; timedOut: true }>((resolve) =>
+        setTimeout(() => resolve({ data: { user: null }, timedOut: true }), 3000)
+      ),
+    ]);
+    user = authResult.data.user;
+    degraded = "timedOut" in authResult;
+  } catch {
+    degraded = true;
+  }
 
-  const path = request.nextUrl.pathname;
+  // Fail safe on timeout/error: send protected routes to login rather than hang.
+  if (degraded) {
+    if (path.startsWith("/dashboard") || path.startsWith("/admin")) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      return NextResponse.redirect(url);
+    }
+    return NextResponse.next({ request });
+  }
 
   // Redirect unauthenticated users from protected routes
   if (!user && (path.startsWith("/dashboard") || path.startsWith("/admin"))) {
