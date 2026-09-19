@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Calendar, MapPin, Gift } from "lucide-react";
 
 export const metadata = {
-  title: "This Month's Postcard — June 2026 — From Your Agent",
-  description: "June 2026: 10% off roof repairs or $500 off a roof replacement from Roof Repair Today — this month's curated local merchant deal featured on every postcard.",
+  title: "Next Month's Postcard — October 2026 — From Your Agent",
+  description: "October 2026: $5 off a $20+ order — or 20% off — at Meraki Coffee + Market. Next month's curated local merchant deal featured on every postcard.",
 };
 
 export default function UpcomingPostcardPage() {
@@ -17,15 +17,15 @@ export default function UpcomingPostcardPage() {
             Next Month&apos;s Exclusive Deal
           </p>
           <h1 className="font-serif text-4xl font-bold tracking-tight md:text-5xl">
-            This Month&apos;s Postcard
+            Next Month&apos;s Postcard
           </h1>
           <p className="mt-4 text-lg text-gray-300">
-            See the curated local deal your contacts will receive this month.
+            See the curated local deal your contacts will receive next month.
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-sm text-gray-300">
             <span className="flex items-center gap-1.5">
               <Calendar className="h-4 w-4 text-[#E8733A]" />
-              June 2026
+              October 2026
             </span>
             <span className="flex items-center gap-1.5">
               <MapPin className="h-4 w-4 text-[#E8733A]" />
@@ -33,7 +33,7 @@ export default function UpcomingPostcardPage() {
             </span>
             <span className="flex items-center gap-1.5">
               <Gift className="h-4 w-4 text-[#E8733A]" />
-              Roof Repair Today
+              Meraki Coffee + Market
             </span>
           </div>
         </div>
@@ -50,8 +50,8 @@ export default function UpcomingPostcardPage() {
               </p>
               <div className="overflow-hidden rounded-xl border shadow-lg bg-white" style={{ aspectRatio: "9/6" }}>
                 <img
-                  src="/roof-repair-front.png"
-                  alt="Postcard Front — Roof Repair Today"
+                  src="/meraki-front.png"
+                  alt="Postcard Front — Meraki Coffee + Market"
                   className="h-full w-full object-cover"
                 />
               </div>
@@ -66,56 +66,56 @@ export default function UpcomingPostcardPage() {
                 <div className="flex flex-col h-full">
                   {/* Top half — split in half like the bottom: offer panel (left) + brokerage branding (right) */}
                   <div className="flex h-1/2">
-                    {/* Top-left: Featured Offer Panel (your designed postcard back) */}
-                    <div className="relative w-1/2 overflow-hidden border-r border-gray-200" style={{ backgroundColor: '#1B3A5C' }}>
+                    {/* Top-left: Featured Offer Panel (Meraki Coffee + Market) */}
+                    <div className="relative w-1/2 overflow-hidden border-r border-gray-200" style={{ backgroundColor: '#fff2e5' }}>
                       <div className="absolute inset-0" style={{ backgroundColor: 'rgba(0,0,0,0.3)' }} />
 
-                      {/* Headline */}
-                      <p
-                        className="absolute text-center font-bold uppercase text-white leading-tight text-[5px] md:text-[8px]"
-                        style={{ left: '0.4%', top: '4.6%', width: '99%', fontFamily: "'Century Gothic', Futura, sans-serif" }}
-                      >
-                        Extend the Life of Your Roof
-                      </p>
-
-                      {/* Roof photo */}
+                      {/* Food & coffee photo (left) */}
                       <img
-                        src="/roof-repair-logo.jpg"
-                        alt="Roof Repair Today"
-                        className="absolute object-contain"
-                        style={{ left: '4.2%', top: '15.6%', width: '45.9%', height: '69.2%' }}
+                        src="/meraki-photo.png"
+                        alt="Meraki Coffee + Market"
+                        className="absolute object-cover"
+                        style={{ left: '2.4%', top: '0%', width: '49.6%', height: '100%' }}
                       />
 
-                      {/* What we offer */}
+                      {/* Logo (top-right) */}
+                      <img
+                        src="/meraki-logo.png"
+                        alt="Meraki Coffee + Market"
+                        className="absolute object-contain mix-blend-multiply"
+                        style={{ left: '55%', top: '3%', width: '40%', height: '22%' }}
+                      />
+
+                      {/* Address / contact */}
                       <p
-                        className="absolute text-center text-white leading-tight whitespace-pre-line text-[3.5px] md:text-[6px]"
-                        style={{ left: '50.7%', top: '14.9%', width: '48.6%' }}
+                        className="absolute text-center text-gray-900 leading-tight whitespace-pre-line font-mono text-[2.5px] md:text-[4.5px]"
+                        style={{ left: '53.4%', top: '27%', width: '43%' }}
                       >
-                        {"WE OFFER :\nRoof Repairs · Roof Maintenance\nRoof Replacement\nSilicone Roof Coating"}
+                        {"5900 Eubank Blvd NE, Albuquerque, NM 87111\n(505) 291-1116 · Hello@drinkmerakiabq.com"}
+                      </p>
+
+                      {/* Description */}
+                      <p
+                        className="absolute text-left text-white leading-snug text-[2.5px] md:text-[4.5px]"
+                        style={{ left: '53.1%', top: '37%', width: '43.9%' }}
+                      >
+                        Meraki — (may-rah-kee): the love and soul you pour into what you make for others.
                       </p>
 
                       {/* The deal */}
                       <p
-                        className="absolute text-center font-bold uppercase text-white leading-tight whitespace-pre-line text-[5px] md:text-[8px]"
-                        style={{ left: '50.9%', top: '39.3%', width: '48.8%', fontFamily: "'Century Gothic', Futura, sans-serif" }}
+                        className="absolute text-center font-bold text-white leading-tight text-[4px] md:text-[7px]"
+                        style={{ left: '52.1%', top: '62%', width: '45.2%' }}
                       >
-                        {"10% OFF Roof Repairs\n$500 OFF Roof Replacement\nor Roof Coating"}
-                      </p>
-
-                      {/* Merchant contact */}
-                      <p
-                        className="absolute text-center text-white leading-tight whitespace-pre-line font-mono text-[3.5px] md:text-[6px]"
-                        style={{ left: '50.6%', top: '68.3%', width: '48.8%' }}
-                      >
-                        {"Roof Repair Today\n(505) 433-0844\nteam@roofrepairtoday.com\nwww.roofrepairtoday.com"}
+                        Enjoy $5 off your order of $20+ — or 20% off your total.
                       </p>
 
                       {/* Fine print */}
                       <p
-                        className="absolute text-center text-white/90 leading-tight text-[2.5px] md:text-[4px]"
-                        style={{ left: '0.4%', top: '92.7%', width: '99.4%' }}
+                        className="absolute text-center text-white/90 leading-tight whitespace-pre-line text-[2px] md:text-[3.5px]"
+                        style={{ left: '50.3%', top: '87%', width: '48.7%' }}
                       >
-                        Offer valid 6/1/2026 through 9/1/2026. One coupon per person.
+                        {"Limit one per table/group. Not valid with other\npromotions, take-out, alcohol or happy hour. Valid 10/1–12/31/26"}
                       </p>
                     </div>
 
@@ -213,19 +213,19 @@ export default function UpcomingPostcardPage() {
           {/* Deal Details */}
           <div className="mt-16 rounded-2xl bg-[#F7F8FA] p-8 md:p-12">
             <h2 className="font-serif text-2xl font-bold text-[#1a1a2e] md:text-3xl">
-              Featured Deal: Roof Repair Today
+              Featured Deal: Meraki Coffee + Market
             </h2>
             <p className="mt-4 text-muted-foreground leading-relaxed">
-              This month&apos;s postcard features an exclusive offer from Roof Repair Today — extend the life of your roof with a free roof inspection plus 10% off roof repairs or $500 off a roof replacement or coating, as a gift from their agent. Your contacts will receive a beautifully designed 6x9 postcard with this deal on the front and your personalized branding on the back.
+              Next month&apos;s postcard features an exclusive offer from Meraki Coffee + Market — $5 off any order of $20 or more, or 20% off your total, as a gift from their agent. Your contacts will receive a beautifully designed 6x9 postcard with this deal on the front and your personalized branding on the back.
             </p>
             <ul className="mt-6 space-y-3">
               {[
-                "Free roof inspection + detailed photo report",
-                "10% off roof repairs, or $500 off a roof replacement or coating",
+                "$5 off your order of $20+, or 20% off your total at Meraki Coffee + Market",
+                "5900 Eubank Blvd NE, Albuquerque, NM · (505) 291-1116",
                 "Professional 6x9 full-color postcard",
                 "Your headshot, logo, and branding on the back",
                 "Delivered via USPS First-Class Mail",
-                "Offer valid June 1 – September 1, 2026",
+                "Offer valid October 1 – December 31, 2026",
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2 text-sm text-gray-700">
                   <span className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-[#E8733A]" />
