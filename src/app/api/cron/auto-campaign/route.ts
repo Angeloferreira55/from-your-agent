@@ -54,6 +54,16 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  // Approval gate: a campaign left in "draft" is still being reviewed by an
+  // admin, so the cron holds it instead of auto-mailing. To release it, set the
+  // campaign to "scheduled" (or send it manually from the admin campaign page).
+  if (existing && existing.status === "draft") {
+    return NextResponse.json({
+      message: `Campaign for ${MONTHS[month]} ${year} is a draft — held for approval, not mailed`,
+      campaign_id: existing.id,
+    });
+  }
+
   // Determine template: use admin-created campaign's template, or fall back to best match
   let template = existing?.postcard_templates || null;
 
