@@ -48,12 +48,19 @@ export default function UpcomingPostcardPage() {
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
                 Front of Postcard
               </p>
-              <div className="overflow-hidden rounded-xl border shadow-lg bg-white" style={{ aspectRatio: "9/6" }}>
+              <div className="relative overflow-hidden rounded-xl border shadow-lg bg-white" style={{ aspectRatio: "9/6" }}>
                 <img
                   src="/meraki-front.png"
                   alt="Postcard Front — Meraki Coffee + Market"
                   className="h-full w-full object-cover"
                 />
+                {/* Realtor name — fills the "as a gift from" line (agent_name placeholder) */}
+                <p
+                  className="absolute font-bold text-left leading-tight text-[8px] md:text-[13px]"
+                  style={{ left: '62%', top: '7.7%', width: '37%', color: '#050505', fontFamily: "Verdana, Geneva, sans-serif" }}
+                >
+                  Liz Garcia
+                </p>
               </div>
             </div>
 
@@ -68,54 +75,46 @@ export default function UpcomingPostcardPage() {
                   <div className="flex h-1/2">
                     {/* Top-left: Featured Offer Panel (Meraki Coffee + Market) */}
                     <div className="relative w-1/2 overflow-hidden border-r border-gray-200" style={{ backgroundColor: '#fff2e5' }}>
-                      <div className="absolute inset-0" style={{ backgroundColor: 'rgba(0,0,0,0.3)' }} />
+                      <div className="absolute inset-0" style={{ backgroundColor: 'rgba(0,0,0,0.28)' }} />
 
                       {/* Food & coffee photo (left) */}
                       <img
                         src="/meraki-photo.png"
                         alt="Meraki Coffee + Market"
-                        className="absolute object-cover"
-                        style={{ left: '2.4%', top: '0%', width: '49.6%', height: '100%' }}
+                        className="absolute object-cover rounded-sm"
+                        style={{ left: '3%', top: '5%', width: '44%', height: '90%' }}
                       />
 
-                      {/* Logo (top-right) */}
-                      <img
-                        src="/meraki-logo.png"
-                        alt="Meraki Coffee + Market"
-                        className="absolute object-contain mix-blend-multiply"
-                        style={{ left: '55%', top: '3%', width: '40%', height: '22%' }}
-                      />
-
-                      {/* Address / contact */}
-                      <p
-                        className="absolute text-center text-gray-900 leading-tight whitespace-pre-line font-mono text-[2.5px] md:text-[4.5px]"
-                        style={{ left: '53.4%', top: '27%', width: '43%' }}
+                      {/* Logo chip (top-right) */}
+                      <div
+                        className="absolute rounded-sm bg-white/95 flex items-center justify-center p-[2px]"
+                        style={{ left: '52%', top: '7%', width: '45%', height: '20%' }}
                       >
-                        {"5900 Eubank Blvd NE, Albuquerque, NM 87111\n(505) 291-1116 · Hello@drinkmerakiabq.com"}
-                      </p>
-
-                      {/* Description */}
-                      <p
-                        className="absolute text-left text-white leading-snug text-[2.5px] md:text-[4.5px]"
-                        style={{ left: '53.1%', top: '37%', width: '43.9%' }}
-                      >
-                        Meraki — (may-rah-kee): the love and soul you pour into what you make for others.
-                      </p>
+                        <img src="/meraki-logo.png" alt="Meraki Coffee + Market" className="h-full w-full object-contain" />
+                      </div>
 
                       {/* The deal */}
                       <p
-                        className="absolute text-center font-bold text-white leading-tight text-[4px] md:text-[7px]"
-                        style={{ left: '52.1%', top: '62%', width: '45.2%' }}
+                        className="absolute text-center font-bold text-white leading-tight whitespace-pre-line text-[4px] md:text-[7px]"
+                        style={{ left: '51%', top: '36%', width: '47%' }}
                       >
-                        Enjoy $5 off your order of $20+ — or 20% off your total.
+                        {"$5 OFF your order\nof $20+ — or 20%\nOFF your total"}
+                      </p>
+
+                      {/* Contact */}
+                      <p
+                        className="absolute text-center text-white/95 leading-tight whitespace-pre-line text-[2.5px] md:text-[4.5px]"
+                        style={{ left: '51%', top: '68%', width: '47%' }}
+                      >
+                        {"5900 Eubank Blvd NE, ABQ\n(505) 291-1116"}
                       </p>
 
                       {/* Fine print */}
                       <p
-                        className="absolute text-center text-white/90 leading-tight whitespace-pre-line text-[2px] md:text-[3.5px]"
-                        style={{ left: '50.3%', top: '87%', width: '48.7%' }}
+                        className="absolute text-center text-white/85 leading-tight text-[2px] md:text-[3.5px]"
+                        style={{ left: '51%', top: '89%', width: '47%' }}
                       >
-                        {"Limit one per table/group. Not valid with other\npromotions, take-out, alcohol or happy hour. Valid 10/1–12/31/26"}
+                        Valid 10/1–12/31/26 · one per table
                       </p>
                     </div>
 
