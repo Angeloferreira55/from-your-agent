@@ -155,7 +155,28 @@ function renderElement(el: DesignElement, pxWidth: number, pxHeight: number, des
   const fontScale = pxWidth / designBasis;
 
   if (el.type === "text") {
-    const fontSizePx = (el.fontSize || 16) * fontScale;
+    let fontSizePx = (el.fontSize || 16) * fontScale;
+    const text = el.text || "";
+
+    // Auto-fit dynamic placeholder text (e.g. the agent name) so long values
+    // always fit on the 6x9 card and never run into the edge. We keep the text
+    // on one line and shrink the font if the value would exceed a safe width.
+    // Static (authored) text keeps its designed size and wrapping.
+    let whiteSpace = "pre-wrap";
+    if (el.placeholder && text) {
+      whiteSpace = "nowrap";
+      // Never let dynamic text pass 94% of the card width — leaves a safety
+      // margin so it stays clear of the trim/edge on every card.
+      const SAFE_RIGHT = 94;
+      const availablePct = Math.max(6, Math.min(el.width, SAFE_RIGHT - el.x));
+      const availablePx = (availablePct / 100) * pxWidth;
+      // Estimate rendered width (bold sans ≈ 0.6em average char width).
+      const estimatedPx = text.length * fontSizePx * 0.6;
+      if (estimatedPx > availablePx) {
+        fontSizePx = fontSizePx * (availablePx / estimatedPx);
+      }
+    }
+
     const fontFamily = FONT_MAP[el.fontFamily || "sans-serif"] || "Arial, sans-serif";
     const textHeight = el.height || 0;
     const containerStyle = [
@@ -178,12 +199,12 @@ function renderElement(el: DesignElement, pxWidth: number, pxHeight: number, des
       el.letterSpacing ? `letter-spacing:${toIn(el.letterSpacing * fontScale)}` : "",
       `text-transform:${el.textTransform || "none"}`,
       `overflow-wrap:break-word`,
-      `white-space:pre-wrap`,
+      `white-space:${whiteSpace}`,
       `margin:0`,
       `padding:0`,
     ].filter(Boolean).join(";");
 
-    return `<div style="${containerStyle}"><p style="${pStyle}">${escapeHtml(el.text || "")}</p></div>`;
+    return `<div style="${containerStyle}"><p style="${pStyle}">${escapeHtml(text)}</p></div>`;
   }
 
   if (el.type === "image" && el.src) {
