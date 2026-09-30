@@ -16,6 +16,7 @@ const navLinks = [
   { label: "The Process", href: "/how-it-works" },
   { label: "Next Campaign", href: "/upcoming-postcard" },
   { label: "Pricing", href: "/pricing" },
+  { label: "For Businesses", href: "/partner" },
 ];
 
 export function Navbar() {
