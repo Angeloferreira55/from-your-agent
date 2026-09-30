@@ -26,6 +26,7 @@ import {
   LogOut,
   Shield,
   TicketPercent,
+  Handshake,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -40,6 +41,7 @@ const navItems = [
     group: "Content",
     items: [
       { title: "Offers", href: "/admin/offers", icon: Tag },
+      { title: "Partners", href: "/admin/partners", icon: Handshake },
       { title: "Campaigns", href: "/admin/campaigns", icon: Send },
       { title: "Templates", href: "/admin/templates", icon: FileImage },
       { title: "Regions", href: "/admin/regions", icon: MapPin },
