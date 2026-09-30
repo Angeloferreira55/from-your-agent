@@ -33,7 +33,7 @@ const TERMS: { title: string; body: string }[] = [
   { title: "Permission", body: "You allow From Your Agent to feature your business name, logo, and offer on mailed postcards and online promotion." },
   { title: "No Cost", body: "Being featured is free. You only cover the discount you choose to give your customers." },
   { title: "Authority", body: "You confirm you are authorized to enter this agreement on behalf of the business." },
-  { title: "Ending It", body: "Either side may end the partnership with written notice. Postcards already printed may still circulate." },
+  { title: "Ending It", body: "Either side may end the partnership with written notice given 30 days or more prior to the scheduled mailing date. Postcards already printed may still circulate." },
 ];
 
 export default function PartnerSignupPage() {
