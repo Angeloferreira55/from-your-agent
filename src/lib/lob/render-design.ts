@@ -179,6 +179,11 @@ function renderElement(el: DesignElement, pxWidth: number, pxHeight: number, des
 
     const fontFamily = FONT_MAP[el.fontFamily || "sans-serif"] || "Arial, sans-serif";
     const textHeight = el.height || 0;
+    // Dynamic placeholder text (agent name) is bottom-aligned in its box so its
+    // baseline sits on a fixed line regardless of how much the font auto-shrinks
+    // — this keeps it visually aligned with the "as a gift from" graphic for
+    // every name length. Static text keeps its normal top flow.
+    const bottomAlign = !!el.placeholder && !!textHeight;
     const containerStyle = [
       `position:absolute`,
       `left:${left}`,
@@ -186,9 +191,12 @@ function renderElement(el: DesignElement, pxWidth: number, pxHeight: number, des
       `width:${width}`,
       textHeight ? `height:${textHeight}%` : "",
       textHeight ? `overflow:hidden` : "",
+      bottomAlign ? `display:flex` : "",
+      bottomAlign ? `align-items:flex-end` : "",
       `opacity:${el.opacity ?? 1}`,
     ].filter(Boolean).join(";");
     const pStyle = [
+      bottomAlign ? `width:100%` : "",
       `font-size:${toIn(fontSizePx)}`,
       `color:${el.fontColor || "#fff"}`,
       `font-weight:${el.fontWeight || "normal"}`,
