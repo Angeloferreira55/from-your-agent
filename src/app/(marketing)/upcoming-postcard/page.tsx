@@ -233,6 +233,25 @@ export default function UpcomingPostcardPage() {
               ))}
             </ul>
           </div>
+
+          {/* Business CTA — for merchants who want to be featured */}
+          <div className="mt-8 overflow-hidden rounded-2xl bg-[#0B1F3B] p-8 md:p-12 text-center">
+            <p className="text-sm font-semibold uppercase tracking-widest text-[#E8733A]">
+              Own a Local Business?
+            </p>
+            <h2 className="mt-3 font-serif text-2xl font-bold text-white md:text-3xl">
+              Want your offer featured on next month&apos;s postcard?
+            </h2>
+            <p className="mx-auto mt-3 max-w-2xl text-gray-300">
+              Get your business in front of local homeowners — for free. You only honor the discount you choose to give. Register your offer in about two minutes.
+            </p>
+            <Link href="/partner">
+              <Button size="lg" className="mt-6 bg-[#E8733A] hover:bg-[#CF6430] text-white text-lg px-8">
+                Click here if you&apos;re a business interested in being featured
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 
