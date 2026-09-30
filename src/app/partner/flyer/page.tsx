@@ -32,7 +32,7 @@ export default async function PartnerFlyerPage() {
           <h1 className="mt-4 font-serif text-[42px] font-bold leading-tight text-[#0B1F3B]">
             Get your business in front of local homeowners
           </h1>
-          <p className="mt-3 text-2xl font-medium text-[#E8733A]">— for free.*</p>
+          <p className="mt-3 text-2xl font-medium text-[#E8733A]">for free.*</p>
         </div>
 
         {/* Intro */}
