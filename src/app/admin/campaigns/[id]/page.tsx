@@ -100,6 +100,26 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
     onError: (err) => toast.error(err.message),
   });
 
+  // Cancel ALL of a single agent's postcards for this campaign (via Lob).
+  const cancelAgentMutation = useMutation({
+    mutationFn: async (agentId: string) => {
+      const res = await fetch("/api/postcards/cancel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ campaign_id: id, agent_id: agentId }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error);
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "campaign", id] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "postcards", id] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "agent_campaigns", id] });
+      toast.success(`Canceled ${data.canceled} postcard(s) (${data.failed} failed)`);
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
   const syncMutation = useMutation({
     mutationFn: async () => {
       const res = await fetch("/api/postcards/sync-status", {
@@ -277,6 +297,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                     <TableHead className="text-center">Failed</TableHead>
                     <TableHead className="text-center">Preview</TableHead>
                     <TableHead className="text-center">Send</TableHead>
+                    <TableHead className="text-center">Cancel</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -334,6 +355,31 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                           ) : (
                             <>
                               <Send className="mr-1.5 h-3.5 w-3.5" /> Send
+                            </>
+                          )}
+                        </Button>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                          disabled={cancelAgentMutation.isPending || agent.mailed === 0}
+                          onClick={() => {
+                            if (
+                              !confirm(
+                                `Cancel ALL of ${agent.name}'s mailed/queued postcards for this campaign at Lob?\n\nThis stops them from printing. Only ${agent.name} is affected.`
+                              )
+                            )
+                              return;
+                            cancelAgentMutation.mutate(agent.agentId);
+                          }}
+                        >
+                          {cancelAgentMutation.isPending && cancelAgentMutation.variables === agent.agentId ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <>
+                              <XCircle className="mr-1.5 h-3.5 w-3.5" /> Cancel
                             </>
                           )}
                         </Button>
