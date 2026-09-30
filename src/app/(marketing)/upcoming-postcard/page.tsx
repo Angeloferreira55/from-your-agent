@@ -243,7 +243,7 @@ export default function UpcomingPostcardPage() {
               Want your offer featured on next month&apos;s postcard?
             </h2>
             <p className="mx-auto mt-3 max-w-2xl text-gray-300">
-              Get your business in front of local homeowners — for free.* You only honor the discount you choose to give. Register your offer in about two minutes.
+              Get your business in front of local homeowners for free.* You only honor the discount you choose to give. Register your offer in about two minutes.
             </p>
             <Link href="/partner">
               <Button size="lg" className="mt-6 bg-[#E8733A] hover:bg-[#CF6430] text-white text-lg px-8">

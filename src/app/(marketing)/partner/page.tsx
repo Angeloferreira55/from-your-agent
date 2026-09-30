@@ -106,7 +106,7 @@ export default function PartnerSignupPage() {
             Become a Featured Partner
           </p>
           <h1 className="font-serif text-4xl font-bold tracking-tight md:text-5xl">
-            Get your business in front of local homeowners — for free.*
+            Get your business in front of local homeowners for free.*
           </h1>
           <p className="mt-4 text-lg text-gray-300">
             We mail beautifully designed postcards to homes across the area every month. Feature your
