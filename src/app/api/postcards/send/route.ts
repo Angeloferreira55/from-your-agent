@@ -239,10 +239,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: insertErr.message }, { status: 500 });
   }
 
-  // Update campaign totals
+  // Update campaign totals — count ALL postcards for the campaign (cumulative
+  // across every agent/batch), never just this batch.
+  const { count: cumulativeTotal } = await admin
+    .from("postcards")
+    .select("id", { count: "exact", head: true })
+    .eq("campaign_id", campaign_id);
+
   await admin
     .from("campaigns")
-    .update({ total_postcards: insertedPostcards.length })
+    .update({ total_postcards: cumulativeTotal || insertedPostcards.length })
     .eq("id", campaign_id);
 
   // Pre-fetch brokerage templates AND logos (cache by brokerage_id)
@@ -373,12 +379,20 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Update campaign status
+  // Update campaign status. mailed_count reflects the CUMULATIVE number of
+  // postcards in a mailed/in-transit/delivered state across all batches — not
+  // just this send — so per-agent sends don't clobber earlier agents' counts.
+  const { count: cumulativeMailed } = await admin
+    .from("postcards")
+    .select("id", { count: "exact", head: true })
+    .eq("campaign_id", campaign_id)
+    .in("status", ["mailed", "in_transit", "in_local_area", "delivered"]);
+
   await admin
     .from("campaigns")
     .update({
       status: "mailed",
-      mailed_count: mailedCount,
+      mailed_count: cumulativeMailed || mailedCount,
     })
     .eq("id", campaign_id);
 

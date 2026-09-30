@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, Send, Loader2, Mail, CheckCircle, XCircle, Clock, Truck, Users, RefreshCw } from "lucide-react";
+import { ArrowLeft, Send, Loader2, Mail, CheckCircle, XCircle, Clock, Truck, Users, RefreshCw, FlaskConical } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 
@@ -95,6 +95,28 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
         toast.error(`Mailed ${data.mailed}, failed ${data.failed}: ${data.errors[0]}`);
       } else {
         toast.success(`Mailed ${data.mailed} postcard(s) for this agent (${data.failed} failed)`);
+      }
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  // Generate a Lob TEST proof for a single agent (no mail, no charge).
+  const testAgentMutation = useMutation({
+    mutationFn: async (agentId: string) => {
+      const res = await fetch("/api/postcards/test-lob", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ campaign_id: id, agent_id: agentId }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error);
+      return res.json();
+    },
+    onSuccess: (data) => {
+      if (data.proof_url) {
+        window.open(data.proof_url, "_blank", "noopener");
+        toast.success(`Test proof ready for ${data.agent} — opened in a new tab (nothing mailed).`);
+      } else {
+        toast.success("Test proof generated (nothing mailed).");
       }
     },
     onError: (err) => toast.error(err.message),
@@ -296,6 +318,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                     <TableHead className="text-center">Returned</TableHead>
                     <TableHead className="text-center">Failed</TableHead>
                     <TableHead className="text-center">Preview</TableHead>
+                    <TableHead className="text-center">Test to Lob</TableHead>
                     <TableHead className="text-center">Send</TableHead>
                     <TableHead className="text-center">Cancel</TableHead>
                   </TableRow>
@@ -339,11 +362,29 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                         <Button
                           size="sm"
                           variant="outline"
+                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200"
+                          disabled={testAgentMutation.isPending}
+                          onClick={() => testAgentMutation.mutate(agent.agentId)}
+                          title="Generate a Lob test proof (no mail, no charge)"
+                        >
+                          {testAgentMutation.isPending && testAgentMutation.variables === agent.agentId ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <>
+                              <FlaskConical className="mr-1.5 h-3.5 w-3.5" /> Test
+                            </>
+                          )}
+                        </Button>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Button
+                          size="sm"
+                          variant="outline"
                           disabled={sendAgentMutation.isPending}
                           onClick={() => {
                             if (
                               !confirm(
-                                `Send this month's postcard to ${agent.name}'s active contacts only?\n\nContacts that still have a live mailed card are skipped; cancelled/failed ones are included. No other agents are affected.`
+                                `Send this month's postcard to ${agent.name}'s active contacts only?\n\nHave you reviewed the Lob test proof first? Contacts that still have a live mailed card are skipped; cancelled/failed ones are included. No other agents are affected.`
                               )
                             )
                               return;

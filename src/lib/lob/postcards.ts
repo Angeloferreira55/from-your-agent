@@ -1,4 +1,5 @@
 import { lobPostcards } from "./client";
+import type { PostcardsApi } from "@lob/lob-typescript-sdk";
 import { renderTemplate, buildMergeVariables } from "./templates";
 import { resolveHtml, LOB_DIMENSIONS, injectFrontOverlay, renderFullBackHtml, designHasFrontPlaceholders } from "./render-design";
 import type { AgentPlaceholderData } from "./render-design";
@@ -88,6 +89,12 @@ interface CreatePostcardParams {
   campaignId: string;
   postcardDbId: string;
   campaignMonth?: number;
+  /**
+   * Optional Lob client override. When provided (e.g. a TEST-key client from the
+   * "Test to Lob" flow), the postcard is created through it instead of the shared
+   * live client. Nothing is mailed and no charge is incurred in test mode.
+   */
+  lobClient?: PostcardsApi;
 }
 
 /**
@@ -102,7 +109,9 @@ export async function createPostcard({
   campaignId,
   postcardDbId,
   campaignMonth,
+  lobClient,
 }: CreatePostcardParams) {
+  const lob = lobClient || lobPostcards;
   const mergeVars = buildMergeVariables(agent, contact, offer);
   const sizeKey = (template.size || "6x9") as keyof typeof LOB_DIMENSIONS;
   const dims = LOB_DIMENSIONS[sizeKey] || LOB_DIMENSIONS["6x9"];
@@ -178,7 +187,7 @@ export async function createPostcard({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let lobPostcard: any;
   try {
-    lobPostcard = await lobPostcards.create({
+    lobPostcard = await lob.create({
       to: {
         name: `${contact.first_name} ${contact.last_name}`,
         address_line1: contact.address_line1,
