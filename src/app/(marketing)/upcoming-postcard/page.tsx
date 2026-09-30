@@ -247,7 +247,7 @@ export default function UpcomingPostcardPage() {
             </p>
             <Link href="/partner">
               <Button size="lg" className="mt-6 bg-[#E8733A] hover:bg-[#CF6430] text-white text-lg px-8">
-                Click here if you&apos;re a business interested in being featured
+                Click here if you are interested
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
