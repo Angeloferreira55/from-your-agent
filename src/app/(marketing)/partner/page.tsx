@@ -15,13 +15,6 @@ import { CheckCircle2, Gift, Mail, Store } from "lucide-react";
 const CATEGORIES: { value: string; label: string }[] = [
   { value: "restaurant", label: "Restaurant" },
   { value: "cafe", label: "Café / Coffee" },
-  { value: "pizza", label: "Pizza" },
-  { value: "mexican", label: "Mexican" },
-  { value: "asian", label: "Asian" },
-  { value: "italian", label: "Italian" },
-  { value: "american", label: "American" },
-  { value: "bbq", label: "BBQ" },
-  { value: "seafood", label: "Seafood" },
   { value: "bakery", label: "Bakery" },
   { value: "ice_cream", label: "Ice Cream / Dessert" },
   { value: "bar", label: "Bar" },
@@ -113,7 +106,7 @@ export default function PartnerSignupPage() {
             Become a Featured Partner
           </p>
           <h1 className="font-serif text-4xl font-bold tracking-tight md:text-5xl">
-            Get your business in front of local homeowners — free.
+            Get your business in front of local homeowners — free.*
           </h1>
           <p className="mt-4 text-lg text-gray-300">
             We mail beautifully designed postcards to homes across the area every month. Feature your
@@ -124,6 +117,9 @@ export default function PartnerSignupPage() {
             <span className="flex items-center gap-2"><Gift className="h-4 w-4 text-[#E8733A]" /> No cost to be featured</span>
             <span className="flex items-center gap-2"><Store className="h-4 w-4 text-[#E8733A]" /> New customers at your door</span>
           </div>
+          <p className="mt-6 text-xs text-gray-400">
+            *Free to be featured — you only cover the discount you choose to offer.
+          </p>
         </div>
       </section>
 
@@ -145,7 +141,7 @@ export default function PartnerSignupPage() {
                   <div className="mt-4 grid gap-4 sm:grid-cols-2">
                     <div className="sm:col-span-2">
                       <Label htmlFor="business_name">Business name *</Label>
-                      <Input id="business_name" required value={form.business_name} onChange={set("business_name")} placeholder="Meraki Coffee + Market" />
+                      <Input id="business_name" required value={form.business_name} onChange={set("business_name")} placeholder="ABC Plumbing" />
                     </div>
                     <div>
                       <Label htmlFor="category">Type of business</Label>
@@ -158,11 +154,11 @@ export default function PartnerSignupPage() {
                     </div>
                     <div>
                       <Label htmlFor="website">Website</Label>
-                      <Input id="website" value={form.website} onChange={set("website")} placeholder="yourbusiness.com" />
+                      <Input id="website" value={form.website} onChange={set("website")} placeholder="abcplumbing.com" />
                     </div>
                     <div className="sm:col-span-2">
                       <Label htmlFor="address_line1">Address</Label>
-                      <Input id="address_line1" value={form.address_line1} onChange={set("address_line1")} placeholder="5900 Eubank Blvd NE" />
+                      <Input id="address_line1" value={form.address_line1} onChange={set("address_line1")} placeholder="123 Main St NE" />
                     </div>
                     <div>
                       <Label htmlFor="city">City</Label>
@@ -187,7 +183,7 @@ export default function PartnerSignupPage() {
                   <div className="mt-4 space-y-4">
                     <div>
                       <Label htmlFor="discount_text">The offer *</Label>
-                      <Input id="discount_text" required value={form.discount_text} onChange={set("discount_text")} placeholder="$5 off any order of $20+ — or 20% off your total" />
+                      <Input id="discount_text" required value={form.discount_text} onChange={set("discount_text")} placeholder="10% off any service" />
                     </div>
                     <div>
                       <Label htmlFor="fine_print">Limits / fine print</Label>
@@ -205,7 +201,7 @@ export default function PartnerSignupPage() {
                     </div>
                     <div>
                       <Label htmlFor="phone">Phone *</Label>
-                      <Input id="phone" required type="tel" value={form.phone} onChange={set("phone")} placeholder="(505) 291-1116" />
+                      <Input id="phone" required type="tel" value={form.phone} onChange={set("phone")} placeholder="(505) 555-0123" />
                     </div>
                     <div className="sm:col-span-2">
                       <Label htmlFor="contact_email">Email *</Label>

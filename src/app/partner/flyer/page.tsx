@@ -32,7 +32,7 @@ export default async function PartnerFlyerPage() {
           <h1 className="mt-4 font-serif text-[42px] font-bold leading-tight text-[#0B1F3B]">
             Get your business in front of local homeowners
           </h1>
-          <p className="mt-3 text-2xl font-medium text-[#E8733A]">— for free.</p>
+          <p className="mt-3 text-2xl font-medium text-[#E8733A]">— for free.*</p>
         </div>
 
         {/* Intro */}
@@ -78,6 +78,9 @@ export default async function PartnerFlyerPage() {
           </div>
           <p className="mt-6 text-center text-sm text-gray-500">
             No cost, no obligation. We&apos;ll confirm your offer before it appears on any postcard.
+          </p>
+          <p className="mt-2 text-center text-xs text-gray-400">
+            *Free to be featured — you only cover the discount you choose to offer.
           </p>
         </div>
       </div>
