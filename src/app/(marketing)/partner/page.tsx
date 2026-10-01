@@ -10,7 +10,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { CheckCircle2, Gift, Mail, Store } from "lucide-react";
+import { CheckCircle2, Gift, Mail, Store, Upload, X } from "lucide-react";
+
+const MAX_LOGO_MB = 6;
+const ALLOWED_LOGO_TYPES = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
 
 const CATEGORIES: { value: string; label: string }[] = [
   { value: "restaurant", label: "Restaurant" },
@@ -43,6 +46,8 @@ export default function PartnerSignupPage() {
     discount_text: "", fine_print: "",
   });
   const [honeypot, setHoneypot] = useState("");
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [accepted, setAccepted] = useState(false);
   const [signature, setSignature] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -51,6 +56,29 @@ export default function PartnerSignupPage() {
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setError(null);
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!ALLOWED_LOGO_TYPES.includes(file.type)) {
+      setError("Logo must be a PNG, JPG, WEBP, or SVG image.");
+      return;
+    }
+    if (file.size > MAX_LOGO_MB * 1024 * 1024) {
+      setError(`Logo must be under ${MAX_LOGO_MB} MB.`);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setLogoPreview(reader.result as string);
+    reader.readAsDataURL(file);
+    setLogoFile(file);
+  }
+
+  function removeLogo() {
+    setLogoFile(null);
+    setLogoPreview(null);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -61,11 +89,21 @@ export default function PartnerSignupPage() {
     }
     setSubmitting(true);
     try {
+      // Derive logo base64 payload (optional).
+      let logoFields: Record<string, string> = {};
+      if (logoFile && logoPreview) {
+        logoFields = {
+          logo_base64: logoPreview.split(",")[1] || "",
+          logo_content_type: logoFile.type,
+          logo_ext: (logoFile.name.split(".").pop() || "png").toLowerCase(),
+        };
+      }
       const res = await fetch("/api/partner-signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
+          ...logoFields,
           company_website: honeypot, // honeypot
           terms_accepted: accepted,
           signature: signature.trim(),
@@ -173,6 +211,35 @@ export default function PartnerSignupPage() {
                         <Label htmlFor="zip">ZIP</Label>
                         <Input id="zip" value={form.zip} onChange={set("zip")} placeholder="87111" />
                       </div>
+                    </div>
+
+                    {/* Logo upload */}
+                    <div className="sm:col-span-2">
+                      <Label>Business logo</Label>
+                      <p className="mb-2 text-xs text-muted-foreground">
+                        Upload your highest-quality logo (PNG, JPG, WEBP, or SVG — up to {MAX_LOGO_MB} MB). Transparent PNG or vector SVG looks best on the postcard.
+                      </p>
+                      {logoPreview ? (
+                        <div className="flex items-center gap-3 rounded-lg border bg-white p-3">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={logoPreview} alt="Logo preview" className="h-14 w-14 rounded object-contain" />
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium">{logoFile?.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {logoFile ? `${(logoFile.size / 1024 / 1024).toFixed(2)} MB` : ""}
+                            </p>
+                          </div>
+                          <button type="button" onClick={removeLogo} className="rounded-md p-1.5 text-muted-foreground hover:bg-gray-100" aria-label="Remove logo">
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <label htmlFor="logo" className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed bg-white px-4 py-6 text-sm text-muted-foreground hover:border-[#E8733A] hover:text-[#0B1F3B]">
+                          <Upload className="h-4 w-4" />
+                          Click to upload your logo
+                          <input id="logo" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="hidden" onChange={handleLogoChange} />
+                        </label>
+                      )}
                     </div>
                   </div>
                 </div>

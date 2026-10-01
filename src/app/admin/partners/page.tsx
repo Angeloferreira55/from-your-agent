@@ -16,6 +16,7 @@ interface Partner {
   state: string | null;
   phone: string | null;
   website: string | null;
+  logo_url: string | null;
   created_at: string;
   contact_name: string | null;
   contact_email: string | null;
@@ -131,10 +132,20 @@ export default function AdminPartnersPage() {
                     return (
                       <TableRow key={p.merchant_id}>
                         <TableCell>
-                          <div className="font-medium">{p.business_name}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {[p.city, p.state].filter(Boolean).join(", ")}
-                            {p.website ? <> · <a href={p.website.startsWith("http") ? p.website : `https://${p.website}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">site</a></> : null}
+                          <div className="flex items-center gap-3">
+                            {p.logo_url ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <a href={p.logo_url} target="_blank" rel="noreferrer" className="shrink-0">
+                                <img src={p.logo_url} alt={`${p.business_name} logo`} className="h-10 w-10 rounded border bg-white object-contain" />
+                              </a>
+                            ) : null}
+                            <div>
+                              <div className="font-medium">{p.business_name}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {[p.city, p.state].filter(Boolean).join(", ")}
+                                {p.website ? <> · <a href={p.website.startsWith("http") ? p.website : `https://${p.website}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">site</a></> : null}
+                              </div>
+                            </div>
                           </div>
                         </TableCell>
                         <TableCell className="max-w-[240px]">

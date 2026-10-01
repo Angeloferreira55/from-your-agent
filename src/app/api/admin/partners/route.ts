@@ -86,6 +86,7 @@ export async function GET(request: NextRequest) {
         state: m.state,
         phone: m.phone,
         website: m.website,
+        logo_url: m.logo_url || null,
         created_at: m.created_at,
         ...p,
         offer: offer

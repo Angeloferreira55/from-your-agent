@@ -19,6 +19,46 @@ function isMissingColumnError(err: { code?: string; message?: string } | null): 
     /column .* does not exist/i.test(err.message || "");
 }
 
+const LOGO_BUCKET = "merchant-assets";
+const MAX_LOGO_BYTES = 6 * 1024 * 1024; // 6 MB
+const ALLOWED_LOGO_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "image/svg+xml"]);
+
+/**
+ * Uploads a business logo (base64) to public storage and returns its URL.
+ * Returns null on any problem — a logo is optional and must never block signup.
+ */
+async function uploadLogo(
+  admin: ReturnType<typeof createAdminClient>,
+  merchantId: string,
+  base64: string,
+  contentType: string,
+  ext: string,
+): Promise<string | null> {
+  try {
+    if (!ALLOWED_LOGO_TYPES.has(contentType)) return null;
+    const buffer = Buffer.from(base64, "base64");
+    if (buffer.length === 0 || buffer.length > MAX_LOGO_BYTES) return null;
+
+    // Ensure the public bucket exists.
+    const { data: buckets } = await admin.storage.listBuckets();
+    if (!buckets?.some((b) => b.name === LOGO_BUCKET)) {
+      await admin.storage.createBucket(LOGO_BUCKET, { public: true });
+    }
+
+    const safeExt = /^[a-z0-9]{1,5}$/i.test(ext) ? ext.toLowerCase() : "png";
+    const filePath = `${merchantId}/logo.${safeExt}`;
+    const { error } = await admin.storage
+      .from(LOGO_BUCKET)
+      .upload(filePath, buffer, { upsert: true, contentType });
+    if (error) return null;
+
+    const { data: { publicUrl } } = admin.storage.from(LOGO_BUCKET).getPublicUrl(filePath);
+    return publicUrl;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * POST — Public "Become a Partner" signup (NO auth).
  *
@@ -125,6 +165,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: full.error.message }, { status: 500 });
   } else {
     merchant = full.data;
+  }
+
+  // Optional logo upload (base64). Never blocks signup if it fails.
+  const logoBase64 = str(body.logo_base64);
+  if (logoBase64) {
+    const logoUrl = await uploadLogo(
+      admin,
+      merchant!.id,
+      logoBase64,
+      str(body.logo_content_type) || "image/png",
+      str(body.logo_ext) || "png",
+    );
+    if (logoUrl) {
+      await admin.from("merchants").update({ logo_url: logoUrl }).eq("id", merchant!.id);
+    }
   }
 
   // Create the pending offer (inactive until approved).
