@@ -56,7 +56,7 @@ export default function UpcomingPostcardPage() {
                 />
                 {/* Realtor name — fills the "as a gift from" line (agent_name placeholder) */}
                 <p
-                  className="absolute font-bold text-left leading-none text-[9px] md:text-[15px]"
+                  className="absolute font-bold text-left leading-none text-[10px] md:text-[17px]"
                   style={{ left: '62%', top: '8.2%', width: '37%', color: '#050505', fontFamily: "Verdana, Geneva, sans-serif" }}
                 >
                   Liz Garcia
