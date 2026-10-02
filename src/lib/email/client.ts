@@ -52,6 +52,63 @@ export async function sendNewAgentNotification(agentEmail: string, agentName: st
   });
 }
 
+export interface PartnerNotification {
+  businessName: string;
+  contactName?: string | null;
+  contactEmail?: string | null;
+  phone?: string | null;
+  city?: string | null;
+  state?: string | null;
+  offer?: string | null;
+  logoUrl?: string | null;
+}
+
+export async function sendNewPartnerNotification(p: PartnerNotification) {
+  const fromEmail = process.env.EMAIL_FROM || "onboarding@resend.dev";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const now = new Date().toLocaleString("en-US", { timeZone: "America/New_York", dateStyle: "full", timeStyle: "short" });
+  const location = [p.city, p.state].filter(Boolean).join(", ") || "—";
+
+  await getResend().emails.send({
+    from: `From Your Agent <${fromEmail}>`,
+    to: ["angelo@from-your-agent.com", "contact@from-your-agent.com"],
+    subject: `New partner request: ${p.businessName}`,
+    html: `
+<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:40px 20px;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);margin:0 auto;">
+    <tr>
+      <td style="background:#0B1F3B;padding:24px 32px;">
+        <p style="margin:0;font-size:18px;font-weight:700;color:#fff;">New Partner Request 🤝</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:32px;">
+        <p style="margin:0 0 16px;font-size:15px;color:#334155;line-height:1.6;">
+          A business just signed up to be a featured partner. It's waiting for your review.
+        </p>
+        ${p.logoUrl ? `<div style="margin-bottom:20px;"><img src="${p.logoUrl}" alt="${p.businessName} logo" style="max-height:72px;max-width:220px;object-fit:contain;" /></div>` : ""}
+        <table cellpadding="0" cellspacing="0" style="background:#f8fafc;border-radius:8px;padding:20px;width:100%;margin-bottom:24px;">
+          <tr><td style="font-size:13px;color:#64748b;padding-bottom:6px;">Business</td><td style="font-size:15px;font-weight:600;color:#1e293b;">${p.businessName}</td></tr>
+          <tr><td style="font-size:13px;color:#64748b;padding-top:10px;">Offer</td><td style="font-size:15px;color:#1e293b;">${p.offer || "—"}</td></tr>
+          <tr><td style="font-size:13px;color:#64748b;padding-top:10px;">Contact</td><td style="font-size:15px;color:#1e293b;">${p.contactName || "—"}</td></tr>
+          <tr><td style="font-size:13px;color:#64748b;padding-top:10px;">Email</td><td style="font-size:15px;color:#1e293b;">${p.contactEmail || "—"}</td></tr>
+          <tr><td style="font-size:13px;color:#64748b;padding-top:10px;">Phone</td><td style="font-size:15px;color:#1e293b;">${p.phone || "—"}</td></tr>
+          <tr><td style="font-size:13px;color:#64748b;padding-top:10px;">Location</td><td style="font-size:15px;color:#1e293b;">${location}</td></tr>
+          <tr><td style="font-size:13px;color:#64748b;padding-top:10px;">Submitted</td><td style="font-size:15px;color:#1e293b;">${now} ET</td></tr>
+        </table>
+        <a href="${appUrl}/admin/partners" style="display:inline-block;background:#E8733A;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-size:14px;font-weight:600;">
+          Review in Admin →
+        </a>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`,
+  });
+}
+
 export async function sendWelcomeEmail(to: string, firstName: string) {
   const fromEmail = process.env.EMAIL_FROM || "onboarding@resend.dev";
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";

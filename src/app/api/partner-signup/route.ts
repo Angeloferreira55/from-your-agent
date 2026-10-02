@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { sendNewPartnerNotification } from "@/lib/email/client";
 
 export const maxDuration = 30;
 
@@ -168,17 +169,18 @@ export async function POST(req: NextRequest) {
   }
 
   // Optional logo upload (base64). Never blocks signup if it fails.
+  let savedLogoUrl: string | null = null;
   const logoBase64 = str(body.logo_base64);
   if (logoBase64) {
-    const logoUrl = await uploadLogo(
+    savedLogoUrl = await uploadLogo(
       admin,
       merchant!.id,
       logoBase64,
       str(body.logo_content_type) || "image/png",
       str(body.logo_ext) || "png",
     );
-    if (logoUrl) {
-      await admin.from("merchants").update({ logo_url: logoUrl }).eq("id", merchant!.id);
+    if (savedLogoUrl) {
+      await admin.from("merchants").update({ logo_url: savedLogoUrl }).eq("id", merchant!.id);
     }
   }
 
@@ -196,6 +198,22 @@ export async function POST(req: NextRequest) {
 
   if (offerErr) {
     return NextResponse.json({ error: offerErr.message }, { status: 500 });
+  }
+
+  // Notify admins of the new partner request (fire-and-forget — never block signup).
+  try {
+    await sendNewPartnerNotification({
+      businessName,
+      contactName,
+      contactEmail,
+      phone,
+      city: str(body.city) || null,
+      state: str(body.state) || null,
+      offer: discountText,
+      logoUrl: savedLogoUrl,
+    });
+  } catch (err) {
+    console.error("[partner-signup] notification email failed:", err);
   }
 
   return NextResponse.json({ ok: true, merchant_id: merchant!.id }, { status: 201 });
