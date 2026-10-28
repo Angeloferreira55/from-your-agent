@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await admin
     .from("agent_campaigns")
-    .select("id, agent_id, status, contact_count, agent_profiles ( id, first_name, last_name, email, company_name )")
+    .select("id, agent_id, status, contact_count, billed, agent_profiles ( id, first_name, last_name, email, company_name )")
     .eq("campaign_id", campaignId)
     .order("created_at", { ascending: false });
 

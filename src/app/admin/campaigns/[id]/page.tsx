@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, Send, Loader2, Mail, CheckCircle, XCircle, Clock, Truck, Users, RefreshCw, FlaskConical } from "lucide-react";
+import { ArrowLeft, Send, Loader2, Mail, CheckCircle, XCircle, Clock, Truck, Users, RefreshCw, FlaskConical, DollarSign } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 
@@ -142,6 +142,25 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
     onError: (err) => toast.error(err.message),
   });
 
+  // Bill a single agent for this campaign — creates & charges a Stripe invoice
+  // for their MAILED cards only. Guarded against double-billing server-side.
+  const billAgentMutation = useMutation({
+    mutationFn: async (agentId: string) => {
+      const res = await fetch("/api/stripe/invoice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ campaign_id: id, agent_id: agentId }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error);
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "agent_campaigns", id] });
+      toast.success(`Invoiced ${data.total_cards} card(s) — $${Number(data.total).toFixed(2)} charged.`);
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
   const syncMutation = useMutation({
     mutationFn: async () => {
       const res = await fetch("/api/postcards/sync-status", {
@@ -165,7 +184,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
   const postcards = postcardsData?.postcards || [];
 
   // Build per-agent breakdown from agent_campaigns (all agents in campaign), merge postcard counts
-  const agentMap = new Map<string, { name: string; email: string; total: number; mailed: number; delivered: number; returned: number; failed: number }>();
+  const agentMap = new Map<string, { name: string; email: string; total: number; mailed: number; delivered: number; returned: number; failed: number; billed: boolean }>();
 
   const agentCampaigns = agentCampaignsData?.agent_campaigns || [];
   for (const ac of agentCampaigns) {
@@ -176,7 +195,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
       agentMap.set(agentId, {
         name: agent ? `${agent.first_name} ${agent.last_name}`.trim() : "Unknown",
         email: agent?.email || "",
-        total: 0, mailed: 0, delivered: 0, returned: 0, failed: 0,
+        total: 0, mailed: 0, delivered: 0, returned: 0, failed: 0, billed: !!ac.billed,
       });
     }
   }
@@ -192,7 +211,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
       agentMap.set(agentId, {
         name: agent ? `${agent.first_name} ${agent.last_name}`.trim() : "Unknown",
         email: agent?.email || "",
-        total: 0, mailed: 0, delivered: 0, returned: 0, failed: 0,
+        total: 0, mailed: 0, delivered: 0, returned: 0, failed: 0, billed: false,
       });
     }
     const entry = agentMap.get(agentId)!;
@@ -320,6 +339,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                     <TableHead className="text-center">Preview</TableHead>
                     <TableHead className="text-center">Test to Lob</TableHead>
                     <TableHead className="text-center">Send</TableHead>
+                    <TableHead className="text-center">Bill</TableHead>
                     <TableHead className="text-center">Cancel</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -399,6 +419,37 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                             </>
                           )}
                         </Button>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {agent.billed ? (
+                          <span className="inline-flex items-center gap-1 text-sm text-green-600">
+                            <CheckCircle className="h-3.5 w-3.5" /> Billed
+                          </span>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 border-emerald-300"
+                            disabled={billAgentMutation.isPending || agent.mailed === 0}
+                            onClick={() => {
+                              if (
+                                !confirm(
+                                  `Charge ${agent.name} for ${agent.mailed} mailed card(s) in this campaign?\n\nThis creates a finalized Stripe invoice and charges their card on file right now. Only mailed cards are billed; it can't double-charge.`
+                                )
+                              )
+                                return;
+                              billAgentMutation.mutate(agent.agentId);
+                            }}
+                          >
+                            {billAgentMutation.isPending && billAgentMutation.variables === agent.agentId ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <>
+                                <DollarSign className="mr-1.5 h-3.5 w-3.5" /> Bill
+                              </>
+                            )}
+                          </Button>
+                        )}
                       </TableCell>
                       <TableCell className="text-center">
                         <Button

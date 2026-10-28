@@ -61,16 +61,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Already billed" }, { status: 400 });
   }
 
-  // Count postcards
+  // Count postcards — bill ONLY cards that actually mailed (never failed/canceled/queued).
+  const MAILED_STATUSES = ["mailed", "in_transit", "in_local_area", "delivered"];
   const { data: postcards } = await admin
     .from("postcards")
-    .select("id")
+    .select("status")
     .eq("agent_campaign_id", agentCampaign.id);
 
-  const totalCards = (postcards || []).length;
+  const allCards = (postcards || []).length;
+  const totalCards = (postcards || []).filter((p) => MAILED_STATUSES.includes(p.status)).length;
+  const unmailedCards = allCards - totalCards;
 
   if (totalCards === 0) {
-    return NextResponse.json({ error: "No postcards to bill" }, { status: 400 });
+    return NextResponse.json({ error: "No mailed postcards to bill" }, { status: 400 });
   }
 
   // Get campaign info for description
@@ -116,7 +119,7 @@ export async function POST(req: NextRequest) {
     description,
     total_cards: totalCards,
     mailed_cards: totalCards,
-    unmailed_cards: 0,
+    unmailed_cards: unmailedCards,
     price_per_mailed: pricePerCard,
     price_per_unmailed: 0,
     subtotal,
@@ -125,6 +128,12 @@ export async function POST(req: NextRequest) {
     status: "pending",
     billing_date: new Date().toISOString().split("T")[0],
   });
+
+  // Mark this agent-campaign as billed so it can never be charged twice.
+  await admin
+    .from("agent_campaigns")
+    .update({ billed: true })
+    .eq("id", agentCampaign.id);
 
   return NextResponse.json({
     invoice_id: invoice.id,
