@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserId } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { stripe } from "@/lib/stripe/client";
-import { reportUsage } from "@/lib/stripe/helpers";
 import { getPricePerCard } from "@/lib/stripe/config";
 import type Stripe from "stripe";
 
@@ -85,14 +84,18 @@ export async function POST(req: NextRequest) {
 
   const description = `${campaign?.name || "Campaign"} — ${campaign?.month}/${campaign?.year}`;
 
-  // Create invoice items via reportUsage
-  await reportUsage(agent.stripe_customer_id, totalCards, 0, campaign_id, description);
+  const pricePerCard = getPricePerCard(totalCards);
+  const subtotal = totalCards * pricePerCard;
 
-  // Create and finalize Stripe invoice (auto-charges card on file)
+  // Create a DRAFT invoice first, then attach the line item DIRECTLY to it, then
+  // finalize. Leaving the item "pending" (the old approach) produced $0 invoices
+  // because it was never pulled onto this invoice. Attaching by invoice id and
+  // excluding stray pending items guarantees the amount lands here.
   const invoiceParams: Stripe.InvoiceCreateParams = {
     customer: agent.stripe_customer_id,
-    auto_advance: true,
+    auto_advance: false,
     collection_method: "charge_automatically",
+    pending_invoice_items_behavior: "exclude",
     metadata: {
       campaign_id,
       agent_id,
@@ -106,11 +109,21 @@ export async function POST(req: NextRequest) {
 
   const invoice = await stripe.invoices.create(invoiceParams);
 
+  // Attach the postcard charge directly to this invoice.
+  await stripe.invoiceItems.create({
+    customer: agent.stripe_customer_id,
+    invoice: invoice.id,
+    amount: Math.round(pricePerCard * totalCards * 100), // cents
+    currency: "usd",
+    description: `${description} — ${totalCards} postcards @ $${pricePerCard.toFixed(2)}`,
+    tax_code: "txcd_10103001",
+    metadata: { campaign_id, type: "postcard", count: String(totalCards) },
+  });
+
+  // Finalize (charges the card on file since collection_method is automatic).
   const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id);
 
   // Create billing record
-  const pricePerCard = getPricePerCard(totalCards);
-  const subtotal = totalCards * pricePerCard;
 
   await admin.from("billing_records").insert({
     agent_id,
