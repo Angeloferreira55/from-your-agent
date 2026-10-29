@@ -156,7 +156,11 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["admin", "agent_campaigns", id] });
-      toast.success(`Invoiced ${data.total_cards} card(s) — $${Number(data.total).toFixed(2)} charged.`);
+      if (data.paid) {
+        toast.success(`Charged $${Number(data.total).toFixed(2)} for ${data.total_cards} card(s).`);
+      } else {
+        toast.success(`Invoice created for ${data.total_cards} card(s) ($${Number(data.total).toFixed(2)}) — not yet paid. Send it from Stripe if the card needs the agent to confirm.`);
+      }
     },
     onError: (err) => toast.error(err.message),
   });

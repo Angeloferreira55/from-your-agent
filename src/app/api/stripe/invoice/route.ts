@@ -87,6 +87,30 @@ export async function POST(req: NextRequest) {
   const pricePerCard = getPricePerCard(totalCards);
   const subtotal = totalCards * pricePerCard;
 
+  // Resolve a card to charge: the customer's default payment method, else their
+  // first saved card — which we also set as the default so this and future
+  // invoices can auto-charge. Without a default, charge_automatically invoices
+  // just sit "open" and never collect.
+  let defaultPm: string | null = null;
+  try {
+    const cust = await stripe.customers.retrieve(agent.stripe_customer_id);
+    if (!("deleted" in cust)) {
+      const dp = cust.invoice_settings?.default_payment_method;
+      defaultPm = typeof dp === "string" ? dp : dp?.id || null;
+    }
+    if (!defaultPm) {
+      const pms = await stripe.paymentMethods.list({ customer: agent.stripe_customer_id, type: "card", limit: 1 });
+      if (pms.data[0]) {
+        defaultPm = pms.data[0].id;
+        await stripe.customers.update(agent.stripe_customer_id, {
+          invoice_settings: { default_payment_method: defaultPm },
+        });
+      }
+    }
+  } catch {
+    // No card available — invoice will finalize as "open" for manual collection.
+  }
+
   // Create a DRAFT invoice first, then attach the line item DIRECTLY to it, then
   // finalize. Leaving the item "pending" (the old approach) produced $0 invoices
   // because it was never pulled onto this invoice. Attaching by invoice id and
@@ -101,6 +125,7 @@ export async function POST(req: NextRequest) {
       agent_id,
     },
   };
+  if (defaultPm) invoiceParams.default_payment_method = defaultPm;
 
   // Apply coupon discount if agent has one
   if (agent.stripe_coupon_id) {
@@ -120,8 +145,16 @@ export async function POST(req: NextRequest) {
     metadata: { campaign_id, type: "postcard", count: String(totalCards) },
   });
 
-  // Finalize (charges the card on file since collection_method is automatic).
-  const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id);
+  // Finalize, then attempt payment against the card on file.
+  let finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id);
+  if (finalizedInvoice.status === "open" && defaultPm) {
+    try {
+      finalizedInvoice = await stripe.invoices.pay(invoice.id);
+    } catch {
+      // Payment needs authentication or was declined — leave open for the agent
+      // to complete via the hosted invoice link.
+    }
+  }
 
   // Create billing record
 
@@ -137,8 +170,8 @@ export async function POST(req: NextRequest) {
     price_per_unmailed: 0,
     subtotal,
     tax: 0,
-    total: subtotal,
-    status: "pending",
+    total: finalizedInvoice.total != null ? finalizedInvoice.total / 100 : subtotal,
+    status: finalizedInvoice.status === "paid" ? "paid" : "pending",
     billing_date: new Date().toISOString().split("T")[0],
   });
 
@@ -148,10 +181,13 @@ export async function POST(req: NextRequest) {
     .update({ billed: true })
     .eq("id", agentCampaign.id);
 
+  const amountCharged = finalizedInvoice.total != null ? finalizedInvoice.total / 100 : subtotal;
   return NextResponse.json({
     invoice_id: invoice.id,
     invoice_url: finalizedInvoice.hosted_invoice_url,
-    total: subtotal,
+    total: amountCharged,
     total_cards: totalCards,
+    status: finalizedInvoice.status,
+    paid: finalizedInvoice.status === "paid",
   });
 }
